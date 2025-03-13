@@ -62,4 +62,4 @@ fastlane/screenshots/**/*.png
 fastlane/test_output
 
 .DS_Store
-fw_note/fw_note/Resources/example.gif
+fw_note/Resources/example.gif
