@@ -24,6 +24,7 @@ class CanvasSettings: ObservableObject {
 
     @Published var lines: [Line] = []
     @Published var imageViews: [ImageView] = []
+    @Published var gifs: [Gif] = []
 
     // Undo/Redo Stacks
     @Published var undoStack: [(lines: [Line], imageViews: [ImageView])] = []

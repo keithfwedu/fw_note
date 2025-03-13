@@ -24,7 +24,9 @@ class TimerManager {
     }
 
     func setHoldTimer(currentPosition: CGPoint, onHold: @escaping (CGPoint) -> Void) {
+        print("hold timer1")
         cancelHoldTimer()
+        print("hold timer2")
         startHoldTimer(for: currentPosition, onHold: onHold)
     }
 }

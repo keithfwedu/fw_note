@@ -38,6 +38,13 @@ struct CanvasView: View {
                     canvasSettings.imageViews.append(newImageView)
                 }
                 
+                Button("Add Gif") {
+                    let newGifView = Gif(
+                        id: UUID(), position: CGPoint(x: 100, y: 100),
+                        size: CGSize(width: 100, height: 100))
+                    canvasSettings.gifs.append(newGifView)
+                }
+                
                 Button("Undo") {
                                    canvasSettings.undo()
                                }
@@ -57,73 +64,80 @@ struct CanvasView: View {
             }
 
             VStack {
-                Canvas { context, size in
-
-                    for imageView in canvasSettings.imageViews {
-
-                        context.draw(
-                            Image(systemName: "photo"), in: imageView.rect)
-
-                        // Highlight selected images
-                        if canvasSettings.selectedImages.contains(imageView.id) {
-                            let selectionRect = imageView.rect.insetBy(
-                                dx: -2, dy: -2)
-                            var borderPath = Path()
-                            borderPath.addRect(selectionRect)
-                            context.stroke(
-                                borderPath, with: .color(.blue),
-                                style: StrokeStyle(lineWidth: 2))
-                        }
-                    }
-                    // Draw all lines
-                    for line in canvasSettings.lines {
-                        var path = Path()
-                        path.addLines(line.points)
-
-                        if canvasSettings.selectedLines.contains(where: { $0.id == line.id }) {
-                            context.stroke(
-                                path, with: .color(.blue),
-                                style: StrokeStyle(lineWidth: 8))
-                        } else {
-                            if line.mode == .draw {
-                                context.blendMode = .normal
+                ZStack {
+                   
+                    Canvas { context, size in
+                        
+                        for imageView in canvasSettings.imageViews {
+                            
+                            context.draw(
+                                Image(systemName: "photo"), in: imageView.rect)
+                            
+                            // Highlight selected images
+                            if canvasSettings.selectedImages.contains(imageView.id) {
+                                let selectionRect = imageView.rect.insetBy(
+                                    dx: -2, dy: -2)
+                                var borderPath = Path()
+                                borderPath.addRect(selectionRect)
                                 context.stroke(
-                                    path, with: .color(line.color),
-                                    style: StrokeStyle(lineWidth: 8))
-                            } else if line.mode == .eraser {
-                                context.blendMode = .clear
-                                context.stroke(
-                                    path, with: .color(line.color),
-                                    style: StrokeStyle(lineWidth: 8))
+                                    borderPath, with: .color(.blue),
+                                    style: StrokeStyle(lineWidth: 2))
                             }
                         }
+                        
+                        
+                        // Draw all lines
+                        for line in canvasSettings.lines {
+                            var path = Path()
+                            path.addLines(line.points)
+                            
+                            if canvasSettings.selectedLines.contains(where: { $0.id == line.id }) {
+                                context.stroke(
+                                    path, with: .color(.blue),
+                                    style: StrokeStyle(lineWidth: 8))
+                            } else {
+                                if line.mode == .draw {
+                                    context.blendMode = .normal
+                                    context.stroke(
+                                        path, with: .color(line.color),
+                                        style: StrokeStyle(lineWidth: 8))
+                                } else if line.mode == .eraser {
+                                    context.blendMode = .clear
+                                    context.stroke(
+                                        path, with: .color(line.color),
+                                        style: StrokeStyle(lineWidth: 8))
+                                }
+                            }
+                        }
+                        
+                        // Draw selection path if in select mode
+                        if CanvasMode(rawValue: canvasSettings.selectionModeIndex) == .lasso
+                            && !canvasSettings.selectionPath.isEmpty
+                        {
+                            var selectionDrawing = Path()
+                            selectionDrawing.addLines(canvasSettings.selectionPath)
+                            selectionDrawing.closeSubpath()
+                            context.stroke(
+                                selectionDrawing, with: .color(.green),
+                                style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
+                        }
                     }
-
-                    // Draw selection path if in select mode
-                    if CanvasMode(rawValue: canvasSettings.selectionModeIndex) == .lasso
-                        && !canvasSettings.selectionPath.isEmpty
-                    {
-                        var selectionDrawing = Path()
-                        selectionDrawing.addLines(canvasSettings.selectionPath)
-                        selectionDrawing.closeSubpath()
-                        context.stroke(
-                            selectionDrawing, with: .color(.green),
-                            style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
+                    .allowsHitTesting(canvasSettings.isCanvasInteractive)  // Toggle interaction
+                    .onChange(of: canvasSettings.selectionModeIndex) {
+                        oldModeIndex, newModeIndex in
+                        handleModeChange(index: newModeIndex)
                     }
+                    .gesture(
+                        DragGesture()
+                            .onChanged(handleDragChange)
+                            .onEnded({ _ in handleDragEnded() })
+                    )
+                    .onAppear {
+                        canvasSettings.saveStateForUndo()
+                    }
+                   
                 }
-                .allowsHitTesting(canvasSettings.isCanvasInteractive)  // Toggle interaction
-                .onChange(of: canvasSettings.selectionModeIndex) {
-                    oldModeIndex, newModeIndex in
-                    handleModeChange(index: newModeIndex)
-                }
-                .gesture(
-                    DragGesture()
-                        .onChanged(handleDragChange)
-                        .onEnded({ _ in handleDragEnded() })
-                )
-                .onAppear {
-                    canvasSettings.saveStateForUndo()
-                }
+              
             }
         }
     }
@@ -212,6 +226,7 @@ struct CanvasView: View {
             canvasSettings.currentDrawingLineID = newLine.id
         } else {
             // Add points to the current stroke
+            print("drag detected for a new stroke2")
             if let lastLine = canvasSettings.lines.last {
                 let interpolatedPoints = PointHelper.interpolatePoints(
                     from: lastLine.points.last ?? dragValue.location,
@@ -223,14 +238,22 @@ struct CanvasView: View {
             }
         }
 
-        canvasSettings.lastDrawPosition = dragValue.location
+      
         // Update hold detection logic for the latest position
-
-        canvasSettings.timerManager.setHoldTimer(currentPosition: dragValue.location) {
-            position in
-
-            guard let line = findCurrentDrawingLine() else { return }
-            processLineForTransformation(line)
+        if(canvasSettings.lastDrawPosition != nil) {
+            if PointHelper.distance(canvasSettings.lastDrawPosition!, dragValue.location) < 5.0 {
+                print("set hold timer")
+                canvasSettings.lastDrawPosition = dragValue.location
+                canvasSettings.timerManager.setHoldTimer(currentPosition: dragValue.location) {
+                    position in
+                   
+                    guard let line = findCurrentDrawingLine() else { return }
+                    processLineForTransformation(line)
+                }
+                
+            }
+        } else {
+            canvasSettings.lastDrawPosition = dragValue.location
         }
     }
 
