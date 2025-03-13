@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct Line: Identifiable {
+struct Line: Codable {
     let id = UUID()
     var color: Color
     var points: [CGPoint]

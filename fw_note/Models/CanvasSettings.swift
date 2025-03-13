@@ -8,7 +8,19 @@
 import PencilKit
 import SwiftUI
 
+struct CanvasState: Codable {
+    let lines: [Line]
+    let imageViews: [ImageView]
+    let gifs: [Gif]
+    let undoStack: [[Line]] // Simplified for encoding
+    let redoStack: [[Line]] // Simplified for encoding
+}
+
 class CanvasSettings: ObservableObject {
+    @Published var lines: [Line] = []
+    @Published var imageViews: [ImageView] = []
+    @Published var gifs: [Gif] = []
+    
     @Published var selectionModeIndex: Int = 0
     @Published var isCanvasInteractive: Bool = true
 
@@ -22,9 +34,7 @@ class CanvasSettings: ObservableObject {
     @Published var isLassoCreated: Bool = false
     @Published var timerManager = TimerManager()
 
-    @Published var lines: [Line] = []
-    @Published var imageViews: [ImageView] = []
-    @Published var gifs: [Gif] = []
+    
 
     // Undo/Redo Stacks
     @Published var undoStack: [(lines: [Line], imageViews: [ImageView])] = []
@@ -71,4 +81,57 @@ class CanvasSettings: ObservableObject {
         lines = nextState.lines
         imageViews = nextState.imageViews
     }
+    
+    
+    func saveCanvasState() {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+
+        do {
+            // Create an instance of CanvasState
+            let canvasState = CanvasState(
+                lines: lines,
+                imageViews: imageViews,
+                gifs: gifs,
+                undoStack: undoStack.map { $0.lines }, // Extract only lines for simplicity
+                redoStack: redoStack.map { $0.lines }  // Extract only lines for simplicity
+            )
+
+            // Encode the canvasState struct
+            let data = try encoder.encode(canvasState)
+            let url = getDocumentsDirectory().appendingPathComponent("canvasState.json")
+            try data.write(to: url)
+            print("Canvas state saved!")
+        } catch {
+            print("Failed to save canvas state: \(error)")
+        }
+    }
+
+
+    func getDocumentsDirectory() -> URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
+    
+    func loadCanvasState() {
+        let decoder = JSONDecoder()
+
+        do {
+            let url = getDocumentsDirectory().appendingPathComponent("canvasState.json")
+            let data = try Data(contentsOf: url)
+            let canvasState = try decoder.decode(CanvasState.self, from: data)
+
+            // Restore properties
+            lines = canvasState.lines
+            imageViews = canvasState.imageViews
+            gifs = canvasState.gifs
+            undoStack = canvasState.undoStack.map { (lines: $0, imageViews: []) } // Rebuild undo stack
+            redoStack = canvasState.redoStack.map { (lines: $0, imageViews: []) } // Rebuild redo stack
+
+            print("Canvas state loaded!")
+        } catch {
+            print("Failed to load canvas state: \(error)")
+        }
+    }
+
+
 }

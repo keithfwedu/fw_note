@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ImageView: Identifiable {
+struct ImageView: Codable {
     let id: UUID
     var position: CGPoint
     var size: CGSize
