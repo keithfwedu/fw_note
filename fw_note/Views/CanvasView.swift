@@ -10,7 +10,7 @@ import SwiftUI
 struct CanvasView: View {
 
     @StateObject private var canvasSettings = CanvasSettings()
-
+    
     var body: some View {
         VStack {
             HStack {
@@ -35,33 +35,32 @@ struct CanvasView: View {
                 .pickerStyle(.segmented)
 
                 Button("Add Image") {
-                    let newImageView = ImageView(
+                    let newImageObj = ImageObj(
                         id: UUID(), position: CGPoint(x: 100, y: 100),
                         size: CGSize(width: 100, height: 100))
-                    canvasSettings.imageViews.append(newImageView)
+                    canvasSettings.imageObjs.append(newImageObj)
                 }
 
                 Button("Add Gif") {
-                    let newGifView = Gif(
+                    let newGif = Gif(
                         id: UUID(), position: CGPoint(x: 100, y: 100),
                         size: CGSize(width: 100, height: 100))
-                    canvasSettings.gifs.append(newGifView)
+                    canvasSettings.gifs.append(newGif)
                 }
 
                 Button("Reset Canvas") {
-                    canvasSettings.imageViews = []
+                    canvasSettings.imageObjs = []
                     canvasSettings.gifs = []
                     canvasSettings.lines = []
                     canvasSettings.selectionPath = []
                     canvasSettings.selectedImages = []
                     canvasSettings.selectedLines = []
-
                 }
                 
                 Button("Save") {
                     canvasSettings.saveCanvasState()
                 }
-                
+
                 Button("Load") {
                     canvasSettings.loadCanvasState()
                 }
@@ -69,7 +68,7 @@ struct CanvasView: View {
                 Button("Undo") {
                     canvasSettings.undo()
                 }
-                .disabled(canvasSettings.undoStack.isEmpty)  // Disable if no undo actions
+                .disabled($canvasSettings.undoStack.isEmpty)  // Disable if no undo actions
 
                 Button("Redo") {
                     canvasSettings.redo()
@@ -88,19 +87,30 @@ struct CanvasView: View {
 
             VStack {
                 ZStack {
+                    // Add a dynamic circle that syncs with the touch position
+                    if(canvasSettings.touchPoint != nil && canvasSettings.isTouching) {
+                        Circle()
+                            .stroke(Color.gray, lineWidth: 0.5) // Thin border with red color
+                            .background(Circle().fill(Color.clear)) // Optional: Make the circle transparent insid
+                            .frame(width: 8+5, height: 8+5) // Circle size
+                            .position(canvasSettings.touchPoint!) // Dynamically update circle position
+                    }
 
                     Canvas { context, size in
 
-                        for imageView in canvasSettings.imageViews {
+                        for image in canvasSettings.imageObjs {
 
-                            context.draw(
-                                Image(systemName: "photo"), in: imageView.rect)
+                            var rectPath = Path()
+                            rectPath.addRect(image.rect)
+
+                            // Fill the rectangle with a color
+                            context.fill(rectPath, with: .color(.gray))  // Replace .gray with any color
 
                             // Highlight selected images
                             if canvasSettings.selectedImages.contains(
-                                imageView.id)
+                                image.id)
                             {
-                                let selectionRect = imageView.rect.insetBy(
+                                let selectionRect = image.rect.insetBy(
                                     dx: -2, dy: -2)
                                 var borderPath = Path()
                                 borderPath.addRect(selectionRect)
@@ -165,6 +175,16 @@ struct CanvasView: View {
                         canvasSettings.saveStateForUndo()
                     }
 
+                    ForEach($canvasSettings.imageObjs) { $imageView in
+                        InteractiveImageView(
+                            position: $imageView.position,
+                            size: $imageView.size,
+                            selectMode: Binding<Bool>(
+                                get: { canvasSettings.selectionModeIndex != 2 },
+                                set: { _ in } // No-op setter since the condition is derived
+                            )
+                        )
+                    }
                 }
 
             }
@@ -189,6 +209,8 @@ struct CanvasView: View {
     }
 
     private func handleDragChange(dragValue: DragGesture.Value) {
+        canvasSettings.touchPoint = dragValue.location
+        canvasSettings.isTouching = true
         if let mode = CanvasMode(rawValue: canvasSettings.selectionModeIndex) {
             switch mode {
             case .draw:  // Draw Mode
@@ -206,6 +228,7 @@ struct CanvasView: View {
     private func handleDragEnded() {
         print("Erase Mode Gesture Ended")
         canvasSettings.lastDrawPosition = nil
+        canvasSettings.isTouching = false
 
         if let mode = CanvasMode(rawValue: canvasSettings.selectionModeIndex) {
             switch mode {
@@ -232,10 +255,10 @@ struct CanvasView: View {
                     canvasSettings.selectedImages =
                         LassoToolHelper.getSelectedImages(
                             selectionPath: canvasSettings.selectionPath,
-                            images: canvasSettings.imageViews)
+                            images: canvasSettings.imageObjs)
                     canvasSettings.selectionPath =
                         LassoToolHelper.createSelectionBounds(
-                            imageViews: canvasSettings.imageViews,
+                            imageObjs: canvasSettings.imageObjs,
                             selectedLines: canvasSettings.selectedLines,
                             selectedImages: canvasSettings.selectedImages)
                 }
@@ -281,7 +304,7 @@ struct CanvasView: View {
         // Update hold detection logic for the latest position
         if canvasSettings.lastDrawPosition != nil {
             if PointHelper.distance(
-                canvasSettings.lastDrawPosition!, dragValue.location) < 5.0
+                canvasSettings.lastDrawPosition!, dragValue.location) > 5.0
             {
                 print("set hold timer")
                 canvasSettings.lastDrawPosition = dragValue.location
@@ -345,7 +368,7 @@ struct CanvasView: View {
 
                 let centerTranslation = LassoToolHelper.getCenterTranslation(
                     dragValue: dragValue,
-                    imageViews: canvasSettings.imageViews,
+                    imageObjs: canvasSettings.imageObjs,
                     selectedLines: canvasSettings.selectedLines,
                     selectedImages: canvasSettings.selectedImages)
 
@@ -362,13 +385,13 @@ struct CanvasView: View {
                 }
 
                 // Move selected images
-                for i in 0..<canvasSettings.imageViews.count {
+                for i in 0..<canvasSettings.imageObjs.count {
                     if canvasSettings.selectedImages.contains(
-                        canvasSettings.imageViews[i].id)
+                        canvasSettings.imageObjs[i].id)
                     {
-                        canvasSettings.imageViews[i].position.x +=
+                        canvasSettings.imageObjs[i].position.x +=
                             centerTranslation.width
-                        canvasSettings.imageViews[i].position.y +=
+                        canvasSettings.imageObjs[i].position.y +=
                             centerTranslation.height
                     }
                 }

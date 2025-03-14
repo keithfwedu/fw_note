@@ -10,7 +10,7 @@ import SwiftUI
 
 struct CanvasState: Codable {
     let lines: [Line]
-    let imageViews: [ImageView]
+    let imageObjs: [ImageObj]
     let gifs: [Gif]
     let undoStack: [[Line]] // Simplified for encoding
     let redoStack: [[Line]] // Simplified for encoding
@@ -18,13 +18,14 @@ struct CanvasState: Codable {
 
 class CanvasSettings: ObservableObject {
     @Published var lines: [Line] = []
-    @Published var imageViews: [ImageView] = []
+    @Published var imageObjs: [ImageObj] = []
     @Published var gifs: [Gif] = []
     
     @Published var selectionModeIndex: Int = 0
     @Published var isCanvasInteractive: Bool = true
 
     @Published var currentDrawingLineID: UUID? = nil
+    @Published var touchPoint: CGPoint? = nil
     @Published var lastDrawPosition: CGPoint? = nil
     @Published var lastDragPosition: CGPoint? = nil
 
@@ -33,19 +34,19 @@ class CanvasSettings: ObservableObject {
     @Published var selectedLines: [Line] = []
     @Published var isLassoCreated: Bool = false
     @Published var timerManager = TimerManager()
-
+    @Published var isTouching: Bool = false
     
 
     // Undo/Redo Stacks
-    @Published var undoStack: [(lines: [Line], imageViews: [ImageView])] = []
-    @Published var redoStack: [(lines: [Line], imageViews: [ImageView])] = []
+    @Published var undoStack: [(lines: [Line], imageObjs: [ImageObj])] = []
+    @Published var redoStack: [(lines: [Line], imageObjs: [ImageObj])] = []
 
     // Max history size
     private let maxHistorySize = 50
 
     func saveStateForUndo() {
         // Save current state to undo stack
-        undoStack.append((lines: lines, imageViews: imageViews))
+        undoStack.append((lines: lines, imageObjs: imageObjs))
         if undoStack.count > maxHistorySize {
             undoStack.removeFirst()
         }
@@ -58,28 +59,28 @@ class CanvasSettings: ObservableObject {
         guard let lastState = undoStack.popLast() else { return }
 
         // Save current state to redo stack
-        redoStack.append((lines: lines, imageViews: imageViews))
+        redoStack.append((lines: lines, imageObjs: imageObjs))
         if redoStack.count > maxHistorySize {
             redoStack.removeFirst()
         }
 
         // Restore the last state
         lines = lastState.lines
-        imageViews = lastState.imageViews
+        imageObjs = lastState.imageObjs
     }
 
     func redo() {
         guard let nextState = redoStack.popLast() else { return }
 
         // Save current state to undo stack
-        undoStack.append((lines: lines, imageViews: imageViews))
+        undoStack.append((lines: lines, imageObjs: imageObjs))
         if undoStack.count > maxHistorySize {
             undoStack.removeFirst()
         }
 
         // Restore the next state
         lines = nextState.lines
-        imageViews = nextState.imageViews
+        imageObjs = nextState.imageObjs
     }
     
     
@@ -91,7 +92,7 @@ class CanvasSettings: ObservableObject {
             // Create an instance of CanvasState
             let canvasState = CanvasState(
                 lines: lines,
-                imageViews: imageViews,
+                imageObjs: imageObjs,
                 gifs: gifs,
                 undoStack: undoStack.map { $0.lines }, // Extract only lines for simplicity
                 redoStack: redoStack.map { $0.lines }  // Extract only lines for simplicity
@@ -122,10 +123,10 @@ class CanvasSettings: ObservableObject {
 
             // Restore properties
             lines = canvasState.lines
-            imageViews = canvasState.imageViews
+            imageObjs = canvasState.imageObjs
             gifs = canvasState.gifs
-            undoStack = canvasState.undoStack.map { (lines: $0, imageViews: []) } // Rebuild undo stack
-            redoStack = canvasState.redoStack.map { (lines: $0, imageViews: []) } // Rebuild redo stack
+            undoStack = canvasState.undoStack.map { (lines: $0, imageObjs: []) } // Rebuild undo stack
+            redoStack = canvasState.redoStack.map { (lines: $0, imageObjs: []) } // Rebuild redo stack
 
             print("Canvas state loaded!")
         } catch {

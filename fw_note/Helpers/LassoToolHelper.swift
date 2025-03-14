@@ -51,18 +51,18 @@ class LassoToolHelper {
         return updatedLines // Return the updated array
     }
 
-    static func moveSelectedImageView(imageViews: [ImageView], selectedImages: [UUID], translation: CGSize) -> [ImageView] {
-        return imageViews.map { imageView in
+    static func moveSelectedImageView(imageObjs: [ImageObj], selectedImages: [UUID], translation: CGSize) -> [ImageObj] {
+        return imageObjs.map { imageObj in
             // Check if the current imageView is selected
-            if selectedImages.contains(imageView.id) {
+            if selectedImages.contains(imageObj.id) {
                 // Return a new imageView with updated position
-                var updatedImageView = imageView
-                updatedImageView.position.x += translation.width
-                updatedImageView.position.y += translation.height
-                return updatedImageView
+                var updatedImageObj = imageObj
+                updatedImageObj.position.x += translation.width
+                updatedImageObj.position.y += translation.height
+                return updatedImageObj
             } else {
                 // Return the imageView unchanged
-                return imageView
+                return imageObj
             }
         }
     }
@@ -78,7 +78,7 @@ class LassoToolHelper {
         }
     }
     
-    static func getSelectedImages(selectionPath: [CGPoint], images: [ImageView]) -> [UUID] {
+    static func getSelectedImages(selectionPath: [CGPoint], images: [ImageObj]) -> [UUID] {
         let selectionRect = calculateSelectionRect(from: selectionPath);
         return images.filter { image in
             selectionRect.contains(image.position)
@@ -87,13 +87,13 @@ class LassoToolHelper {
     
     static func getCenterTranslation(
         dragValue: DragGesture.Value,
-        imageViews: [ImageView],
+        imageObjs: [ImageObj],
         selectedLines: [Line],
         selectedImages: [UUID]
     ) -> CGSize {
         // Calculate the center of the selection area
         let selectionCenter = calculateSelectionCenter(
-            imageViews: imageViews, selectedLines: selectedLines,
+            imageObjs: imageObjs, selectedLines: selectedLines,
             selectedImages: selectedImages)
 
         // Offset translation to align the drag with the center
@@ -105,13 +105,13 @@ class LassoToolHelper {
         return centerTranslation;
     }
     
-    static func createSelectionBounds(imageViews: [ImageView],
+    static func createSelectionBounds(imageObjs: [ImageObj],
                                            selectedLines: [Line],
                                                   selectedImages: [UUID]
                                                  ) -> [CGPoint] {
         // Gather all points from selected lines and image positions (with dimensions)
         var allPoints = selectedLines.flatMap { $0.points }
-        for image in imageViews {
+        for image in imageObjs {
             if selectedImages.contains(image.id) {
                 // Add all four corners of the image to account for its size
                 allPoints.append(
@@ -179,10 +179,10 @@ class LassoToolHelper {
         return path.contains(point)
     }
 
-    static func calculateSelectionCenter(imageViews: [ImageView], selectedLines: [Line], selectedImages: [UUID]) -> CGPoint {
+    static func calculateSelectionCenter(imageObjs: [ImageObj], selectedLines: [Line], selectedImages: [UUID]) -> CGPoint {
         let allPoints =
             selectedLines.flatMap { $0.points }
-            + imageViews.filter { selectedImages.contains($0.id) }.map {
+            + imageObjs.filter { selectedImages.contains($0.id) }.map {
                 $0.position
             }
 

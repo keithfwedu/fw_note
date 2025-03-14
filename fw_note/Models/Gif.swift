@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct Gif: Codable {
+struct Gif: Identifiable, Codable {
     let id: UUID
     var position: CGPoint
     var size: CGSize
