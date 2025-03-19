@@ -8,187 +8,113 @@
 import SwiftUI
 
 struct CanvasView: View {
+    let pageIndex: Int
+    @ObservedObject var canvasState: CanvasState
+    @ObservedObject var notePage: NotePage
 
-    @StateObject private var canvasSettings = CanvasSettings()
-    
     var body: some View {
-        VStack {
-            HStack {
-                // Mode Picker
-                Picker("Mode:", selection: $canvasSettings.selectionModeIndex) {
-                    Text("Draw mode")
-                        .tag(0)
-                        .foregroundColor(
-                            canvasSettings.selectionModeIndex == 0
-                                ? .blue : .primary)
-                    Text("Eraser Mode")
-                        .tag(1)
-                        .foregroundColor(
-                            canvasSettings.selectionModeIndex == 1
-                                ? .blue : .primary)
-                    Text("Select Mode")
-                        .tag(2)
-                        .foregroundColor(
-                            canvasSettings.selectionModeIndex == 2
-                                ? .blue : .primary)
-                }
-                .pickerStyle(.segmented)
-
-                Button("Add Image") {
-                    let newImageObj = ImageObj(
-                        id: UUID(), position: CGPoint(x: 100, y: 100),
-                        size: CGSize(width: 100, height: 100))
-                    canvasSettings.imageObjs.append(newImageObj)
-                }
-
-                Button("Add Gif") {
-                    let newGif = Gif(
-                        id: UUID(), position: CGPoint(x: 100, y: 100),
-                        size: CGSize(width: 100, height: 100))
-                    canvasSettings.gifs.append(newGif)
-                }
-
-                Button("Reset Canvas") {
-                    canvasSettings.imageObjs = []
-                    canvasSettings.gifs = []
-                    canvasSettings.lines = []
-                    canvasSettings.selectionPath = []
-                    canvasSettings.selectedImages = []
-                    canvasSettings.selectedLines = []
-                }
-                
-                Button("Save") {
-                    canvasSettings.saveCanvasState()
-                }
-
-                Button("Load") {
-                    canvasSettings.loadCanvasState()
-                }
-
-                Button("Undo") {
-                    canvasSettings.undo()
-                }
-                .disabled($canvasSettings.undoStack.isEmpty)  // Disable if no undo actions
-
-                Button("Redo") {
-                    canvasSettings.redo()
-                }
-                .disabled(canvasSettings.redoStack.isEmpty)
-
-                Button(
-                    canvasSettings.isCanvasInteractive
-                        ? "Disable Canvas" : "Enable Canvas"
-                ) {
-                    canvasSettings.isCanvasInteractive.toggle()
-                }
-                .padding(.leading, 20)
-
+        ZStack {
+            // Add a dynamic circle that syncs with the touch position
+            if canvasState.touchPoint != nil && canvasState.isTouching {
+                Circle()
+                    .stroke(Color.gray, lineWidth: 0.5)  // Thin border with red color
+                    .background(Circle().fill(Color.clear))  // Optional: Make the circle transparent insid
+                    .frame(width: 8 + 5, height: 8 + 5)  // Circle size
+                    .position(canvasState.touchPoint!)  // Dynamically update circle position
             }
 
-            VStack {
-                ZStack {
-                    // Add a dynamic circle that syncs with the touch position
-                    if(canvasSettings.touchPoint != nil && canvasSettings.isTouching) {
-                        Circle()
-                            .stroke(Color.gray, lineWidth: 0.5) // Thin border with red color
-                            .background(Circle().fill(Color.clear)) // Optional: Make the circle transparent insid
-                            .frame(width: 8+5, height: 8+5) // Circle size
-                            .position(canvasSettings.touchPoint!) // Dynamically update circle position
-                    }
+            Canvas { context, size in
 
-                    Canvas { context, size in
+                for image in notePage.imageObjs {
 
-                        for image in canvasSettings.imageObjs {
+                    var rectPath = Path()
+                    rectPath.addRect(image.rect)
 
-                            var rectPath = Path()
-                            rectPath.addRect(image.rect)
+                    // Fill the rectangle with a color
+                    context.fill(rectPath, with: .color(.gray))  // Replace .gray with any color
 
-                            // Fill the rectangle with a color
-                            context.fill(rectPath, with: .color(.gray))  // Replace .gray with any color
-
-                            // Highlight selected images
-                            if canvasSettings.selectedImages.contains(
-                                image.id)
-                            {
-                                let selectionRect = image.rect.insetBy(
-                                    dx: -2, dy: -2)
-                                var borderPath = Path()
-                                borderPath.addRect(selectionRect)
-                                context.stroke(
-                                    borderPath, with: .color(.blue),
-                                    style: StrokeStyle(lineWidth: 2))
-                            }
-                        }
-
-                        // Draw all lines
-                        for line in canvasSettings.lines {
-                            var path = Path()
-                            path.addLines(line.points)
-
-                            if canvasSettings.selectedLines.contains(where: {
-                                $0.id == line.id
-                            }) {
-                                context.stroke(
-                                    path, with: .color(.blue),
-                                    style: StrokeStyle(lineWidth: 8))
-                            } else {
-                                if line.mode == .draw {
-                                    context.blendMode = .normal
-                                    context.stroke(
-                                        path, with: .color(line.color),
-                                        style: StrokeStyle(lineWidth: 8))
-                                } else if line.mode == .eraser {
-                                    context.blendMode = .clear
-                                    context.stroke(
-                                        path, with: .color(line.color),
-                                        style: StrokeStyle(lineWidth: 8))
-                                }
-                            }
-                        }
-
-                        // Draw selection path if in select mode
-                        if CanvasMode(
-                            rawValue: canvasSettings.selectionModeIndex)
-                            == .lasso
-                            && !canvasSettings.selectionPath.isEmpty
-                        {
-                            var selectionDrawing = Path()
-                            selectionDrawing.addLines(
-                                canvasSettings.selectionPath)
-                            selectionDrawing.closeSubpath()
-                            context.stroke(
-                                selectionDrawing, with: .color(.green),
-                                style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
-                        }
-                    }
-                    .allowsHitTesting(canvasSettings.isCanvasInteractive)  // Toggle interaction
-                    .onChange(of: canvasSettings.selectionModeIndex) {
-                        oldModeIndex, newModeIndex in
-                        handleModeChange(index: newModeIndex)
-                    }
-                    .gesture(
-                        DragGesture()
-                            .onChanged(handleDragChange)
-                            .onEnded({ _ in handleDragEnded() })
-                    )
-                    .onAppear {
-                        canvasSettings.saveStateForUndo()
-                    }
-
-                    ForEach($canvasSettings.imageObjs) { $imageView in
-                        InteractiveImageView(
-                            position: $imageView.position,
-                            size: $imageView.size,
-                            selectMode: Binding<Bool>(
-                                get: { canvasSettings.selectionModeIndex != 2 },
-                                set: { _ in } // No-op setter since the condition is derived
-                            )
-                        )
+                    // Highlight selected images
+                    if canvasState.selectedImageObjIds.contains(
+                        image.id)
+                    {
+                        let selectionRect = image.rect.insetBy(
+                            dx: -2, dy: -2)
+                        var borderPath = Path()
+                        borderPath.addRect(selectionRect)
+                        context.stroke(
+                            borderPath, with: .color(.blue),
+                            style: StrokeStyle(lineWidth: 2))
                     }
                 }
 
+                // Draw all lines
+                for line in notePage.lineObjs {
+                    var path = Path()
+                    path.addLines(line.points)
+
+                    if canvasState.selectedLineObjs.contains(where: {
+                        $0.id == line.id
+                    }) {
+                        context.stroke(
+                            path, with: .color(.blue),
+                            style: StrokeStyle(lineWidth: 8))
+                    } else {
+                        if line.mode == .draw {
+                            context.blendMode = .normal
+                            context.stroke(
+                                path, with: .color(line.color),
+                                style: StrokeStyle(lineWidth: 8))
+                        } else if line.mode == .eraser {
+                            context.blendMode = .clear
+                            context.stroke(
+                                path, with: .color(line.color),
+                                style: StrokeStyle(lineWidth: 8))
+                        }
+                    }
+                }
+
+                // Draw selection path if in select mode
+                if CanvasMode(
+                    rawValue: canvasState.selectionModeIndex)
+                    == .lasso
+                    && !canvasState.selectionPath.isEmpty
+                {
+                    var selectionDrawing = Path()
+                    selectionDrawing.addLines(
+                        canvasState.selectionPath)
+                    selectionDrawing.closeSubpath()
+                    context.stroke(
+                        selectionDrawing, with: .color(.green),
+                        style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
+                }
+            }
+            .allowsHitTesting(canvasState.isCanvasInteractive)  // Toggle interaction
+            .onChange(of: canvasState.selectionModeIndex) {
+                oldModeIndex, newModeIndex in
+                handleModeChange(index: newModeIndex)
+            }
+            .gesture(
+                DragGesture()
+                    .onChanged(handleDragChange)
+                    .onEnded({ _ in handleDragEnded() })
+            )
+            .onAppear {
+                //canvasState.saveToUndo(forPageIndex: pageIndex)
+            }
+            .background(Color.blue.opacity(0.1))
+
+            ForEach($notePage.imageObjs) { $imageView in
+                InteractiveImageView(
+                    position: $imageView.position,
+                    size: $imageView.size,
+                    selectMode: Binding<Bool>(
+                        get: { canvasState.selectionModeIndex != 2 },
+                        set: { _ in }  // No-op setter since the condition is derived
+                    )
+                )
             }
         }
+
     }
 
     private func handleModeChange(
@@ -209,9 +135,9 @@ struct CanvasView: View {
     }
 
     private func handleDragChange(dragValue: DragGesture.Value) {
-        canvasSettings.touchPoint = dragValue.location
-        canvasSettings.isTouching = true
-        if let mode = CanvasMode(rawValue: canvasSettings.selectionModeIndex) {
+        canvasState.touchPoint = dragValue.location
+        canvasState.isTouching = true
+        if let mode = CanvasMode(rawValue: canvasState.selectionModeIndex) {
             switch mode {
             case .draw:  // Draw Mode
                 handleDrawing(dragValue: dragValue)
@@ -227,88 +153,88 @@ struct CanvasView: View {
 
     private func handleDragEnded() {
         print("Erase Mode Gesture Ended")
-        canvasSettings.lastDrawPosition = nil
-        canvasSettings.isTouching = false
+        canvasState.lastDrawPosition = nil
+        canvasState.isTouching = false
 
-        if let mode = CanvasMode(rawValue: canvasSettings.selectionModeIndex) {
+        if let mode = CanvasMode(rawValue: canvasState.selectionModeIndex) {
             switch mode {
             case .draw:  // Draw Mode
-                canvasSettings.lastDragPosition = nil
-                canvasSettings.timerManager.cancelHoldTimer()
+                canvasState.lastDragPosition = nil
+                canvasState.timerManager.cancelHoldTimer()
 
             case .eraser:  // Erase Mode
-                canvasSettings.lastDragPosition = nil
+                canvasState.lastDragPosition = nil
 
             case .lasso:  // Select Mode
 
-                if !canvasSettings.selectionPath.isEmpty
-                    && canvasSettings.isLassoCreated == false
+                if !canvasState.selectionPath.isEmpty
+                    && canvasState.isLassoCreated == false
                 {
                     let hasSelectedItems: Bool =
-                        !canvasSettings.selectedLines.isEmpty
-                        || !canvasSettings.selectedImages.isEmpty
-                    canvasSettings.isLassoCreated = hasSelectedItems
-                    canvasSettings.selectedLines =
+                        !canvasState.selectedLineObjs.isEmpty
+                        || !canvasState.selectedImageObjIds.isEmpty
+                    canvasState.isLassoCreated = hasSelectedItems
+                    canvasState.selectedLineObjs =
                         LassoToolHelper.getSelectedLines(
-                            selectionPath: canvasSettings.selectionPath,
-                            lines: canvasSettings.lines)
-                    canvasSettings.selectedImages =
+                            selectionPath: canvasState.selectionPath,
+                            lines: notePage.lineObjs)
+                    canvasState.selectedImageObjIds =
                         LassoToolHelper.getSelectedImages(
-                            selectionPath: canvasSettings.selectionPath,
-                            images: canvasSettings.imageObjs)
-                    canvasSettings.selectionPath =
+                            selectionPath: canvasState.selectionPath,
+                            images: notePage.imageObjs)
+                    canvasState.selectionPath =
                         LassoToolHelper.createSelectionBounds(
-                            imageObjs: canvasSettings.imageObjs,
-                            selectedLines: canvasSettings.selectedLines,
-                            selectedImages: canvasSettings.selectedImages)
+                            imageObjs: notePage.imageObjs,
+                            selectedLines: canvasState.selectedLineObjs,
+                            selectedImages: canvasState.selectedImageObjIds)
                 }
             }
-            canvasSettings.saveStateForUndo()
+            //canvasState.saveStateForUndo()
         } else {
             print("Invalid mode selected.")
         }
     }
 
-    private func findCurrentDrawingLine() -> Line? {
-        guard let drawingLineID = canvasSettings.currentDrawingLineID else {
+    private func findCurrentDrawingLine() -> LineObj? {
+        guard let drawingLineID = canvasState.currentDrawingLineID else {
             return nil
         }
-        return canvasSettings.lines.first(where: { $0.id == drawingLineID })
+        return notePage.lineObjs.first(where: { $0.id == drawingLineID })
     }
 
     private func handleDrawing(dragValue: DragGesture.Value) {
-        if canvasSettings.lastDrawPosition == nil {
+        if canvasState.lastDrawPosition == nil {
             // Start a new stroke when drag begins
             print("First drag detected for a new stroke")
-            let newLine = Line(
+            let newLine = LineObj(
                 color: .brown,
                 points: [dragValue.location],
                 mode: .draw
             )
-            canvasSettings.lines.append(newLine)  // Add a new line
-            canvasSettings.currentDrawingLineID = newLine.id
+            notePage.lineObjs.append(newLine)  // Add a new line
+            canvasState.currentDrawingLineID = newLine.id
         } else {
             // Add points to the current stroke
             print("drag detected for a new stroke2")
-            if let lastLine = canvasSettings.lines.last {
+            if let lastLine = notePage.lineObjs.last {
                 let interpolatedPoints = PointHelper.interpolatePoints(
                     from: lastLine.points.last ?? dragValue.location,
                     to: dragValue.location
                 )
-                let lastIndex: Int = canvasSettings.lines.count - 1
-                canvasSettings.lines[lastIndex].points.append(
+                let lastIndex: Int = notePage.lineObjs.count - 1
+                notePage.lineObjs[lastIndex].points.append(
                     contentsOf: interpolatedPoints)
             }
         }
 
         // Update hold detection logic for the latest position
-        if canvasSettings.lastDrawPosition != nil {
+        if canvasState.lastDrawPosition != nil {
             if PointHelper.distance(
-                canvasSettings.lastDrawPosition!, dragValue.location) > 5.0
+                canvasState.lastDrawPosition!, dragValue.location) > 5.0
             {
                 print("set hold timer")
-                canvasSettings.lastDrawPosition = dragValue.location
-                canvasSettings.timerManager.setHoldTimer(
+                canvasState.lastDrawPosition = dragValue.location
+                canvasState.timerManager.setHoldTimer(
                     currentPosition: dragValue.location
                 ) {
                     position in
@@ -319,13 +245,13 @@ struct CanvasView: View {
 
             }
         } else {
-            canvasSettings.lastDrawPosition = dragValue.location
+            canvasState.lastDrawPosition = dragValue.location
         }
     }
 
-    private func processLineForTransformation(_ line: Line) {
+    private func processLineForTransformation(_ line: LineObj) {
         guard
-            let index = canvasSettings.lines.firstIndex(where: {
+            let index = notePage.lineObjs.firstIndex(where: {
                 $0.id == line.id
             })
         else {
@@ -336,30 +262,30 @@ struct CanvasView: View {
 
         let shapePoints = ShapeHelper.lineToShape(line)
         if !shapePoints.isEmpty {
-            canvasSettings.lines[index].points = shapePoints
-            canvasSettings.lastDrawPosition = nil
+            notePage.lineObjs[index].points = shapePoints
+            canvasState.lastDrawPosition = nil
         }
     }
 
     private func handleErasing(dragValue: DragGesture.Value) {
-        canvasSettings.lines = EraseHelper.eraseLines(
-            lines: canvasSettings.lines, dragValue: dragValue)
+        notePage.lineObjs = EraseHelper.eraseLines(
+            lines: notePage.lineObjs, dragValue: dragValue)
     }
 
     private func handleSelection(dragValue: DragGesture.Value) {
         let hasSelectedItems: Bool =
-            !canvasSettings.selectedLines.isEmpty
-            || !canvasSettings.selectedImages.isEmpty
-        if canvasSettings.lastDragPosition == nil {
+            !canvasState.selectedLineObjs.isEmpty
+            || !canvasState.selectedImageObjIds.isEmpty
+        if canvasState.lastDragPosition == nil {
             print("First drag detected")
             resetSelection()  // Ensure there's no existing selection
-            canvasSettings.selectionPath = [dragValue.location]  // Initialize selection path
-            canvasSettings.lastDragPosition = dragValue.location
+            canvasState.selectionPath = [dragValue.location]  // Initialize selection path
+            canvasState.lastDragPosition = dragValue.location
             return  // Exit early as this is the first touch point
         }
 
         let isCurrentlyInsideSelection = LassoToolHelper.isPointInsideSelection(
-            canvasSettings.selectionPath,
+            canvasState.selectionPath,
             point: dragValue.location)
 
         if isCurrentlyInsideSelection {
@@ -368,46 +294,46 @@ struct CanvasView: View {
 
                 let centerTranslation = LassoToolHelper.getCenterTranslation(
                     dragValue: dragValue,
-                    imageObjs: canvasSettings.imageObjs,
-                    selectedLines: canvasSettings.selectedLines,
-                    selectedImages: canvasSettings.selectedImages)
+                    imageObjs: notePage.imageObjs,
+                    selectedLines: canvasState.selectedLineObjs,
+                    selectedImages: canvasState.selectedImageObjIds)
 
                 // Move selected lines
-                for i in 0..<canvasSettings.selectedLines.count {
-                    let updatedPoints = canvasSettings.selectedLines[i].points
+                for i in 0..<canvasState.selectedLineObjs.count {
+                    let updatedPoints = canvasState.selectedLineObjs[i].points
                         .map {
                             CGPoint(
                                 x: $0.x + centerTranslation.width,
                                 y: $0.y + centerTranslation.height
                             )
                         }
-                    canvasSettings.selectedLines[i].points = updatedPoints
+                    canvasState.selectedLineObjs[i].points = updatedPoints
                 }
 
                 // Move selected images
-                for i in 0..<canvasSettings.imageObjs.count {
-                    if canvasSettings.selectedImages.contains(
-                        canvasSettings.imageObjs[i].id)
+                for i in 0..<notePage.imageObjs.count {
+                    if canvasState.selectedImageObjIds.contains(
+                        notePage.imageObjs[i].id)
                     {
-                        canvasSettings.imageObjs[i].position.x +=
+                        notePage.imageObjs[i].position.x +=
                             centerTranslation.width
-                        canvasSettings.imageObjs[i].position.y +=
+                        notePage.imageObjs[i].position.y +=
                             centerTranslation.height
                     }
                 }
 
-                canvasSettings.selectionPath =
+                canvasState.selectionPath =
                     LassoToolHelper.moveSelectionPath(
-                        selectionPath: canvasSettings.selectionPath,
+                        selectionPath: canvasState.selectionPath,
                         translation: centerTranslation
                     )
 
                 // Update the original lines and images
-                for selectedLine in canvasSettings.selectedLines {
-                    if let index = canvasSettings.lines.firstIndex(where: {
+                for selectedLine in canvasState.selectedLineObjs {
+                    if let index = notePage.lineObjs.firstIndex(where: {
                         $0.id == selectedLine.id
                     }) {
-                        canvasSettings.lines[index] = selectedLine
+                        notePage.lineObjs[index] = selectedLine
                     }
                 }
             }
@@ -417,21 +343,21 @@ struct CanvasView: View {
             if hasSelectedItems {
                 print("reset session")
                 resetSelection()  // Ensure there's no existing selection
-                canvasSettings.isLassoCreated = false
+                canvasState.isLassoCreated = false
             }
-            if !canvasSettings.isLassoCreated {
-                canvasSettings.selectionPath.append(dragValue.location)
+            if !canvasState.isLassoCreated {
+                canvasState.selectionPath.append(dragValue.location)
             }  // Extend the selection path
 
         }
 
-        canvasSettings.lastDragPosition = dragValue.location
+        canvasState.lastDragPosition = dragValue.location
     }
 
     private func resetSelection() {
-        canvasSettings.selectedLines.removeAll()
-        canvasSettings.selectedImages.removeAll()
-        canvasSettings.selectionPath.removeAll()
-        canvasSettings.isLassoCreated = false
+        canvasState.selectedLineObjs.removeAll()
+        canvasState.selectedImageObjIds.removeAll()
+        canvasState.selectionPath.removeAll()
+        canvasState.isLassoCreated = false
     }
 }

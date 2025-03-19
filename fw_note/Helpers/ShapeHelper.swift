@@ -9,7 +9,7 @@ import SwiftUI
 
 class ShapeHelper {
     
-    static func lineToShape(_ line: Line) -> [CGPoint] {
+    static func lineToShape(_ line: LineObj) -> [CGPoint] {
         let shape = ShapeHelper.predictLineShape(line)
        
         // Proceed with transformation based on the identified shape
@@ -29,7 +29,7 @@ class ShapeHelper {
         }
     }
     
-    static func predictLineShape(_ line: Line) -> String {
+    static func predictLineShape(_ line: LineObj) -> String {
         if isStraightLine(line) {
             return "straight"
         }
@@ -41,7 +41,7 @@ class ShapeHelper {
         return "curve"
     }
 
-    static func lineToStraightLine(_ line: Line) -> [CGPoint] {
+    static func lineToStraightLine(_ line: LineObj) -> [CGPoint] {
         print("Line \(line.id) converted to a refined straight line.")
         guard let firstPoint = line.points.first,
             let lastPoint = line.points.last
@@ -51,7 +51,7 @@ class ShapeHelper {
         return [firstPoint, lastPoint]
     }
 
-    static func lineToCurve(_ line: Line) -> [CGPoint] {
+    static func lineToCurve(_ line: LineObj) -> [CGPoint] {
         print("Line \(line.id) converted to a refined Bézier curve.")
         guard let firstPoint = line.points.first,
             let lastPoint = line.points.last
@@ -94,7 +94,7 @@ class ShapeHelper {
 
     }
 
-    static func lineToCircle(_ line: Line) -> [CGPoint] {
+    static func lineToCircle(_ line: LineObj) -> [CGPoint] {
         print("Line \(line.id) converted to a refined circlee.")
         guard let (circleCenter, radius) = fitCircleToPoints(to: line.points)
         else {
@@ -109,7 +109,7 @@ class ShapeHelper {
         }
     }
 
-    static func isStraightLine(_ line: Line) -> Bool {
+    static func isStraightLine(_ line: LineObj) -> Bool {
         guard line.points.count >= 3 else { return true }
 
         let firstPoint = line.points.first!
@@ -129,7 +129,7 @@ class ShapeHelper {
         return maxDeviation < 15.0
     }
 
-    static func isCircle(_ line: Line) -> Bool {
+    static func isCircle(_ line: LineObj) -> Bool {
         let firstPoint = line.points.first!
         let lastPoint = line.points.last!
         // Calculate bounding box and roundness

@@ -7,10 +7,12 @@
 
 import SwiftUI
 
-struct Gif: Identifiable, Codable {
+struct GifObj: Identifiable, Codable {
     let id: UUID
+    var path: String?
     var position: CGPoint
     var size: CGSize
+    var rotation: CGFloat = 0
 
     // Computed property to calculate the rectangle
     var rect: CGRect {

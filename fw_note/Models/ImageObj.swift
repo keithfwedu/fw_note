@@ -9,8 +9,10 @@ import SwiftUI
 
 struct ImageObj: Identifiable, Codable {
     let id: UUID
+    var path: String?
     var position: CGPoint
     var size: CGSize
+    var rotation: CGFloat = 0
 
     // Computed property to calculate the rectangle
     var rect: CGRect {

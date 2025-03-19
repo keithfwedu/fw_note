@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct Line: Identifiable, Codable {
-    let id = UUID()
+struct LineObj: Identifiable, Codable {
+    var id = UUID()
     var color: Color
     var points: [CGPoint]
     var mode: CanvasMode

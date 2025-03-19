@@ -16,7 +16,7 @@ class LassoToolHelper {
         }
     }
     
-    static func moveSelectedLines(selectedLines: [Line], translation: CGSize) -> [Line] {
+    static func moveSelectedLines(selectedLines: [LineObj], translation: CGSize) -> [LineObj] {
         return selectedLines.map { line in
             var updatedLine = line  // Create a mutable copy of the line
             updatedLine.points = line.points.map { point in
@@ -29,7 +29,7 @@ class LassoToolHelper {
         }
     }
     
-    static func moveLines(lines: [Line], selectedLines: [Line], translation: CGSize) -> [Line] {
+    static func moveLines(lines: [LineObj], selectedLines: [LineObj], translation: CGSize) -> [LineObj] {
         var updatedLines = lines // Create a mutable copy of the original array
 
         for selectedLine in selectedLines {
@@ -69,7 +69,7 @@ class LassoToolHelper {
 
 
    
-    static func getSelectedLines(selectionPath: [CGPoint], lines: [Line]) -> [Line] {
+    static func getSelectedLines(selectionPath: [CGPoint], lines: [LineObj]) -> [LineObj] {
         let selectionRect = calculateSelectionRect(from: selectionPath);
         return lines.filter { line in
             line.points.contains { point in
@@ -88,7 +88,7 @@ class LassoToolHelper {
     static func getCenterTranslation(
         dragValue: DragGesture.Value,
         imageObjs: [ImageObj],
-        selectedLines: [Line],
+        selectedLines: [LineObj],
         selectedImages: [UUID]
     ) -> CGSize {
         // Calculate the center of the selection area
@@ -106,7 +106,7 @@ class LassoToolHelper {
     }
     
     static func createSelectionBounds(imageObjs: [ImageObj],
-                                           selectedLines: [Line],
+                                           selectedLines: [LineObj],
                                                   selectedImages: [UUID]
                                                  ) -> [CGPoint] {
         // Gather all points from selected lines and image positions (with dimensions)
@@ -179,7 +179,7 @@ class LassoToolHelper {
         return path.contains(point)
     }
 
-    static func calculateSelectionCenter(imageObjs: [ImageObj], selectedLines: [Line], selectedImages: [UUID]) -> CGPoint {
+    static func calculateSelectionCenter(imageObjs: [ImageObj], selectedLines: [LineObj], selectedImages: [UUID]) -> CGPoint {
         let allPoints =
             selectedLines.flatMap { $0.points }
             + imageObjs.filter { selectedImages.contains($0.id) }.map {

@@ -7,9 +7,9 @@
 import SwiftUI
 
 class EraseHelper {
-    static func eraseLines(lines: [Line], dragValue: DragGesture.Value) -> [Line] {
+    static func eraseLines(lines: [LineObj], dragValue: DragGesture.Value) -> [LineObj] {
         let adjustedLocation = dragValue.location  // Adjust location if necessary
-        var updatedLines: [Line] = []
+        var updatedLines: [LineObj] = []
 
         for i in (0..<lines.count).reversed() {
             let line = lines[i]
@@ -32,7 +32,7 @@ class EraseHelper {
 
             for segment in newSegments where !segment.isEmpty {
                 updatedLines.append(
-                    Line(
+                    LineObj(
                         color: line.color,
                         points: segment,
                         mode: line.mode
