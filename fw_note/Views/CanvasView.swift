@@ -102,20 +102,97 @@ struct CanvasView: View {
                 //canvasState.saveToUndo(forPageIndex: pageIndex)
             }
             .background(Color.blue.opacity(0.1))
+            .onDrop(of: ["public.image"], isTargeted: nil) { providers in
+                                handleDrop(providers: providers)
+                            }
 
             ForEach($notePage.imageObjs) { $imageView in
-                InteractiveImageView(
+                InteractiveImageView( 
                     position: $imageView.position,
                     size: $imageView.size,
                     selectMode: Binding<Bool>(
                         get: { canvasState.selectionModeIndex != 2 },
                         set: { _ in }  // No-op setter since the condition is derived
-                    )
+                    ),
+                    path: $imageView.path
                 )
             }
         }
 
     }
+
+    private func handleDrop(providers: [NSItemProvider]) -> Bool {
+        for provider in providers {
+            // Check for a valid "public.image" type
+            if provider.hasItemConformingToTypeIdentifier("public.image") {
+                // Load the UIImage object directly
+                provider.loadObject(ofClass: UIImage.self) { item, error in
+                    guard error == nil, let uiImage = item as? UIImage else {
+                        print("Failed to load image: \(String(describing: error))")
+                        return
+                    }
+                    
+                    // Perform UI updates on the main thread
+                    DispatchQueue.main.async {
+                        // Save the image and create an ImageObj
+                        if let imagePath = saveImageToDocuments(image: uiImage, targetSize: CGSize(width: 500, height: 500)) {
+                            print("imagePath: \(imagePath)")
+                            let newImageObj = ImageObj(
+                                id: UUID(),
+                                path: imagePath,
+                                position: CGPoint(x: 100, y: 100), // Example position
+                                size: CGSize(width: 100, height: 100) // Example size
+                            )
+                            notePage.imageObjs.append(newImageObj)
+                        }
+                    }
+                }
+                return true // Successfully handled the provider
+            }
+        }
+        return false // No valid providers were processed
+    }
+
+    
+    
+    private func saveImageToDocuments(image: UIImage, targetSize: CGSize? = nil) -> String? {
+        // Resize the image if a target size is provided
+        let resizedImage = targetSize != nil ? resizeImage(image: image, targetSize: targetSize!) : image
+
+        // Convert the image to PNG data (to preserve transparency)
+        guard let data = resizedImage.pngData() else { return nil }
+
+        let filename = UUID().uuidString + ".png" // Use PNG file format
+        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(filename)
+
+        do {
+            try data.write(to: fileURL)
+            return fileURL.path
+        } catch {
+            print("Failed to save image: \(error)")
+            return nil
+        }
+    }
+    
+    private func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
+        let size = image.size
+
+        let widthRatio = targetSize.width / size.width
+        let heightRatio = targetSize.height / size.height
+        let ratio = min(widthRatio, heightRatio)
+
+        let newSize = CGSize(width: size.width * ratio, height: size.height * ratio)
+        let rect = CGRect(origin: .zero, size: newSize)
+
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: rect)
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return newImage ?? image
+    }
+
+
 
     private func handleModeChange(
         index: Int

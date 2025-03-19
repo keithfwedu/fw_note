@@ -139,7 +139,7 @@ struct PDFNotePageView: View {
                     width: geometry.size.width,
                     height: geometry.size.height
                 )  // Dynamic width and height
-              
+               
                
 
             }.gesture(

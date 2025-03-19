@@ -11,6 +11,7 @@ struct InteractiveImageView: View {
     @Binding var position: CGPoint
     @Binding var size: CGSize
     @Binding var selectMode: Bool
+    @Binding var path: String?
     
     private let aspectRatio: CGFloat = 1.0  // Assuming a 1:1 aspect ratio for simplicity
     
@@ -18,18 +19,34 @@ struct InteractiveImageView: View {
         ZStack {
             // Image
             if selectMode {
-            Image(systemName: "photo")
-                .resizable()
-                .frame(width: size.width, height: size.height)
-                .position(x: position.x, y: position.y)
-                .gesture(
-                    DragGesture()
-                        .onChanged { gesture in
-                          
-                                self.position = CGPoint(x: gesture.location.x, y: gesture.location.y)
-                            }
-                        
-                )
+                if let path = path, let uiImage = UIImage(contentsOfFile: path) {
+                       Image(uiImage: uiImage)
+                        .resizable()
+                        .frame(width: size.width, height: size.height)
+                        .position(x: position.x, y: position.y)
+                        .gesture(
+                            DragGesture()
+                                .onChanged { gesture in
+                                  
+                                        self.position = CGPoint(x: gesture.location.x, y: gesture.location.y)
+                                    }
+                                
+                        )
+                   } else {
+                       Image(systemName: "photo")
+                           .resizable()
+                           .frame(width: size.width, height: size.height)
+                           .position(x: position.x, y: position.y)
+                           .gesture(
+                               DragGesture()
+                                   .onChanged { gesture in
+                                     
+                                           self.position = CGPoint(x: gesture.location.x, y: gesture.location.y)
+                                       }
+                                   
+                           )
+                   }
+            
             }else{
                 Image(systemName: "photo")
                     .resizable()

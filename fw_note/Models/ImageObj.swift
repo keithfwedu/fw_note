@@ -24,4 +24,8 @@ struct ImageObj: Identifiable, Codable {
             size: size
         )
     }
+    
+
+
+    
 }
