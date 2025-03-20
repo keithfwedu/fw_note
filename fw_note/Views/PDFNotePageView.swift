@@ -43,7 +43,7 @@ struct PDFNotePageView: View {
                 .clipped()
 
                 // CanvasView: Synchronize width, height, and scale
-                CanvasView(
+               /* CanvasView(
                     pageIndex: pageIndex,
                     canvasState: canvasState,
                     notePage: notePage
@@ -54,7 +54,7 @@ struct PDFNotePageView: View {
                     height: pdfFrame.height  // Match PDF size dynamically
                 )
                 .background(.blue)
-                .clipped()
+                .clipped()*/
 
                 if canvasState.selectionModeIndex == 3 {
                     LaserCanvasView()
