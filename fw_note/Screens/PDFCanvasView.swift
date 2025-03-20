@@ -19,12 +19,17 @@ struct PDFCanvasView: UIViewRepresentable {
         pdfView.document = pdfDocument
         pdfView.autoScales = true
         pdfView.displayMode = .singlePageContinuous
-        pdfView.usePageViewController(false)
+        pdfView.displayDirection = .horizontal
 
+        pdfView.usePageViewController(false)
+        
+    
         // Access the internal UIScrollView and configure two-finger scrolling
         if let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }) as? UIScrollView {
             scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
+            
+          
         }
 
         // Add canvases as annotations to each page
@@ -32,6 +37,7 @@ struct PDFCanvasView: UIViewRepresentable {
 
         return pdfView
     }
+
 
     func updateUIView(_ uiView: PDFView, context: Context) {
         // Ensure updates refresh canvases
