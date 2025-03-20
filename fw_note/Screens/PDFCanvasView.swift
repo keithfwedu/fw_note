@@ -28,15 +28,23 @@ struct PDFCanvasView: UIViewRepresentable {
         if let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }) as? UIScrollView {
             scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
-            
-          
         }
+        
+        // Add observer for page changes
+                NotificationCenter.default.addObserver(
+                    context.coordinator,
+                    selector: #selector(context.coordinator.pageDidChange),
+                    name: Notification.Name.PDFViewPageChanged,
+                    object: pdfView
+                )
 
         // Add canvases as annotations to each page
         context.coordinator.addCanvasesToPages(pdfView: pdfView)
 
         return pdfView
     }
+    
+    
 
 
     func updateUIView(_ uiView: PDFView, context: Context) {
@@ -139,5 +147,17 @@ struct PDFCanvasView: UIViewRepresentable {
             }
         }
 
+        @objc func pageDidChange(notification: Notification) {
+                    guard let pdfView = notification.object as? PDFView,
+                          let currentPage = pdfView.currentPage,
+                          let document = pdfView.document else { return }
+
+                    // Get the current page index
+                    let currentPageIndex = document.index(for: currentPage)
+                    print("Page changed to index: \(currentPageIndex)")
+
+                    // Perform additional logic here, such as updating the state
+                    canvasState.currentPageIndex = currentPageIndex
+                }
     }
 }

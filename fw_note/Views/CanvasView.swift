@@ -118,7 +118,7 @@ struct CanvasView: View {
                         set: { _ in }  // No-op setter since the condition is derived
                     ),
                     path: $imageView.path
-                )
+                ).clipped()
             }
         }
 
