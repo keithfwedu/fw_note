@@ -80,11 +80,16 @@ struct UIKitColorPicker: UIViewControllerRepresentable {
         }
     }
 
+
     class Coordinator: NSObject, UIColorPickerViewControllerDelegate {
         var parent: UIKitColorPicker
 
         init(_ parent: UIKitColorPicker) {
             self.parent = parent
+        }
+        
+        func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
+            view?.removeFromSuperview()
         }
 
         func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController) {

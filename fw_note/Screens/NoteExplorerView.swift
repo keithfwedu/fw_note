@@ -121,13 +121,13 @@ struct NoteExplorerView: View {
             try FileManager.default.createDirectory(at: uniqueDirectory, withIntermediateDirectories: true, attributes: nil)
 
             // Step 2: Locate example.pdf in the app bundle
-            guard let examplePDF = Bundle.main.url(forResource: "example", withExtension: "pdf") else {
+            guard let examplePDF = Bundle.main.url(forResource: "example2", withExtension: "pdf") else {
                 print("example.pdf not found in bundle")
                 return
             }
 
             // Step 3: Copy the example.pdf to the unique directory
-            let pdfFileName = "example.pdf"
+            let pdfFileName = "example2.pdf"
             let pdfFileURL = uniqueDirectory.appendingPathComponent(pdfFileName)
             try FileManager.default.copyItem(at: examplePDF, to: pdfFileURL)
             print("Copied example.pdf to \(pdfFileURL)")

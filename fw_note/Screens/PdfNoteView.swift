@@ -7,12 +7,21 @@
 
 import PDFKit
 import SwiftUI
+struct CustomColorView: View {
+    var body: some View {
+        Color.blue
+            .frame(width: 200, height: 500) // Define the size of the view
+            .cornerRadius(20) // Make the corners rounded
+            .shadow(radius: 10) // Add a shadow for styling
+    }
+}
 
 struct PdfNoteView: View {
     @StateObject private var canvasState = CanvasState()
     @State var noteFile: NoteFile
     @StateObject var navigationState: NavigationState
-
+    @State private var zoomScale: CGFloat = 1.0
+    @State private var lastZoomScale: CGFloat = 1.0
 
     var body: some View {
 
@@ -28,18 +37,18 @@ struct PdfNoteView: View {
                     if let pdfDocument = PDFDocument(
                         url: URL(fileURLWithPath: absolutePath))
                     {
-                        TwoFingerScrollView {
-                            LazyVStack(spacing: 0) {
+                        TwoFingerZoomableScrollView {
+                            LazyVStack(alignment: .center, spacing: 20) {
                                 ForEach(0..<pdfDocument.pageCount, id: \.self) {
                                     pageIndex in
-                                    PDFNotePageView(
-                                       
+                               
+                             PDFNotePageView(
                                         canvasState: canvasState,
                                         pageIndex: pageIndex,
                                         notePage: noteFile.notePages[pageIndex],
                                         pdfPage: pdfDocument.page(at: pageIndex),
                                         navigationState: navigationState
-                                    ).clipped()
+                                    )
                                     
                                     .background(
                                         GeometryReader { geometry in
@@ -53,24 +62,14 @@ struct PdfNoteView: View {
                                                
                                         }
                                     )  // Ensure proper height for GeometryReader
+                                  
                                 }
                             }
                             
+                           
+                            
                         }
-
-                        /*ScrollView(.horizontal) { // Horizontal scrolling
-                             LazyHStack(spacing: 0) { // LazyHStack for horizontal layout
-                             ForEach(0..<pdfDocument.pageCount, id: \.self) { pageIndex in
-                             GeometryReader { geometry in
-                             PDFViewWrapper(pdfPage: pdfDocument.page(at: pageIndex))
-                             .frame(width: geometry.size.width, height: geometry.size.height) // Dynamic width and height
-                             }
-                             .frame(width: UIScreen.main.bounds.width) // Ensure proper width for GeometryReader
-                             }
-                             }
-                             .padding()
-                             }*/
-
+                
                     } else {
                         Text("Unable to load PDF")
                             .foregroundColor(.red)

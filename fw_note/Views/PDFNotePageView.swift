@@ -22,6 +22,7 @@ struct PDFNotePageView: View {
     var body: some View {
 
         GeometryReader { geometry in
+
             ZStack(alignment: .topLeading) {
                 // PDFViewWrapper: Pass frame and scale updates
                 PDFViewWrapper(
@@ -31,11 +32,10 @@ struct PDFNotePageView: View {
                         DispatchQueue.main.async {
                             self.pdfFrame = frame
                         }
-
                     }
                 )
-                .allowsHitTesting(shouldAllowHitTesting)  // Disable interaction when drawing
-                .scaleEffect(zoomScale)  // Apply overall zoom
+                .allowsHitTesting(!canvasState.isCanvasInteractive)  // Disable interaction when drawing
+                
                 .frame(
                     width: geometry.size.width,
                     height: calculatePageHeight(for: geometry.size.width)
@@ -49,11 +49,11 @@ struct PDFNotePageView: View {
                     notePage: notePage
                 )
                 .allowsHitTesting(shouldAllowHitTesting)
-                .scaleEffect(zoomScale)  // Combine zoom and PDFView scaling
                 .frame(
                     width: pdfFrame.width,
                     height: pdfFrame.height  // Match PDF size dynamically
                 )
+                .background(.blue)
                 .clipped()
 
                 if canvasState.selectionModeIndex == 3 {
@@ -68,20 +68,15 @@ struct PDFNotePageView: View {
                 }
 
             }
-            /*.gesture(
-                MagnificationGesture()
-                    .onChanged { value in
-                        zoomScale = lastZoomScale * value  // Dynamically adjust zoom scale
-                    }
-                    .onEnded { _ in
-                        lastZoomScale = zoomScale  // Save the zoom scale
-                    }
-            )*/
+
             .clipped()
         }
+       
         .frame(
+            width: pdfFrame.width > 0
+                ? pdfFrame.width : UIScreen.main.bounds.width,
             height: pdfFrame.height > 0
-                ? pdfFrame.height : UIScreen.main.bounds.height  // Use PDF height dynamically
+                ? pdfFrame.height : UIScreen.main.bounds.height
         )
 
     }

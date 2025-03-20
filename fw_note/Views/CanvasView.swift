@@ -89,14 +89,13 @@ struct CanvasView: View {
                         style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
                 }
             }
-           
+            
             .allowsHitTesting(canvasState.isCanvasInteractive)  // Toggle interaction
             .onChange(of: canvasState.selectionModeIndex) {
                 newModeIndex in
                 handleModeChange(index: newModeIndex)
             }
             .gesture(
-              
                 DragGesture()
                     .onChanged(handleDragChange)
                     .onEnded({ _ in handleDragEnded() })
