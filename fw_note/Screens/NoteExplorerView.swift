@@ -1,64 +1,81 @@
 import SwiftUI
+class NavigationState: ObservableObject {
+    @Published var isNavigationVisible: Bool = true
+}
 
 struct NoteExplorerView: View {
+    @StateObject private var navigationState = NavigationState()
     @State private var noteFiles: [NoteFile] = [] // Store NoteFile objects
     let appSupportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-
+    
     init() {
             // Load files immediately when the view is created
             _noteFiles = State(initialValue: listAllFiles())
         }
     
     var body: some View {
-        NavigationView {
-            VStack {
-               
-                if noteFiles.isEmpty {
-                    // Display a message if there are no NoteFiles
-                    Text("No Notes Found")
-                        .font(.headline)
-                        .foregroundColor(.gray)
-                        .padding()
-                } else {
-                    // List all NoteFiles
-                    List {
-                        ForEach(noteFiles, id: \.id) { noteFile in
-                            Text("\(noteFile.notePages.count)")
-                            NavigationLink(
-                                destination: PdfNoteView(
-                                    noteFile: noteFile
-                                )
-                            ) {
-                                VStack(alignment: .leading) {
-                                    Text(noteFile.title)
-                                        .font(.headline)
-                                    
-                                    Text("ID: \(noteFile.id.uuidString)")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                    
-                                    Text("PDF Path: \(noteFile.pdfFilePath ?? "Not Available")")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
+        VStack {
+            NavigationView {
+                VStack {
+                    
+                    if noteFiles.isEmpty {
+                        // Display a message if there are no NoteFiles
+                        Text("No Notes Found")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .padding()
+                    } else {
+                        // List all NoteFiles
+                        List {
+                            ForEach(noteFiles, id: \.id) { noteFile in
+                                Text("\(noteFile.notePages.count)")
+                                NavigationLink(
+                                    destination: PdfNoteView(
+                                        noteFile: noteFile,
+                                        navigationState: navigationState
+                                    )
+                                ) {
+                                    VStack(alignment: .leading) {
+                                        Text(noteFile.title)
+                                            .font(.headline)
+                                        
+                                        Text("ID: \(noteFile.id.uuidString)")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                        
+                                        Text("PDF Path: \(noteFile.pdfFilePath ?? "Not Available")")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
                                 }
                             }
+                            .onDelete(perform: deleteFile) // Enable swipe-to-delete
                         }
-                        .onDelete(perform: deleteFile) // Enable swipe-to-delete
                     }
+                    
+                    // Button to create a new entry
+                    Button(action: createNewEntry) {
+                        Text("Add New Entry")
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                    .padding()
                 }
-
-                // Button to create a new entry
-                Button(action: createNewEntry) {
-                    Text("Add New Entry")
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                .navigationTitle("Note Explorer")
+                .onDisappear() {
+                    print("hide1");
+                    navigationState.isNavigationVisible = false;
                 }
-                .padding()
+                .onAppear() {
+                    print("show1");
+                    navigationState.isNavigationVisible = true;
+                }
             }
-            .navigationTitle("Note Explorer")
+            
+            Text("\(navigationState.isNavigationVisible == true ? "1":"0")");
         }
     }
 

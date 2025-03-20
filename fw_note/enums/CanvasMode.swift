@@ -8,5 +8,6 @@
 enum CanvasMode: Int, Codable {
     case draw = 0
     case eraser = 1
-    case lasso = 2 
+    case lasso = 2
+    case laser = 3
 }

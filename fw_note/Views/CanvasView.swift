@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CanvasView: View {
     let pageIndex: Int
+   
     @ObservedObject var canvasState: CanvasState
     @ObservedObject var notePage: NotePage
 
@@ -88,12 +89,14 @@ struct CanvasView: View {
                         style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
                 }
             }
+           
             .allowsHitTesting(canvasState.isCanvasInteractive)  // Toggle interaction
             .onChange(of: canvasState.selectionModeIndex) {
-                oldModeIndex, newModeIndex in
+                newModeIndex in
                 handleModeChange(index: newModeIndex)
             }
             .gesture(
+              
                 DragGesture()
                     .onChanged(handleDragChange)
                     .onEnded({ _ in handleDragEnded() })
@@ -101,6 +104,7 @@ struct CanvasView: View {
             .onAppear {
                 //canvasState.saveToUndo(forPageIndex: pageIndex)
             }
+            .clipped()
             .background(Color.blue.opacity(0.1))
             .onDrop(of: ["public.image"], isTargeted: nil) { providers in
                                 handleDrop(providers: providers)
@@ -208,10 +212,13 @@ struct CanvasView: View {
             resetSelection()
         case .lasso:
             print("Erase Mode")
+        case .laser:
+            print("Laser Mode")
         }
     }
 
     private func handleDragChange(dragValue: DragGesture.Value) {
+        print("drag")
         canvasState.touchPoint = dragValue.location
         canvasState.isTouching = true
         if let mode = CanvasMode(rawValue: canvasState.selectionModeIndex) {
@@ -222,6 +229,8 @@ struct CanvasView: View {
                 handleErasing(dragValue: dragValue)
             case .lasso:  // Select Mode
                 handleSelection(dragValue: dragValue)
+            case .laser:  // Laser Mode
+                print("Laser Mode")
             }
         } else {
             print("Invalid mode selected.")
@@ -265,6 +274,8 @@ struct CanvasView: View {
                             selectedLines: canvasState.selectedLineObjs,
                             selectedImages: canvasState.selectedImageObjIds)
                 }
+            case .laser:  // Laser Mode
+                print("Laser Mode")
             }
             //canvasState.saveStateForUndo()
         } else {
@@ -438,3 +449,4 @@ struct CanvasView: View {
         canvasState.isLassoCreated = false
     }
 }
+

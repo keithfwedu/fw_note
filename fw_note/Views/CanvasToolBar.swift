@@ -15,20 +15,26 @@ struct CanvasToolBar: View {
         HStack {
             // Mode Picker
             Picker("Mode:", selection: $canvasState.selectionModeIndex) {
-                Text("Draw mode")
+                Text("Draw")
                     .tag(0)
                     .foregroundColor(
                         canvasState.selectionModeIndex == 0
                         ? .blue : .primary)
-                Text("Eraser Mode")
+                Text("Eraser")
                     .tag(1)
                     .foregroundColor(
                         canvasState.selectionModeIndex == 1
                         ? .blue : .primary)
-                Text("Select Mode")
+                Text("Select")
                     .tag(2)
                     .foregroundColor(
                         canvasState.selectionModeIndex == 2
+                        ? .blue : .primary)
+                
+                Text("Laser")
+                    .tag(3)
+                    .foregroundColor(
+                        canvasState.selectionModeIndex == 3
                         ? .blue : .primary)
             }
             .pickerStyle(.segmented)
