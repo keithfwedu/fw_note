@@ -13,6 +13,10 @@ class CanvasState: ObservableObject {
     @Published var timerManager = TimerManager()
     @Published var currentPageIndex: Int = 0
     @Published var selectionModeIndex: Int = 0
+    @Published var penSize: CGFloat = 1.0
+    @Published var penColor: Color = .black
+    @Published var recentColors: [Color] = []
+    
     @Published var isTouching: Bool = false
     @Published var isLassoCreated: Bool = false
     @Published var isCanvasInteractive: Bool = true
@@ -23,8 +27,8 @@ class CanvasState: ObservableObject {
     @Published var lastDrawPosition: CGPoint? = nil
     @Published var lastDragPosition: CGPoint? = nil
 
+    //Lasso Mode
     @Published var selectionPath: [CGPoint] = []
-
     @Published var selectedImageObjIds: [UUID] = []
     @Published var selectedGifObjIds: [UUID] = []
     @Published var selectedLineObjs: [LineObj] = []

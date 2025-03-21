@@ -83,7 +83,9 @@ struct LaserCanvasView: UIViewRepresentable {
         canvasView.backgroundColor = .clear  // Transparent background
 
         // Set the tool to use white color for drawing
-        let inkingTool = PKInkingTool(.pen, color: UIColor.white, width: 5)
+       
+        let inkingTool = PKInkingTool(.pen, color: UIColor.red, width: 5)
+
         canvasView.tool = inkingTool
         canvasView.layer.shadowColor = UIColor.red.cgColor
         canvasView.layer.shadowRadius = 3

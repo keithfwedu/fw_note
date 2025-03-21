@@ -35,6 +35,7 @@ class EraseHelper {
                     LineObj(
                         color: line.color,
                         points: segment,
+                        lineWidth: line.lineWidth,
                         mode: line.mode
                     )
                 )

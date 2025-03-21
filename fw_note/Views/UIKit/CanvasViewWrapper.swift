@@ -1,5 +1,5 @@
 //
-//  CustomCanvas.swift
+//  CanvasViewWrapper.swift
 //  fw_note
 //
 //  Created by Alex Ng on 20/3/2025.
@@ -9,7 +9,7 @@
 import SwiftUI
 import UIKit
 
-class CustomCanvas: UIView {
+class CanvasViewWrapper: UIView {
 
         private var hostingController: UIHostingController<CanvasView>?
 

@@ -58,18 +58,18 @@ struct CanvasView: View {
                     }) {
                         context.stroke(
                             path, with: .color(.blue),
-                            style: StrokeStyle(lineWidth: 8))
+                            style: StrokeStyle(lineWidth: line.lineWidth))
                     } else {
                         if line.mode == .draw {
                             context.blendMode = .normal
                             context.stroke(
                                 path, with: .color(line.color),
-                                style: StrokeStyle(lineWidth: 8))
+                                style: StrokeStyle(lineWidth: line.lineWidth))
                         } else if line.mode == .eraser {
                             context.blendMode = .clear
                             context.stroke(
                                 path, with: .color(line.color),
-                                style: StrokeStyle(lineWidth: 8))
+                                style: StrokeStyle(lineWidth: line.lineWidth))
                         }
                     }
                 }
@@ -294,8 +294,9 @@ struct CanvasView: View {
             // Start a new stroke when drag begins
             print("First drag detected for a new stroke")
             let newLine = LineObj(
-                color: .brown,
+                color: canvasState.penColor,
                 points: [dragValue.location],
+                lineWidth: canvasState.penSize,
                 mode: .draw
             )
             notePage.lineObjs.append(newLine)  // Add a new line

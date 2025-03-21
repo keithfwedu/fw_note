@@ -73,7 +73,7 @@ struct PDFCanvasView: UIViewRepresentable {
             guard let document = pdfView.document else { return }
 
             // Remove existing custom canvases to avoid duplication
-            pdfView.subviews.forEach { if $0 is CustomCanvas { $0.removeFromSuperview() } }
+            pdfView.subviews.forEach { if $0 is CanvasViewWrapper { $0.removeFromSuperview() } }
 
             // Access the UIScrollView rendering pages
             guard let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }) as? UIScrollView else { return }
@@ -101,19 +101,19 @@ struct PDFCanvasView: UIViewRepresentable {
                     if subview.frame.contains(pageFrame.origin) || subview.frame.intersects(pageFrame) {
                         print("Found rendered subview for page \(pageIndex)")
 
-                        // Create a `CustomCanvas` for this page
-                        let customCanvas = CustomCanvas(
+                        // Create a `CanvasViewWrapper` for this page
+                        let canvasViewWrapper = CanvasViewWrapper(
                             frame: pageFrame,
                             pageIndex: pageIndex,
                             canvasState: canvasState,
                             notePage: noteFile.notePages[pageIndex]
                         )
-                        customCanvas.backgroundColor = UIColor.clear // Transparent canvas
-                        customCanvas.layer.borderColor = UIColor.red.cgColor // Debugging border
-                        customCanvas.layer.borderWidth = 1
+                        canvasViewWrapper.backgroundColor = UIColor.clear // Transparent canvas
+                        canvasViewWrapper.layer.borderColor = UIColor.red.cgColor // Debugging border
+                        canvasViewWrapper.layer.borderWidth = 1
 
                         // Attach the canvas to the page view
-                        subview.addSubview(customCanvas)
+                        subview.addSubview(canvasViewWrapper)
 
                         pageMatchFound = true
                         break
@@ -128,7 +128,7 @@ struct PDFCanvasView: UIViewRepresentable {
 
 
         /// Synchronize `CustomCanvas` with the corresponding page's size, position, and scale
-        private func synchronizeCanvasWithPage(pdfView: PDFView, page: PDFPage, canvas: CustomCanvas, pageView: UIView) {
+        private func synchronizeCanvasWithPage(pdfView: PDFView, page: PDFPage, canvas: CanvasViewWrapper, pageView: UIView) {
             // Add a listener for `PDFView` scale and movement changes
          /*  NotificationCenter.default.addObserver(forName: Notification.Name.PDFViewScaleChanged, object: pdfView, queue: .main) { _ in
                 self.updateCanvasFrame(pdfView: pdfView, page: page, canvas: canvas, pageView: pageView)
@@ -139,7 +139,7 @@ struct PDFCanvasView: UIViewRepresentable {
         }
 
         /// Update the `CustomCanvas` frame to match the page's current bounds and position
-        private func updateCanvasFrame(pdfView: PDFView, page: PDFPage, canvas: CustomCanvas, pageView: UIView) {
+        private func updateCanvasFrame(pdfView: PDFView, page: PDFPage, canvas: CanvasViewWrapper, pageView: UIView) {
             DispatchQueue.main.async {
                 // Ensure the canvas matches the page view's bounds and scale
                 canvas.frame = pageView.bounds
