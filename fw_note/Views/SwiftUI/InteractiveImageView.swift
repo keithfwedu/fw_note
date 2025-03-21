@@ -29,14 +29,50 @@ struct InteractiveImageView: View {
                         .resizable()
                         .frame(width: size.width, height: size.height)
                         .allowsHitTesting(selectMode)
+                        .rotationEffect(Angle(degrees: rotation), anchor: .center)
 
                 } else {
                     Image(systemName: "photo")
                         .resizable()
                         .frame(width: size.width, height: size.height)
                         .allowsHitTesting(selectMode)
+                        .rotationEffect(Angle(degrees: rotation), anchor: .center)
 
                 }
+
+                // **Center Circle for Rotation**
+                Circle()
+                    .frame(width: 40, height: 40)
+                    .foregroundColor(.blue)
+                    .opacity(0.8)
+                    .overlay(
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(.white)
+                    )
+                    .gesture(
+                        LongPressGesture(minimumDuration: 0.3)
+                            .sequenced(before: DragGesture())
+                            .onChanged { value in
+                                switch value {
+                                case .second(true, let dragGesture):
+                                    if let drag = dragGesture {
+                                        let center = CGPoint(
+                                            x: size.width / 2,
+                                            y: size.height / 2)
+                                        let dragLocation = drag.location
+
+                                        // Calculate the angle of rotation relative to the center of the image
+                                        let dx = dragLocation.x - center.x
+                                        let dy = dragLocation.y - center.y
+                                        let angle = atan2(dy, dx) * 180 / .pi
+
+                                        self.rotation = angle
+                                    }
+                                default:
+                                    break
+                                }
+                            }
+                    )
 
                 if selectMode && isFocused {
                     // Frame with 10px space around the image
@@ -64,12 +100,15 @@ struct InteractiveImageView: View {
                                         0, newPointTRX - newPointTLX)
                                     let newHeight = max(
                                         0, newPointBRY - newPointTLY)
-                                   
-                                    let newPositionX = self.position.x - ((newWidth - self.size.width)/2)
-                                    let newPositionY = self.position.y - ((newHeight - self.size.height)/2)
-                                  
-                                  
-                                   self.position = CGPoint(
+
+                                    let newPositionX =
+                                        self.position.x
+                                        - ((newWidth - self.size.width) / 2)
+                                    let newPositionY =
+                                        self.position.y
+                                        - ((newHeight - self.size.height) / 2)
+
+                                    self.position = CGPoint(
                                         x: newPositionX, y: newPositionY)
                                     self.size = CGSize(
                                         width: newWidth, height: newHeight)
@@ -96,9 +135,13 @@ struct InteractiveImageView: View {
                                         0, newPointTRX - newPointBLX)
                                     let newHeight = max(
                                         0, newPointBLY - newPointTRY)
-                                   
-                                    let newPositionX = self.position.x + ((newWidth - self.size.width)/2)
-                                    let newPositionY = self.position.y - ((newHeight - self.size.height)/2)
+
+                                    let newPositionX =
+                                        self.position.x
+                                        + ((newWidth - self.size.width) / 2)
+                                    let newPositionY =
+                                        self.position.y
+                                        - ((newHeight - self.size.height) / 2)
                                     self.size = CGSize(
                                         width: newWidth, height: newHeight)
                                     self.position = CGPoint(
@@ -126,9 +169,13 @@ struct InteractiveImageView: View {
                                         0, newPointTRX - newPointBLX)
                                     let newHeight = max(
                                         0, newPointBLY - newPointTRY)
-                                   
-                                    let newPositionX = self.position.x - ((newWidth - self.size.width)/2)
-                                    let newPositionY = self.position.y + ((newHeight - self.size.height)/2)
+
+                                    let newPositionX =
+                                        self.position.x
+                                        - ((newWidth - self.size.width) / 2)
+                                    let newPositionY =
+                                        self.position.y
+                                        + ((newHeight - self.size.height) / 2)
                                     self.size = CGSize(
                                         width: newWidth, height: newHeight)
                                     self.position = CGPoint(
@@ -156,9 +203,13 @@ struct InteractiveImageView: View {
                                         0, newPointBRX - newPointTLX)
                                     let newHeight = max(
                                         0, newPointBRY - newPointTLY)
-                                   
-                                    let newPositionX = self.position.x + ((newWidth - self.size.width)/2)
-                                    let newPositionY = self.position.y + ((newHeight - self.size.height)/2)
+
+                                    let newPositionX =
+                                        self.position.x
+                                        + ((newWidth - self.size.width) / 2)
+                                    let newPositionY =
+                                        self.position.y
+                                        + ((newHeight - self.size.height) / 2)
                                     self.size = CGSize(
                                         width: newWidth, height: newHeight)
                                     self.position = CGPoint(
@@ -171,32 +222,34 @@ struct InteractiveImageView: View {
             }
             .frame(width: size.width + 20, height: size.height + 20)
             .background(Color.blue.opacity(0.1))
-            .rotationEffect(Angle(degrees: rotation), anchor: .center)
-
+            
             .onTapGesture {
                 isFocused = true  // Focus the image on tap
             }
 
         }.position(self.position)
-            .gesture(
-                SimultaneousGesture(
-                    DragGesture()
-                        .onChanged { gesture in
-                            self.position = CGPoint(
-                                x: gesture.location.x,
-                                y: gesture.location.y
-                            )
-                        },
-                    RotationGesture()
-                        .onChanged { angle in
-                            self.rotation = angle.degrees
-                        }
-                )
-            )
+           
+           
+
+       
     }
 }
 
-/*
+/*  .gesture(
+        SimultaneousGesture(
+            DragGesture()
+                .onChanged { gesture in
+                    self.position = CGPoint(
+                        x: gesture.location.x,
+                        y: gesture.location.y
+                    )
+                },
+            RotationGesture()
+                .onChanged { angle in
+                    self.rotation = angle.degrees
+                }
+        )
+    )*/
 
 
 
@@ -224,4 +277,4 @@ struct InteractiveImageView: View {
  y: size.height + 5
 )*/
 
- */
+

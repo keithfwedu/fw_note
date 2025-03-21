@@ -17,16 +17,24 @@ struct CanvasView: View {
     @State var selectedImageObjIds: [UUID] = []
     @State var selectedGifObjIds: [UUID] = []
     @State var selectedLineObjs: [LineObj] = []
+    
+    @State var isTouching: Bool = false
+    @State var isLassoCreated: Bool = false
+
+    @State var touchPoint: CGPoint? = nil
+    @State var currentDrawingLineID: UUID? = nil
+    @State var lastDrawPosition: CGPoint? = nil
+    @State var lastDragPosition: CGPoint? = nil
 
     var body: some View {
         ZStack {
             // Add a dynamic circle that syncs with the touch position
-            if canvasState.touchPoint != nil && canvasState.isTouching {
+            if touchPoint != nil && isTouching {
                 Circle()
                     .stroke(Color.gray, lineWidth: 0.5)  // Thin border with red color
                     .background(Circle().fill(Color.clear))  // Optional: Make the circle transparent insid
                     .frame(width: 8 + 5, height: 8 + 5)  // Circle size
-                    .position(canvasState.touchPoint!)  // Dynamically update circle position
+                    .position(touchPoint!)  // Dynamically update circle position
             }
 
             Canvas { context, size in
@@ -233,8 +241,8 @@ struct CanvasView: View {
 
     private func handleDragChange(dragValue: DragGesture.Value) {
         print("drag")
-        canvasState.touchPoint = dragValue.location
-        canvasState.isTouching = true
+        touchPoint = dragValue.location
+        isTouching = true
         if let mode = CanvasMode(rawValue: canvasState.selectionModeIndex) {
             switch mode {
             case .draw:  // Draw Mode
@@ -253,27 +261,27 @@ struct CanvasView: View {
 
     private func handleDragEnded() {
         print("Erase Mode Gesture Ended")
-        canvasState.lastDrawPosition = nil
-        canvasState.isTouching = false
+        lastDrawPosition = nil
+        isTouching = false
 
         if let mode = CanvasMode(rawValue: canvasState.selectionModeIndex) {
             switch mode {
             case .draw:  // Draw Mode
-                canvasState.lastDragPosition = nil
+                lastDragPosition = nil
                 canvasState.timerManager.cancelHoldTimer()
 
             case .eraser:  // Erase Mode
-                canvasState.lastDragPosition = nil
+                lastDragPosition = nil
 
             case .lasso:  // Select Mode
 
                 if !selectionPaths.isEmpty
-                    && canvasState.isLassoCreated == false
+                    && isLassoCreated == false
                 {
                     let hasSelectedItems: Bool =
                         !selectedLineObjs.isEmpty
                         || !selectedImageObjIds.isEmpty
-                    canvasState.isLassoCreated = hasSelectedItems
+                    isLassoCreated = hasSelectedItems
                     selectedLineObjs =
                         LassoToolHelper.getSelectedLines(
                             selectionPath: selectionPaths,
@@ -298,14 +306,14 @@ struct CanvasView: View {
     }
 
     private func findCurrentDrawingLine() -> LineObj? {
-        guard let drawingLineID = canvasState.currentDrawingLineID else {
+        guard let drawingLineID = currentDrawingLineID else {
             return nil
         }
         return notePage.lineObjs.first(where: { $0.id == drawingLineID })
     }
 
     private func handleDrawing(dragValue: DragGesture.Value) {
-        if canvasState.lastDrawPosition == nil {
+        if lastDrawPosition == nil {
             // Start a new stroke when drag begins
             print("First drag detected for a new stroke")
             let newLine = LineObj(
@@ -315,7 +323,7 @@ struct CanvasView: View {
                 mode: .draw
             )
             notePage.lineObjs.append(newLine)  // Add a new line
-            canvasState.currentDrawingLineID = newLine.id
+            currentDrawingLineID = newLine.id
         } else {
             // Add points to the current stroke
             print("drag detected for a new stroke2")
@@ -331,12 +339,12 @@ struct CanvasView: View {
         }
 
         // Update hold detection logic for the latest position
-        if canvasState.lastDrawPosition != nil {
+        if lastDrawPosition != nil {
             if PointHelper.distance(
-                canvasState.lastDrawPosition!, dragValue.location) > 5.0
+                lastDrawPosition!, dragValue.location) > 5.0
             {
                 print("set hold timer")
-                canvasState.lastDrawPosition = dragValue.location
+                lastDrawPosition = dragValue.location
                 canvasState.timerManager.setHoldTimer(
                     currentPosition: dragValue.location
                 ) {
@@ -348,7 +356,7 @@ struct CanvasView: View {
 
             }
         } else {
-            canvasState.lastDrawPosition = dragValue.location
+            lastDrawPosition = dragValue.location
         }
     }
 
@@ -366,7 +374,7 @@ struct CanvasView: View {
         let shapePoints = ShapeHelper.lineToShape(line)
         if !shapePoints.isEmpty {
             notePage.lineObjs[index].points = shapePoints
-            canvasState.lastDrawPosition = nil
+            lastDrawPosition = nil
         }
     }
 
@@ -379,11 +387,11 @@ struct CanvasView: View {
         let hasSelectedItems: Bool =
             !selectedLineObjs.isEmpty
             || !selectedImageObjIds.isEmpty
-        if canvasState.lastDragPosition == nil {
+        if lastDragPosition == nil {
             print("First drag detected")
             resetSelection()  // Ensure there's no existing selection
             self.selectionPaths = [dragValue.location]  // Initialize selection path
-            canvasState.lastDragPosition = dragValue.location
+            lastDragPosition = dragValue.location
             return  // Exit early as this is the first touch point
         }
 
@@ -446,21 +454,21 @@ struct CanvasView: View {
             if hasSelectedItems {
                 print("reset session")
                 resetSelection()  // Ensure there's no existing selection
-                canvasState.isLassoCreated = false
+                isLassoCreated = false
             }
-            if !canvasState.isLassoCreated {
+            if !isLassoCreated {
                 self.selectionPaths.append(dragValue.location)
             }  // Extend the selection path
 
         }
 
-        canvasState.lastDragPosition = dragValue.location
+        lastDragPosition = dragValue.location
     }
 
     private func resetSelection() {
         selectedLineObjs.removeAll()
         selectedImageObjIds.removeAll()
         selectionPaths.removeAll()
-        canvasState.isLassoCreated = false
+        isLassoCreated = false
     }
 }

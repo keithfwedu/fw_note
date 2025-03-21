@@ -13,9 +13,7 @@ class NotePage: Identifiable, Codable, ObservableObject {
     @Published var lineObjs: [LineObj] = []
     @Published var imageObjs: [ImageObj] = []
     @Published var gifObjs: [GifObj] = []
-    @Published var zoomScale: CGFloat = 1.0
-    
-    
+
 
     init(pageIndex: Int) {
         print("pageIndex: \(pageIndex)")

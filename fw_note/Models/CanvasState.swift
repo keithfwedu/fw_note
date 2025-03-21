@@ -7,7 +7,7 @@
 
 import PencilKit
 import SwiftUI
-
+import PDFKit
 
 class CanvasState: ObservableObject {
     @Published var timerManager = TimerManager()
@@ -17,34 +17,25 @@ class CanvasState: ObservableObject {
     @Published var penColor: Color = .black
     @Published var recentColors: [Color] = []
     
-    @Published var isTouching: Bool = false
-    @Published var isLassoCreated: Bool = false
     @Published var isCanvasInteractive: Bool = true
     @Published var isLaserCanvasInteractive: Bool = true
+    @Published var displayDirection: PDFDisplayDirection = .vertical
+
+    
+    /*@Published var isTouching: Bool = false
+    @Published var isLassoCreated: Bool = false
 
     @Published var touchPoint: CGPoint? = nil
     @Published var currentDrawingLineID: UUID? = nil
     @Published var lastDrawPosition: CGPoint? = nil
     @Published var lastDragPosition: CGPoint? = nil
+   
 
-    //Lasso Mode
-    /*@Published var selectionPath: [CGPoint] = []
-    @Published var selectedImageObjIds: [UUID] = []
-    @Published var selectedGifObjIds: [UUID] = []
-    @Published var selectedLineObjs: [LineObj] = []
-
-    // Reset all selection paths
-    func clearSelection() {
-        selectionPath.removeAll()
-        selectedImageObjIds.removeAll()
-        selectedGifObjIds.removeAll()
-        selectedLineObjs.removeAll()
-    }*/
 
     // Reset touch and drag states
     func clearTouchStates() {
         touchPoint = nil
         lastDrawPosition = nil
         lastDragPosition = nil
-    }
+    }*/
 }
