@@ -15,7 +15,7 @@ struct PdfNoteScreen: View {
     @State var noteFile: NoteFile
 
     var body: some View {
-
+        
             VStack {
                 CanvasToolBar(noteFile: noteFile, canvasState: canvasState)
                 ZStack {

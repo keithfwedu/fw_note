@@ -28,6 +28,8 @@ struct PDFCanvasView: UIViewRepresentable {
         if let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }) as? UIScrollView {
             scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
+            
+            
         }
         
         // Add observer for page changes
@@ -66,8 +68,12 @@ struct PDFCanvasView: UIViewRepresentable {
             self.pdfDocument = pdfDocument
             self.noteFile = noteFile
             self.canvasState = canvasState
-            
         }
+        
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+                // Allow simultaneous recognition for rotation gestures
+                return true
+            }
 
         func addCanvasesToPages(pdfView: PDFView) {
             guard let document = pdfView.document else { return }

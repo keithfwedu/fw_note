@@ -123,8 +123,11 @@ struct CanvasView: View {
                         get: { canvasState.selectionModeIndex != 2 },
                         set: { _ in }  // No-op setter since the condition is derived
                     ),
-                    path: $imageView.path
-                ).clipped()
+                    path: $imageView.path,
+                    rotation:  $imageView.rotation
+                )
+                
+                .clipped()
             }
         }
 
