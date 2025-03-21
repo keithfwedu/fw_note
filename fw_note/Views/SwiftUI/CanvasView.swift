@@ -12,6 +12,12 @@ struct CanvasView: View {
    
     @ObservedObject var canvasState: CanvasState
     @ObservedObject var notePage: NotePage
+    
+    @State var selectionPaths: [CGPoint] = []
+    @State var selectedImageObjIds: [UUID] = []
+    @State var selectedGifObjIds: [UUID] = []
+    @State var selectedLineObjs: [LineObj] = []
+
 
     var body: some View {
         ZStack {
@@ -35,7 +41,7 @@ struct CanvasView: View {
                     context.fill(rectPath, with: .color(.gray))  // Replace .gray with any color
 
                     // Highlight selected images
-                    if canvasState.selectedImageObjIds.contains(
+                    if selectedImageObjIds.contains(
                         image.id)
                     {
                         let selectionRect = image.rect.insetBy(
@@ -53,7 +59,7 @@ struct CanvasView: View {
                     var path = Path()
                     path.addLines(line.points)
 
-                    if canvasState.selectedLineObjs.contains(where: {
+                    if selectedLineObjs.contains(where: {
                         $0.id == line.id
                     }) {
                         context.stroke(
@@ -78,11 +84,11 @@ struct CanvasView: View {
                 if CanvasMode(
                     rawValue: canvasState.selectionModeIndex)
                     == .lasso
-                    && !canvasState.selectionPath.isEmpty
+                    && !selectionPaths.isEmpty
                 {
                     var selectionDrawing = Path()
                     selectionDrawing.addLines(
-                        canvasState.selectionPath)
+                       selectionPaths)
                     selectionDrawing.closeSubpath()
                     context.stroke(
                         selectionDrawing, with: .color(.green),
@@ -252,26 +258,26 @@ struct CanvasView: View {
 
             case .lasso:  // Select Mode
 
-                if !canvasState.selectionPath.isEmpty
+                if !selectionPaths.isEmpty
                     && canvasState.isLassoCreated == false
                 {
                     let hasSelectedItems: Bool =
-                        !canvasState.selectedLineObjs.isEmpty
-                        || !canvasState.selectedImageObjIds.isEmpty
+                        !selectedLineObjs.isEmpty
+                        || !selectedImageObjIds.isEmpty
                     canvasState.isLassoCreated = hasSelectedItems
-                    canvasState.selectedLineObjs =
+                    selectedLineObjs =
                         LassoToolHelper.getSelectedLines(
-                            selectionPath: canvasState.selectionPath,
+                            selectionPath:selectionPaths,
                             lines: notePage.lineObjs)
-                    canvasState.selectedImageObjIds =
+                    selectedImageObjIds =
                         LassoToolHelper.getSelectedImages(
-                            selectionPath: canvasState.selectionPath,
+                            selectionPath: selectionPaths,
                             images: notePage.imageObjs)
-                    canvasState.selectionPath =
+                    selectionPaths =
                         LassoToolHelper.createSelectionBounds(
                             imageObjs: notePage.imageObjs,
-                            selectedLines: canvasState.selectedLineObjs,
-                            selectedImages: canvasState.selectedImageObjIds)
+                            selectedLines: selectedLineObjs,
+                            selectedImages: selectedImageObjIds)
                 }
             case .laser:  // Laser Mode
                 print("Laser Mode")
@@ -362,18 +368,18 @@ struct CanvasView: View {
 
     private func handleSelection(dragValue: DragGesture.Value) {
         let hasSelectedItems: Bool =
-            !canvasState.selectedLineObjs.isEmpty
-            || !canvasState.selectedImageObjIds.isEmpty
+            !selectedLineObjs.isEmpty
+            || !selectedImageObjIds.isEmpty
         if canvasState.lastDragPosition == nil {
             print("First drag detected")
             resetSelection()  // Ensure there's no existing selection
-            canvasState.selectionPath = [dragValue.location]  // Initialize selection path
+            self.selectionPaths = [dragValue.location]  // Initialize selection path
             canvasState.lastDragPosition = dragValue.location
             return  // Exit early as this is the first touch point
         }
 
         let isCurrentlyInsideSelection = LassoToolHelper.isPointInsideSelection(
-            canvasState.selectionPath,
+            selectionPaths,
             point: dragValue.location)
 
         if isCurrentlyInsideSelection {
@@ -383,24 +389,24 @@ struct CanvasView: View {
                 let centerTranslation = LassoToolHelper.getCenterTranslation(
                     dragValue: dragValue,
                     imageObjs: notePage.imageObjs,
-                    selectedLines: canvasState.selectedLineObjs,
-                    selectedImages: canvasState.selectedImageObjIds)
+                    selectedLines: selectedLineObjs,
+                    selectedImages: selectedImageObjIds)
 
                 // Move selected lines
-                for i in 0..<canvasState.selectedLineObjs.count {
-                    let updatedPoints = canvasState.selectedLineObjs[i].points
+                for i in 0..<selectedLineObjs.count {
+                    let updatedPoints = selectedLineObjs[i].points
                         .map {
                             CGPoint(
                                 x: $0.x + centerTranslation.width,
                                 y: $0.y + centerTranslation.height
                             )
                         }
-                    canvasState.selectedLineObjs[i].points = updatedPoints
+                    self.selectedLineObjs[i].points = updatedPoints
                 }
 
                 // Move selected images
                 for i in 0..<notePage.imageObjs.count {
-                    if canvasState.selectedImageObjIds.contains(
+                    if selectedImageObjIds.contains(
                         notePage.imageObjs[i].id)
                     {
                         notePage.imageObjs[i].position.x +=
@@ -410,14 +416,14 @@ struct CanvasView: View {
                     }
                 }
 
-                canvasState.selectionPath =
+                selectionPaths =
                     LassoToolHelper.moveSelectionPath(
-                        selectionPath: canvasState.selectionPath,
+                        selectionPath: selectionPaths,
                         translation: centerTranslation
                     )
 
                 // Update the original lines and images
-                for selectedLine in canvasState.selectedLineObjs {
+                for selectedLine in selectedLineObjs {
                     if let index = notePage.lineObjs.firstIndex(where: {
                         $0.id == selectedLine.id
                     }) {
@@ -434,7 +440,7 @@ struct CanvasView: View {
                 canvasState.isLassoCreated = false
             }
             if !canvasState.isLassoCreated {
-                canvasState.selectionPath.append(dragValue.location)
+                self.selectionPaths.append(dragValue.location)
             }  // Extend the selection path
 
         }
@@ -443,9 +449,9 @@ struct CanvasView: View {
     }
 
     private func resetSelection() {
-        canvasState.selectedLineObjs.removeAll()
-        canvasState.selectedImageObjIds.removeAll()
-        canvasState.selectionPath.removeAll()
+        selectedLineObjs.removeAll()
+        selectedImageObjIds.removeAll()
+        selectionPaths.removeAll()
         canvasState.isLassoCreated = false
     }
 }

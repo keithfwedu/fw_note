@@ -28,7 +28,7 @@ class CanvasState: ObservableObject {
     @Published var lastDragPosition: CGPoint? = nil
 
     //Lasso Mode
-    @Published var selectionPath: [CGPoint] = []
+    /*@Published var selectionPath: [CGPoint] = []
     @Published var selectedImageObjIds: [UUID] = []
     @Published var selectedGifObjIds: [UUID] = []
     @Published var selectedLineObjs: [LineObj] = []
@@ -39,7 +39,7 @@ class CanvasState: ObservableObject {
         selectedImageObjIds.removeAll()
         selectedGifObjIds.removeAll()
         selectedLineObjs.removeAll()
-    }
+    }*/
 
     // Reset touch and drag states
     func clearTouchStates() {
