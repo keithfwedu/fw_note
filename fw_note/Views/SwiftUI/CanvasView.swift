@@ -9,15 +9,14 @@ import SwiftUI
 
 struct CanvasView: View {
     let pageIndex: Int
-   
+
     @ObservedObject var canvasState: CanvasState
     @ObservedObject var notePage: NotePage
-    
+
     @State var selectionPaths: [CGPoint] = []
     @State var selectedImageObjIds: [UUID] = []
     @State var selectedGifObjIds: [UUID] = []
     @State var selectedLineObjs: [LineObj] = []
-
 
     var body: some View {
         ZStack {
@@ -38,7 +37,7 @@ struct CanvasView: View {
                     rectPath.addRect(image.rect)
 
                     // Fill the rectangle with a color
-                    context.fill(rectPath, with: .color(.gray))  // Replace .gray with any color
+                    // context.fill(rectPath, with: .color(.gray))  // Replace .gray with any color
 
                     // Highlight selected images
                     if selectedImageObjIds.contains(
@@ -88,14 +87,14 @@ struct CanvasView: View {
                 {
                     var selectionDrawing = Path()
                     selectionDrawing.addLines(
-                       selectionPaths)
+                        selectionPaths)
                     selectionDrawing.closeSubpath()
                     context.stroke(
                         selectionDrawing, with: .color(.green),
                         style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
                 }
             }
-            
+
             .allowsHitTesting(canvasState.isCanvasInteractive)  // Toggle interaction
             .onChange(of: canvasState.selectionModeIndex) {
                 newModeIndex in
@@ -112,22 +111,21 @@ struct CanvasView: View {
             .clipped()
             .background(Color.blue.opacity(0.1))
             .onDrop(of: ["public.image"], isTargeted: nil) { providers in
-                                handleDrop(providers: providers)
-                            }
+                handleDrop(providers: providers)
+            }
 
             ForEach($notePage.imageObjs) { $imageView in
-                InteractiveImageView( 
+                InteractiveImageView(
                     position: $imageView.position,
                     size: $imageView.size,
                     selectMode: Binding<Bool>(
                         get: { canvasState.selectionModeIndex != 2 },
                         set: { _ in }  // No-op setter since the condition is derived
                     ),
-                    path: $imageView.path,
-                    rotation:  $imageView.rotation
+                    path: $imageView.path
+                        //rotation:  $imageView.rotation
                 )
-                
-                .clipped()
+
             }
         }
 
@@ -140,42 +138,51 @@ struct CanvasView: View {
                 // Load the UIImage object directly
                 provider.loadObject(ofClass: UIImage.self) { item, error in
                     guard error == nil, let uiImage = item as? UIImage else {
-                        print("Failed to load image: \(String(describing: error))")
+                        print(
+                            "Failed to load image: \(String(describing: error))"
+                        )
                         return
                     }
-                    
+
                     // Perform UI updates on the main thread
                     DispatchQueue.main.async {
                         // Save the image and create an ImageObj
-                        if let imagePath = saveImageToDocuments(image: uiImage, targetSize: CGSize(width: 500, height: 500)) {
+                        if let imagePath = saveImageToDocuments(
+                            image: uiImage,
+                            targetSize: CGSize(width: 500, height: 500))
+                        {
                             print("imagePath: \(imagePath)")
                             let newImageObj = ImageObj(
                                 id: UUID(),
                                 path: imagePath,
-                                position: CGPoint(x: 100, y: 100), // Example position
-                                size: CGSize(width: 100, height: 100) // Example size
+                                position: CGPoint(x: 100, y: 100),  // Example position
+                                size: CGSize(width: 100, height: 100)  // Example size
                             )
                             notePage.imageObjs.append(newImageObj)
                         }
                     }
                 }
-                return true // Successfully handled the provider
+                return true  // Successfully handled the provider
             }
         }
-        return false // No valid providers were processed
+        return false  // No valid providers were processed
     }
 
-    
-    
-    private func saveImageToDocuments(image: UIImage, targetSize: CGSize? = nil) -> String? {
+    private func saveImageToDocuments(image: UIImage, targetSize: CGSize? = nil)
+        -> String?
+    {
         // Resize the image if a target size is provided
-        let resizedImage = targetSize != nil ? resizeImage(image: image, targetSize: targetSize!) : image
+        let resizedImage =
+            targetSize != nil
+            ? resizeImage(image: image, targetSize: targetSize!) : image
 
         // Convert the image to PNG data (to preserve transparency)
         guard let data = resizedImage.pngData() else { return nil }
 
-        let filename = UUID().uuidString + ".png" // Use PNG file format
-        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(filename)
+        let filename = UUID().uuidString + ".png"  // Use PNG file format
+        let fileURL = FileManager.default.urls(
+            for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(filename)
 
         do {
             try data.write(to: fileURL)
@@ -185,7 +192,7 @@ struct CanvasView: View {
             return nil
         }
     }
-    
+
     private func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
         let size = image.size
 
@@ -193,7 +200,8 @@ struct CanvasView: View {
         let heightRatio = targetSize.height / size.height
         let ratio = min(widthRatio, heightRatio)
 
-        let newSize = CGSize(width: size.width * ratio, height: size.height * ratio)
+        let newSize = CGSize(
+            width: size.width * ratio, height: size.height * ratio)
         let rect = CGRect(origin: .zero, size: newSize)
 
         UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
@@ -203,8 +211,6 @@ struct CanvasView: View {
 
         return newImage ?? image
     }
-
-
 
     private func handleModeChange(
         index: Int
@@ -270,7 +276,7 @@ struct CanvasView: View {
                     canvasState.isLassoCreated = hasSelectedItems
                     selectedLineObjs =
                         LassoToolHelper.getSelectedLines(
-                            selectionPath:selectionPaths,
+                            selectionPath: selectionPaths,
                             lines: notePage.lineObjs)
                     selectedImageObjIds =
                         LassoToolHelper.getSelectedImages(
@@ -458,4 +464,3 @@ struct CanvasView: View {
         canvasState.isLassoCreated = false
     }
 }
-
