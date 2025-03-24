@@ -1,5 +1,5 @@
 //
-//  InteractiveImageView2.swift
+//  InteractiveImageView.swift
 //  fw_note
 //
 //  Created by Fung Wing on 23/3/2025.
@@ -8,14 +8,14 @@ import SwiftUI
 
 struct InteractiveImageView: View {
 
-    @Binding var position: CGPoint
-    @Binding var size: CGSize
+    @Binding var imageObj: ImageObj
+   
     @Binding var selectMode: Bool
-    @Binding var path: String?
-    @Binding var angle: CGFloat
+    @Binding var isFocused: Bool
+    
+    var onTap: (_ id: UUID) -> Void
     var onRemove: () -> Void
 
-    @State private var isFocused: Bool = false
    // @State private var viewOffset: CGSize = .zero
     
     @State private var lastAngle: CGFloat = 0
@@ -103,20 +103,20 @@ struct InteractiveImageView: View {
                             }
                         }
                         
-                        .position(x: size.width / 2, y: -20)
+                        .position(x: self.imageObj.size.width / 2, y: -20)
                     }
             
                     // ImageView inside the frame
-                    if let path = path, let uiImage = UIImage(contentsOfFile: path)
+                        if let path = self.imageObj.path, let uiImage = UIImage(contentsOfFile: path)
                     {
                         Image(uiImage: uiImage)
                             .resizable()
-                            .frame(width: size.width, height: size.height)
+                            .frame(width: self.imageObj.size.width, height: self.imageObj.size.height)
                             .allowsHitTesting(selectMode)
                     } else {
                         Image(systemName: "photo")
                             .resizable()
-                            .frame(width: size.width, height: size.height)
+                            .frame(width: self.imageObj.size.width, height: self.imageObj.size.height)
                             .allowsHitTesting(selectMode)
                     }
                         
@@ -141,8 +141,8 @@ struct InteractiveImageView: View {
                     }
                 }
                 .border(Color.blue, width: selectMode && isFocused ? 1:0)  // Border syncs with scaling
-                .frame(width: size.width, height: size.height)
-                .rotationEffect(.degrees(Double(self.angle)))
+                .frame(width: self.imageObj.size.width, height: self.imageObj.size.height)
+                .rotationEffect(.degrees(Double(self.imageObj.angle)))
                 .gesture(updateMovement())  // Gesture for movement
 
             }
@@ -164,11 +164,11 @@ struct InteractiveImageView: View {
                         )
                 }
                
-                .offset(x: 0, y: (size.height/2)+50)
-                .rotationEffect(.degrees(Double(self.angle)), anchor: .center)
+                .offset(x: 0, y: (self.imageObj.size.height/2)+50)
+                .rotationEffect(.degrees(Double(self.imageObj.angle)), anchor: .center)
                 .position(
-                        x: size.width / 2, // Center X position relative to parent
-                        y: size.height / 2 // Center Y position relative to parent
+                    x: self.imageObj.size.width / 2, // Center X position relative to parent
+                    y: self.imageObj.size.height / 2 // Center Y position relative to parent
                     )
                     .gesture(
                         updateRotation()
@@ -177,20 +177,20 @@ struct InteractiveImageView: View {
             }
             
         }
-        .frame(width: size.width, height: size.height)
-        .position(position)
+        .frame(width: self.imageObj.size.width, height: self.imageObj.size.height)
+        .position(self.imageObj.position)
         .onAppear {
           // Update length initially
-         length = min(size.height, size.width)
+            length = min(self.imageObj.size.height, self.imageObj.size.width)
             // length = 50
         }
-        .onChange(of: size) { _ in
+        .onChange(of: self.imageObj.size) { _ in
                 // Update length when size changes
-               length = min(size.height, size.width)
+            length = min(self.imageObj.size.height, self.imageObj.size.width)
             //length = 50
         }
         .onTapGesture {
-            isFocused = true
+            onTap(self.imageObj.id)
         }
         
         
@@ -206,8 +206,8 @@ struct InteractiveImageView: View {
                 )
 
                 // Update the view offset based on the drag translation
-                position.x += transformedTranslation.x
-                position.y += transformedTranslation.y
+                self.imageObj.position.x += transformedTranslation.x
+                self.imageObj.position.y += transformedTranslation.y
 
             }
             .onEnded { value in
@@ -217,8 +217,8 @@ struct InteractiveImageView: View {
                     by: -.degrees(Double(0.0))  // Reverse rotation to correctly align movement
                 )
 
-                position.x += transformedTranslation.x
-                position.y += transformedTranslation.y
+                self.imageObj.position.x += transformedTranslation.x
+                self.imageObj.position.y += transformedTranslation.y
             }
     }
 
@@ -249,12 +249,12 @@ struct InteractiveImageView: View {
                             v.startLocation.x - self.length / 2,
                             self.length / 2 - v.startLocation.y)) * 180 / .pi
                 if theta < 0 { theta += 360 }
-                print("angle \(self.angle)");
-                self.angle = theta + self.lastAngle
+                print("angle \(self.imageObj.angle)");
+                self.imageObj.angle = theta + self.lastAngle
             }
             .onEnded { v in
               
-                self.lastAngle = self.angle
+                self.lastAngle = self.imageObj.angle
             }
     }
 
@@ -271,8 +271,8 @@ struct InteractiveImageView: View {
                 )
 
                 // Initialize variables for new dimensions
-                var newWidth = size.width
-                var newHeight = size.height
+                var newWidth = imageObj.size.width
+                var newHeight = imageObj.size.height
 
                 // Use incremental changes instead of total translation
                 let deltaX = transformedTranslation.x
@@ -302,7 +302,7 @@ struct InteractiveImageView: View {
                 newHeight = max(50, newHeight)
 
                 // Update state
-                self.size = CGSize(width: newWidth, height: newHeight)
+                self.imageObj.size = CGSize(width: newWidth, height: newHeight)
             }
     }
 

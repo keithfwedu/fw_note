@@ -13,6 +13,7 @@ struct CanvasView: View {
     @ObservedObject var canvasState: CanvasState
     @ObservedObject var notePage: NotePage
 
+    @State var focusedID: UUID?
     @State var selectionPaths: [CGPoint] = []
     @State var selectedImageObjIds: [UUID] = []
     @State var selectedGifObjIds: [UUID] = []
@@ -124,24 +125,34 @@ struct CanvasView: View {
 
             ForEach($notePage.imageObjs) { $imageObj in
                 InteractiveImageView(
-                    position: $imageObj.position,
-                    size: $imageObj.size,
+                    imageObj: $imageObj,
+                   
                     selectMode: Binding<Bool>(
                         get: { canvasState.selectionModeIndex != 2 },
                         set: { _ in }  // No-op setter since the condition is derived
                     ),
-                    path: $imageObj.path,
-                    angle: $imageObj.angle,
-                   onRemove: {
-                        if let index = notePage.imageObjs.firstIndex(where: { $0.id == imageObj.id }) {
-                                        notePage.imageObjs.remove(at: index)
-                                    }
-                    }
-                        //rotation:  $imageView.rotation
+                    isFocused: Binding<Bool>(
+                        get: { focusedID == $imageObj.id },
+                        set: { isFocused in
+                            focusedID = isFocused ? $imageObj.id : nil
+                        }
+                    ),
                     
+                    onTap: {id in
+                        focusedID = id
+                       
+                    },
+                    onRemove: {
+                        
+                        if let index = notePage.imageObjs.firstIndex(where: { $0.id == imageObj.id }) {
+                            notePage.imageObjs.remove(at: index)
+                        }
+                    }
                 )
 
             }
+        }.onTapGesture {
+            focusedID = nil // Reset focus if background is tapped
         }
 
     }
