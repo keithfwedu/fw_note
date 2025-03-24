@@ -171,9 +171,6 @@ struct CanvasView: View {
                 pageIndex: self.pageIndex, lineStack: self.notePage.lineStack,
                 imageStack: self.notePage.imageStack)
         }
-        
-        
-
     }
 
     private func handleDrop(providers: [NSItemProvider]) -> Bool {

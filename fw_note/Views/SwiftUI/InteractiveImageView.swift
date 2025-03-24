@@ -6,8 +6,6 @@
 //
 import SwiftUI
 
-
-
 struct InteractiveImageView: View {
 
     @Binding var imageObj: ImageObj
@@ -127,7 +125,7 @@ struct InteractiveImageView: View {
                             )
                     }*/
                     
-                   if let imagePath = Bundle.main.path(forResource: "example2", ofType: "jpg") {
+                   if let imagePath = Bundle.main.path(forResource: "example", ofType: "png") {
                        MetalImageView(imagePath: imagePath, targetSize: CGSize(width: self.imageObj.size.width, height: self.imageObj.size.height))
                            .frame(width: self.imageObj.size.width, height: self.imageObj.size.height)
                    } else {
@@ -222,6 +220,65 @@ struct InteractiveImageView: View {
                 afterMove(imageObj.id)
             }
     }
+    
+    /*private func updateMovement() -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+
+                if !isFocused {
+                    onTap(self.imageObj.id)
+                }
+
+                let transformedTranslation = rotatePoint(
+                    CGPoint(
+                        x: value.translation.width, y: value.translation.height),
+                    by: -.degrees(Double(0.0))  // Reverse rotation to correctly align movement
+                )
+
+                // Calculate the proposed new position
+                let proposedX = self.imageObj.position.x + transformedTranslation.x
+                let proposedY = self.imageObj.position.y + transformedTranslation.y
+
+                let imageWidth = self.imageObj.rect.width
+                let imageHeight = self.imageObj.rect.height
+
+                // Check boundaries and restrict movement
+                if proposedX >= parentBounds.minX &&
+                    proposedX + imageWidth <= parentBounds.maxX &&
+                    proposedY >= parentBounds.minY &&
+                    proposedY + imageHeight <= parentBounds.maxY {
+                    // Update the view offset based on the drag translation
+                    self.imageObj.position.x += transformedTranslation.x
+                    self.imageObj.position.y += transformedTranslation.y
+                }
+            }
+            .onEnded { value in
+                let transformedTranslation = rotatePoint(
+                    CGPoint(
+                        x: value.translation.width, y: value.translation.height),
+                    by: -.degrees(Double(0.0))  // Reverse rotation to correctly align movement
+                )
+
+                // Calculate the proposed new position
+                let proposedX = self.imageObj.position.x + transformedTranslation.x
+                let proposedY = self.imageObj.position.y + transformedTranslation.y
+
+                let imageWidth = self.imageObj.rect.width
+                let imageHeight = self.imageObj.rect.height
+
+                // Check boundaries before finalizing the position
+                if proposedX >= parentBounds.minX &&
+                    proposedX + imageWidth <= parentBounds.maxX &&
+                    proposedY >= parentBounds.minY &&
+                    proposedY + imageHeight <= parentBounds.maxY {
+                    self.imageObj.position.x += transformedTranslation.x
+                    self.imageObj.position.y += transformedTranslation.y
+                }
+
+                afterMove(imageObj.id)
+            }
+    }*/
+
 
     // Calculate corner positions
     private func cornerPosition(for corner: Corner, in geometry: GeometryProxy)

@@ -27,4 +27,3 @@ fragment float4 fragment_main(VertexOut in [[stage_in]],
     constexpr sampler texSampler (mag_filter::linear, min_filter::linear);
     return tex.sample(texSampler, in.texCoord);
 }
-
