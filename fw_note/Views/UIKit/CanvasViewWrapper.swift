@@ -13,11 +13,11 @@ class CanvasViewWrapper: UIView {
 
         private var hostingController: UIHostingController<CanvasView>?
 
-        init(frame: CGRect, pageIndex: Int, canvasState: CanvasState, notePage: NotePage) {
+        init(frame: CGRect, pageIndex: Int, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage) {
             super.init(frame: frame)
             
             // Create the SwiftUI `CanvasView` with the necessary properties
-            let canvasView = CanvasView(pageIndex: pageIndex, canvasState: canvasState, notePage: notePage)
+            let canvasView = CanvasView(pageIndex: pageIndex, canvasState: canvasState, noteFile: noteFile, notePage: notePage)
             
             // Embed the SwiftUI `CanvasView` in a `UIHostingController`
             let hostingController = UIHostingController(rootView: canvasView)

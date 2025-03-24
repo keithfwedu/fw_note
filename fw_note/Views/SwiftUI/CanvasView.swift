@@ -11,14 +11,15 @@ struct CanvasView: View {
     let pageIndex: Int
 
     @ObservedObject var canvasState: CanvasState
+    @ObservedObject var noteFile: NoteFile
     @ObservedObject var notePage: NotePage
 
     @State var focusedID: UUID?
     @State var selectionPaths: [CGPoint] = []
     @State var selectedImageObjIds: [UUID] = []
     @State var selectedGifObjIds: [UUID] = []
-    @State var selectedLineObjs: [LineObj] = []
-    
+    @State var selectedLineStack: [LineObj] = []
+
     @State var isTouching: Bool = false
     @State var isLassoCreated: Bool = false
 
@@ -30,17 +31,20 @@ struct CanvasView: View {
     var body: some View {
         ZStack {
             // Add a dynamic circle that syncs with the touch position
-            if touchPoint != nil && isTouching {
+            if self.touchPoint != nil && isTouching {
                 Circle()
-                    .stroke(Color.gray, lineWidth: 0.5)  // Thin border with red color
+                    .stroke(Color.gray, lineWidth: 1)  // Thin border with red color
                     .background(Circle().fill(Color.clear))  // Optional: Make the circle transparent insid
-                    .frame(width: 8 + 5, height: 8 + 5)  // Circle size
-                    .position(touchPoint!)  // Dynamically update circle position
+                    .frame(
+                        width: canvasState.penSize + 2,
+                        height: canvasState.penSize + 2
+                    )  // Circle size
+                    .position(self.touchPoint!)  // Dynamically update circle position
             }
 
             Canvas { context, size in
 
-                for image in notePage.imageObjs {
+                /*for image in notePage.imageStack {
 
                     var rectPath = Path()
                     rectPath.addRect(image.rect)
@@ -60,14 +64,14 @@ struct CanvasView: View {
                             borderPath, with: .color(.blue),
                             style: StrokeStyle(lineWidth: 2))
                     }
-                }
+                }*/
 
                 // Draw all lines
-                for line in notePage.lineObjs {
+                for line in notePage.lineStack {
                     var path = Path()
                     path.addLines(line.points)
 
-                    if selectedLineObjs.contains(where: {
+                    if selectedLineStack.contains(where: {
                         $0.id == line.id
                     }) {
                         context.stroke(
@@ -103,7 +107,6 @@ struct CanvasView: View {
                         style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
                 }
             }
-
             .allowsHitTesting(canvasState.isCanvasInteractive)  // Toggle interaction
             .onChange(of: canvasState.selectionModeIndex) {
                 newModeIndex in
@@ -117,43 +120,59 @@ struct CanvasView: View {
             .onAppear {
                 //canvasState.saveToUndo(forPageIndex: pageIndex)
             }
-            .clipped()
-            .background(Color.blue.opacity(0.1))
             .onDrop(of: ["public.image"], isTargeted: nil) { providers in
                 handleDrop(providers: providers)
             }
+            .drawingGroup()
+             .clipped()
 
-            ForEach($notePage.imageObjs) { $imageObj in
-                InteractiveImageView(
+            ForEach($notePage.imageStack, id: \.id) { $imageObj in
+               InteractiveImageView(
                     imageObj: $imageObj,
-                   
-                    selectMode: Binding<Bool>(
-                        get: { canvasState.selectionModeIndex != 2 },
-                        set: { _ in }  // No-op setter since the condition is derived
-                    ),
-                    isFocused: Binding<Bool>(
-                        get: { focusedID == $imageObj.id },
-                        set: { isFocused in
-                            focusedID = isFocused ? $imageObj.id : nil
-                        }
-                    ),
-                    
-                    onTap: {id in
+                    selectMode: .constant(canvasState.selectionModeIndex != 2), // Avoid binding if it's derived
+                        isFocused: .constant(focusedID == $imageObj.id),
+                    onTap: { id in
                         focusedID = id
-                       
+
                     },
-                    onRemove: {
-                        
-                        if let index = notePage.imageObjs.firstIndex(where: { $0.id == imageObj.id }) {
-                            notePage.imageObjs.remove(at: index)
+                    onRemove: { id in
+                        if let index = notePage.imageStack.firstIndex(where: {
+                            $0.id == imageObj.id
+                        }) {
+                            notePage.imageStack.remove(at: index)
+                            noteFile.addToUndo(
+                                pageIndex: self.pageIndex, lineStack: self.notePage.lineStack,
+                                imageStack: self.notePage.imageStack)
+
                         }
+                    },
+                    afterMove: {id in 
+                        noteFile.addToUndo(
+                            pageIndex: self.pageIndex, lineStack: self.notePage.lineStack,
+                            imageStack: self.notePage.imageStack)
+                    },
+                    afterScale: {id in 
+                        noteFile.addToUndo(
+                            pageIndex: self.pageIndex, lineStack: self.notePage.lineStack,
+                            imageStack: self.notePage.imageStack)
+                    },
+                    afterRotate: {id in 
+                        noteFile.addToUndo(
+                            pageIndex: self.pageIndex, lineStack: self.notePage.lineStack,
+                            imageStack: self.notePage.imageStack)
                     }
                 )
 
             }
         }.onTapGesture {
-            focusedID = nil // Reset focus if background is tapped
+            focusedID = nil  // Reset focus if background is tapped
+        }.onAppear {
+            noteFile.addToUndo(
+                pageIndex: self.pageIndex, lineStack: self.notePage.lineStack,
+                imageStack: self.notePage.imageStack)
         }
+        
+        
 
     }
 
@@ -184,7 +203,10 @@ struct CanvasView: View {
                                 position: CGPoint(x: 100, y: 100),  // Example position
                                 size: CGSize(width: 100, height: 100)  // Example size
                             )
-                            notePage.imageObjs.append(newImageObj)
+                            notePage.imageStack.append(newImageObj)
+                            noteFile.addToUndo(
+                                pageIndex: pageIndex, lineStack: nil,
+                                imageStack: notePage.imageStack)
                         }
                     }
                 }
@@ -258,8 +280,9 @@ struct CanvasView: View {
     }
 
     private func handleDragChange(dragValue: DragGesture.Value) {
-        print("drag")
-        touchPoint = dragValue.location
+
+        self.touchPoint = dragValue.location
+        print("drag \(self.touchPoint)")
         isTouching = true
         if let mode = CanvasMode(rawValue: canvasState.selectionModeIndex) {
             switch mode {
@@ -287,37 +310,40 @@ struct CanvasView: View {
             case .draw:  // Draw Mode
                 lastDragPosition = nil
                 canvasState.timerManager.cancelHoldTimer()
-
+                noteFile.addToUndo(
+                    pageIndex: pageIndex, lineStack: notePage.lineStack,
+                    imageStack: nil)
             case .eraser:  // Erase Mode
                 lastDragPosition = nil
-
+                noteFile.addToUndo(
+                    pageIndex: pageIndex, lineStack: notePage.lineStack,
+                    imageStack: nil)
             case .lasso:  // Select Mode
 
                 if !selectionPaths.isEmpty
                     && isLassoCreated == false
                 {
                     let hasSelectedItems: Bool =
-                        !selectedLineObjs.isEmpty
+                        !selectedLineStack.isEmpty
                         || !selectedImageObjIds.isEmpty
                     isLassoCreated = hasSelectedItems
-                    selectedLineObjs =
+                    selectedLineStack =
                         LassoToolHelper.getSelectedLines(
                             selectionPath: selectionPaths,
-                            lines: notePage.lineObjs)
+                            lines: notePage.lineStack)
                     selectedImageObjIds =
                         LassoToolHelper.getSelectedImages(
                             selectionPath: selectionPaths,
-                            images: notePage.imageObjs)
+                            images: notePage.imageStack)
                     selectionPaths =
                         LassoToolHelper.createSelectionBounds(
-                            imageObjs: notePage.imageObjs,
-                            selectedLines: selectedLineObjs,
+                            imageStack: notePage.imageStack,
+                            selectedLines: selectedLineStack,
                             selectedImages: selectedImageObjIds)
                 }
             case .laser:  // Laser Mode
                 print("Laser Mode")
             }
-            //canvasState.saveStateForUndo()
         } else {
             print("Invalid mode selected.")
         }
@@ -327,7 +353,7 @@ struct CanvasView: View {
         guard let drawingLineID = currentDrawingLineID else {
             return nil
         }
-        return notePage.lineObjs.first(where: { $0.id == drawingLineID })
+        return notePage.lineStack.first(where: { $0.id == drawingLineID })
     }
 
     private func handleDrawing(dragValue: DragGesture.Value) {
@@ -340,18 +366,18 @@ struct CanvasView: View {
                 lineWidth: canvasState.penSize,
                 mode: .draw
             )
-            notePage.lineObjs.append(newLine)  // Add a new line
+            notePage.lineStack.append(newLine)  // Add a new line
             currentDrawingLineID = newLine.id
         } else {
             // Add points to the current stroke
             print("drag detected for a new stroke2")
-            if let lastLine = notePage.lineObjs.last {
+            if let lastLine = notePage.lineStack.last {
                 let interpolatedPoints = PointHelper.interpolatePoints(
                     from: lastLine.points.last ?? dragValue.location,
                     to: dragValue.location
                 )
-                let lastIndex: Int = notePage.lineObjs.count - 1
-                notePage.lineObjs[lastIndex].points.append(
+                let lastIndex: Int = notePage.lineStack.count - 1
+                notePage.lineStack[lastIndex].points.append(
                     contentsOf: interpolatedPoints)
             }
         }
@@ -380,7 +406,7 @@ struct CanvasView: View {
 
     private func processLineForTransformation(_ line: LineObj) {
         guard
-            let index = notePage.lineObjs.firstIndex(where: {
+            let index = notePage.lineStack.firstIndex(where: {
                 $0.id == line.id
             })
         else {
@@ -391,19 +417,20 @@ struct CanvasView: View {
 
         let shapePoints = ShapeHelper.lineToShape(line)
         if !shapePoints.isEmpty {
-            notePage.lineObjs[index].points = shapePoints
+            notePage.lineStack[index].points = shapePoints
             lastDrawPosition = nil
         }
     }
 
     private func handleErasing(dragValue: DragGesture.Value) {
-        notePage.lineObjs = EraseHelper.eraseLines(
-            lines: notePage.lineObjs, dragValue: dragValue)
+        notePage.lineStack = EraseHelper.eraseLines(
+            lines: notePage.lineStack, dragValue: dragValue,
+            eraserRadius: canvasState.penSize)
     }
 
     private func handleSelection(dragValue: DragGesture.Value) {
         let hasSelectedItems: Bool =
-            !selectedLineObjs.isEmpty
+            !selectedLineStack.isEmpty
             || !selectedImageObjIds.isEmpty
         if lastDragPosition == nil {
             print("First drag detected")
@@ -423,30 +450,30 @@ struct CanvasView: View {
 
                 let centerTranslation = LassoToolHelper.getCenterTranslation(
                     dragValue: dragValue,
-                    imageObjs: notePage.imageObjs,
-                    selectedLines: selectedLineObjs,
+                    imageStack: notePage.imageStack,
+                    selectedLines: selectedLineStack,
                     selectedImages: selectedImageObjIds)
 
                 // Move selected lines
-                for i in 0..<selectedLineObjs.count {
-                    let updatedPoints = selectedLineObjs[i].points
+                for i in 0..<selectedLineStack.count {
+                    let updatedPoints = selectedLineStack[i].points
                         .map {
                             CGPoint(
                                 x: $0.x + centerTranslation.width,
                                 y: $0.y + centerTranslation.height
                             )
                         }
-                    self.selectedLineObjs[i].points = updatedPoints
+                    self.selectedLineStack[i].points = updatedPoints
                 }
 
                 // Move selected images
-                for i in 0..<notePage.imageObjs.count {
+                for i in 0..<notePage.imageStack.count {
                     if selectedImageObjIds.contains(
-                        notePage.imageObjs[i].id)
+                        notePage.imageStack[i].id)
                     {
-                        notePage.imageObjs[i].position.x +=
+                        notePage.imageStack[i].position.x +=
                             centerTranslation.width
-                        notePage.imageObjs[i].position.y +=
+                        notePage.imageStack[i].position.y +=
                             centerTranslation.height
                     }
                 }
@@ -458,11 +485,11 @@ struct CanvasView: View {
                     )
 
                 // Update the original lines and images
-                for selectedLine in selectedLineObjs {
-                    if let index = notePage.lineObjs.firstIndex(where: {
+                for selectedLine in selectedLineStack {
+                    if let index = notePage.lineStack.firstIndex(where: {
                         $0.id == selectedLine.id
                     }) {
-                        notePage.lineObjs[index] = selectedLine
+                        notePage.lineStack[index] = selectedLine
                     }
                 }
             }
@@ -482,11 +509,9 @@ struct CanvasView: View {
 
         lastDragPosition = dragValue.location
     }
-    
-    
 
     private func resetSelection() {
-        selectedLineObjs.removeAll()
+        selectedLineStack.removeAll()
         selectedImageObjIds.removeAll()
         selectionPaths.removeAll()
         isLassoCreated = false

@@ -149,13 +149,19 @@ struct CanvasToolBar: View {
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 100, height: 100)
         )
-        noteFile.notePages[canvasState.currentPageIndex].imageObjs.append(newImageObj)
+        
+        noteFile.notePages[canvasState.currentPageIndex].imageStack.append(newImageObj)
+        noteFile.addToUndo(
+            pageIndex: self.canvasState.currentPageIndex, lineStack: self.noteFile.notePages[self.canvasState.currentPageIndex].lineStack,
+            imageStack: self.noteFile.notePages[self.canvasState.currentPageIndex].imageStack)
     }
     func undoAction() {
         print("undoAction")
+        noteFile.undo()
     }
     func redoAction() {
         print("redoAction")
+        noteFile.redo()
     }
 
     func toggleDisplayDirection() {

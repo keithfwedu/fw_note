@@ -10,5 +10,6 @@ import Foundation
 struct ActionStack: Identifiable, Codable {
     var id = UUID()
     var pageIndex: Int
-    var notePage: NotePage
+    var lineStack: [LineObj]?
+    var imageStack: [ImageObj]?
 }

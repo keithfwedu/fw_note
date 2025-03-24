@@ -97,6 +97,7 @@ struct PDFCanvasView: UIViewRepresentable {
                         frame: pageFrame,
                         pageIndex: pageIndex,
                         canvasState: canvasState,
+                        noteFile: noteFile,
                         notePage: noteFile.notePages[pageIndex]
                     )
                     canvasViewWrapper.backgroundColor = UIColor.clear
