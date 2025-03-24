@@ -13,13 +13,16 @@ class CanvasState: ObservableObject {
     @Published var timerManager = TimerManager()
     @Published var currentPageIndex: Int = 0
     @Published var selectionModeIndex: Int = 0
-    @Published var penSize: CGFloat = 1.0
+    @Published var penSize: CGFloat = 3.0
     @Published var penColor: Color = .black
     @Published var recentColors: [Color] = []
     
     @Published var isCanvasInteractive: Bool = true
     @Published var isLaserCanvasInteractive: Bool = true
     @Published var displayDirection: PDFDisplayDirection = .vertical
+    
+    @Published var undoStack: [ActionStack] = [] // Published property properly initialized
+    @Published var redoStack: [ActionStack] = [] // Published property properly initialized
 
     
     /*@Published var isTouching: Bool = false

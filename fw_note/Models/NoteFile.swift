@@ -7,8 +7,7 @@ class NoteFile: ObservableObject, Identifiable, Codable {
     var title: String
     var pdfFilePath: String?
     @Published var notePages: [NotePage] // Initialize to an empty array
-    @Published var undoStack: [ActionStack] = [] // Published property properly initialized
-    @Published var redoStack: [ActionStack] = [] // Published property properly initialized
+   
     var thumbnailPath: String?
 
     private var maxStackSize = 50
@@ -80,8 +79,7 @@ class NoteFile: ObservableObject, Identifiable, Codable {
         }
         
         notePages = newNotePages;
-        undoStack = []
-        redoStack = []
+       
     }
 
     func encode(to encoder: Encoder) throws {

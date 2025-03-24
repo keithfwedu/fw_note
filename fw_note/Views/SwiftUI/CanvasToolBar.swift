@@ -80,7 +80,7 @@ struct CanvasToolBar: View {
                 .disabled(canvasState.selectionModeIndex == CanvasMode.laser.rawValue)
 
                 if canvasState.selectionModeIndex != CanvasMode.laser.rawValue {
-                    Slider(value: $canvasState.penSize, in: 1...10, step: 0.1) {
+                    Slider(value: $canvasState.penSize, in: 3...10, step: 0.1) {
                         Text("Tool Size")
                     }
                     .frame(width: 100)

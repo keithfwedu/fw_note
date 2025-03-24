@@ -12,17 +12,37 @@ struct ImageObj: Identifiable, Codable {
     var path: String?
     var position: CGPoint
     var size: CGSize
-    var rotation: CGFloat = 0
+    var angle: CGFloat = 0
 
     // Computed property to calculate the rectangle
     var rect: CGRect {
-        CGRect(
+        
+        let transformedSize = calculateBoundingSize(
+            width: size.width,
+            height: size.height,
+            angle: angle
+        )
+        print("\(size.width),\(size.height) - \(transformedSize.width),\(transformedSize.height)")
+        return CGRect(
             origin: CGPoint(
-                x: position.x - size.width / 2,
-                y: position.y - size.height / 2
+                x: position.x - transformedSize.width / 2,
+                y: position.y - transformedSize.height / 2
             ),
-            size: size
+            size: transformedSize
         )
     }
+    
+    
+    func calculateBoundingSize(width: CGFloat, height: CGFloat, angle: CGFloat) -> CGSize {
+        // Convert angle from degrees to radians
+        let radians = angle * .pi / 180
+
+        // Calculate the bounding width and height
+        let boundingWidth = abs(width * cos(radians)) + abs(height * sin(radians))
+        let boundingHeight = abs(width * sin(radians)) + abs(height * cos(radians))
+
+        return CGSize(width: boundingWidth, height: boundingHeight)
+    }
+
 
 }

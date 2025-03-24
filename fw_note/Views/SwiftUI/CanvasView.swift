@@ -123,14 +123,20 @@ struct CanvasView: View {
             }
 
             ForEach($notePage.imageObjs) { $imageObj in
-                InteractiveImageView2(
+                InteractiveImageView(
                     position: $imageObj.position,
                     size: $imageObj.size,
                     selectMode: Binding<Bool>(
                         get: { canvasState.selectionModeIndex != 2 },
                         set: { _ in }  // No-op setter since the condition is derived
                     ),
-                    path: $imageObj.path
+                    path: $imageObj.path,
+                    angle: $imageObj.angle,
+                   onRemove: {
+                        if let index = notePage.imageObjs.firstIndex(where: { $0.id == imageObj.id }) {
+                                        notePage.imageObjs.remove(at: index)
+                                    }
+                    }
                         //rotation:  $imageView.rotation
                     
                 )
@@ -465,6 +471,8 @@ struct CanvasView: View {
 
         lastDragPosition = dragValue.location
     }
+    
+    
 
     private func resetSelection() {
         selectedLineObjs.removeAll()

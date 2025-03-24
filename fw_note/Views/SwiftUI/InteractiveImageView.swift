@@ -6,86 +6,106 @@
 //
 import SwiftUI
 
-struct InteractiveImageView2: View {
+struct InteractiveImageView: View {
 
     @Binding var position: CGPoint
     @Binding var size: CGSize
     @Binding var selectMode: Bool
     @Binding var path: String?
+    @Binding var angle: CGFloat
+    var onRemove: () -> Void
 
+    @State private var isFocused: Bool = false
+   // @State private var viewOffset: CGSize = .zero
     
-    @State private var viewOffset: CGSize = .zero
-    @State private var angle: CGFloat = 0
     @State private var lastAngle: CGFloat = 0
 
     @State private var length: CGFloat = 0
 
 
     var body: some View {
-        let calculatedLength = max(size.height, size.width);
+       
         ZStack {
             GeometryReader { geometry in
-
                 // Refresh background image
-
-                ZStack {
-                    // Top-left corner
-                    VStack {
-                        Circle()
-                            .fill(Color.blue)
-                            .frame(width: 20, height: 20)
+              
+                    ZStack {
+                        // Top-left corner
+                        if(selectMode && isFocused) {
+                            VStack {
+                                Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 20, height: 20) 
+                            }
+                            .frame(width: 80, height: 80)
+                            .background(.clear)
+                            .contentShape(Rectangle())
                             .gesture(dragGesture(for: .topLeft))
-                    }
-                    .padding(50)
-                    .position(cornerPosition(for: .topLeft, in: geometry))
-
-                    // Top-right corner
-                    VStack {
-                        Circle()
-                            .fill(Color.blue)
-                            .frame(width: 20, height: 20)
-                            
-                            .gesture(dragGesture(for: .topRight))
-                    }
-                    .padding(50)
-                    .position(cornerPosition(for: .topRight, in: geometry))
-
-                    // Bottom-left corner
-                    VStack {
-                        Circle()
-                            .fill(Color.blue)
-                            .frame(width: 20, height: 20)
-                            .gesture(dragGesture(for: .bottomLeft))
-                    }.padding(50)
-                        .position(
-                            cornerPosition(for: .bottomLeft, in: geometry))
-
-                    // Bottom-right corner
-                    VStack {
-                    Circle()
-                        .fill(Color.blue)
-                        .frame(width: 20, height: 20)
-                        .gesture(dragGesture(for: .bottomRight))
-                }.padding(50)
-                        .position(
-                            cornerPosition(for: .bottomRight, in: geometry))
-
-                    Button(action: {
-                        // Add your action here, such as removing the view or triggering some logic
-                        print("Close button tapped")
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 30, height: 30)
-                            Image(systemName: "xmark")
-                                .foregroundColor(.white)  // Icon color
-                                .font(.system(size: 16))  // Optional: Adjust size
+                            .position(cornerPosition(for: .topLeft, in: geometry))
+                           
                         }
+                        
+                        // Top-right corner
+                        if(selectMode && isFocused) {
+                            VStack {
+                                Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 20, height: 20)
+                            }
+                            .frame(width: 80, height: 80)
+                            .background(.clear)
+                            .contentShape(Rectangle())
+                            .gesture(dragGesture(for: .topRight))
+                            .position(cornerPosition(for: .topRight, in: geometry))
+                            
+                        }
+                        // Bottom-left corner
+                        if(selectMode && isFocused) {
+                            VStack {
+                                Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 20, height: 20)
+                            }
+                            .frame(width: 80, height: 80)
+                            .background(.clear)
+                            .contentShape(Rectangle())
+                            .gesture(dragGesture(for: .bottomLeft))
+                            .position(cornerPosition(for: .bottomLeft, in: geometry))
+                                
+                        }
+                        // Bottom-right corner
+                        if(selectMode && isFocused) {
+                            VStack {
+                                Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 20, height: 20)
+                            }
+                            .frame(width: 80, height: 80)
+                            .background(.clear)
+                            .contentShape(Rectangle())
+                            .gesture(dragGesture(for: .bottomRight))
+                            .position(cornerPosition(for: .bottomRight, in: geometry))
+                        }
+                        
+                    if(selectMode && isFocused) {
+                        Button(action: {
+                            // Add your action here, such as removing the view or triggering some logic
+                            print("Close button tapped")
+                            onRemove()
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 30, height: 30)
+                                Image(systemName: "xmark")
+                                    .foregroundColor(.white)  // Icon color
+                                    .font(.system(size: 16))  // Optional: Adjust size
+                            }
+                        }
+                        
+                        .position(x: size.width / 2, y: -20)
                     }
-
-                    .position(x: size.width / 2, y: -20)
-
+            
                     // ImageView inside the frame
                     if let path = path, let uiImage = UIImage(contentsOfFile: path)
                     {
@@ -93,72 +113,86 @@ struct InteractiveImageView2: View {
                             .resizable()
                             .frame(width: size.width, height: size.height)
                             .allowsHitTesting(selectMode)
-                            
-
                     } else {
                         Image(systemName: "photo")
                             .resizable()
                             .frame(width: size.width, height: size.height)
                             .allowsHitTesting(selectMode)
-                            
-
                     }
-
-                    ZStack {
-                        Image(systemName: "arrow.clockwise")
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundColor(.white)  // Border color
-                            .frame(
-                                width: geometry.size.width * 0.8,
-                                height: geometry.size.height * 0.8
-                            )
-                            .position(
-                                x: geometry.size.width / 2,
-                                y: geometry.size.height / 2)
-
-                    }.position(
-                        x: geometry.size.width / 2, y: geometry.size.height / 2
-                    ).opacity(0.2)
-                        .background(.blue.opacity(0.5))
+                        
+                    if(selectMode && isFocused) {
+                        ZStack {
+                            /* Image(systemName: "arrow.clockwise")
+                             .resizable()
+                             .scaledToFit()
+                             .foregroundColor(.white)  // Border color
+                             .frame(
+                             width: geometry.size.width * 0.8,
+                             height: geometry.size.height * 0.8
+                             )
+                             .position(
+                             x: geometry.size.width / 2,
+                             y: geometry.size.height / 2)*/
+                            
+                        }.position(
+                            x: geometry.size.width / 2, y: geometry.size.height / 2
+                        ).opacity(0.2)
+                            .background(.blue.opacity(0.5))
+                    }
                 }
-
-                .border(Color.blue, width: 1)  // Border syncs with scaling
+                .border(Color.blue, width: selectMode && isFocused ? 1:0)  // Border syncs with scaling
                 .frame(width: size.width, height: size.height)
                 .rotationEffect(.degrees(Double(self.angle)))
-                .gesture(
-                    updateRotation()
-                )
-
-            }
-
-            Circle()
-                .fill(Color.gray)
-                .frame(width: 50, height: 50)
-
-                .opacity(0.2)  // Semi-transparent background
-                .overlay(
-                    Image(
-                        systemName: "arrow.up.and.down.and.arrow.left.and.right"
-                    )
-                    .frame(width: 30, height: 30)
-                    .foregroundColor(.blue)  // Icon color
-                    .opacity(0.8)  // Adjust icon opacity
-                )
-
                 .gesture(updateMovement())  // Gesture for movement
 
+            }
+            
+            if(selectMode && isFocused) {
+                VStack {
+                    Circle()
+                        .fill(Color.gray)
+                        .frame(width: 50, height: 50)
+                        .opacity(0.2)  // Semi-transparent background
+                        .overlay(
+                            Image(
+                                systemName: "arrow.clockwise"
+                                //systemName: "arrow.up.and.down.and.arrow.left.and.right"
+                            )
+                            .frame(width: 30, height: 30)
+                            .foregroundColor(.blue)  // Icon color
+                                .opacity(0.8)  // Adjust icon opacity
+                        )
+                }
+               
+                .offset(x: 0, y: (size.height/2)+50)
+                .rotationEffect(.degrees(Double(self.angle)), anchor: .center)
+                .position(
+                        x: size.width / 2, // Center X position relative to parent
+                        y: size.height / 2 // Center Y position relative to parent
+                    )
+                    .gesture(
+                        updateRotation()
+                    )
+                
+            }
+            
         }
         .frame(width: size.width, height: size.height)
-        .offset(viewOffset)
+        .position(position)
         .onAppear {
           // Update length initially
-          length = calculatedLength
+         length = min(size.height, size.width)
+            // length = 50
         }
         .onChange(of: size) { _ in
                 // Update length when size changes
-                length = max(size.height, size.width)
-            }
+               length = min(size.height, size.width)
+            //length = 50
+        }
+        .onTapGesture {
+            isFocused = true
+        }
+        
         
     }
 
@@ -172,8 +206,8 @@ struct InteractiveImageView2: View {
                 )
 
                 // Update the view offset based on the drag translation
-                viewOffset.width += transformedTranslation.x
-                viewOffset.height += transformedTranslation.y
+                position.x += transformedTranslation.x
+                position.y += transformedTranslation.y
 
             }
             .onEnded { value in
@@ -183,8 +217,8 @@ struct InteractiveImageView2: View {
                     by: -.degrees(Double(0.0))  // Reverse rotation to correctly align movement
                 )
 
-                viewOffset.width += transformedTranslation.x
-                viewOffset.height += transformedTranslation.y
+                position.x += transformedTranslation.x
+                position.y += transformedTranslation.y
             }
     }
 
@@ -268,7 +302,7 @@ struct InteractiveImageView2: View {
                 newHeight = max(50, newHeight)
 
                 // Update state
-                size = CGSize(width: newWidth, height: newHeight)
+                self.size = CGSize(width: newWidth, height: newHeight)
             }
     }
 
@@ -283,4 +317,16 @@ struct InteractiveImageView2: View {
     private enum Corner {
         case topLeft, topRight, bottomLeft, bottomRight
     }
+    
+    func calculateBoundingSize(width: CGFloat, height: CGFloat, angle: CGFloat) -> CGSize {
+        // Convert angle from degrees to radians
+        let radians = angle * .pi / 180
+
+        // Calculate the bounding width and height
+        let boundingWidth = abs(width * cos(radians)) + abs(height * sin(radians))
+        let boundingHeight = abs(width * sin(radians)) + abs(height * cos(radians))
+
+        return CGSize(width: boundingWidth, height: boundingHeight)
+    }
+
 }
