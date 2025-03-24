@@ -1,280 +1,286 @@
 //
-//  InteractiveImageView.swift
-//  pdf_note
+//  InteractiveImageView2.swift
+//  fw_note
 //
-//  Created by Fung Wing on 7/3/2025.
+//  Created by Fung Wing on 23/3/2025.
 //
-
 import SwiftUI
 
-struct InteractiveImageView: View {
+struct InteractiveImageView2: View {
+
     @Binding var position: CGPoint
     @Binding var size: CGSize
     @Binding var selectMode: Bool
     @Binding var path: String?
 
-    @State var rotation: Double = 0.0
-    @State private var isFocused: Bool = false
-    @State private var scale: CGFloat = 1.0  // State for scaling
-    private let aspectRatio: CGFloat = 1.0  // Assuming a 1:1 aspect ratio for simplicity
+    
+    @State private var viewOffset: CGSize = .zero
+    @State private var angle: CGFloat = 0
+    @State private var lastAngle: CGFloat = 0
+
+    @State private var length: CGFloat = 0
+
 
     var body: some View {
+        let calculatedLength = max(size.height, size.width);
         ZStack {
-            ZStack {
-                // Image
+            GeometryReader { geometry in
 
-                if let path = path, let uiImage = UIImage(contentsOfFile: path)
-                {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .frame(width: size.width, height: size.height)
-                        .allowsHitTesting(selectMode)
-                        .rotationEffect(Angle(degrees: rotation), anchor: .center)
+                // Refresh background image
 
-                } else {
-                    Image(systemName: "photo")
-                        .resizable()
-                        .frame(width: size.width, height: size.height)
-                        .allowsHitTesting(selectMode)
-                        .rotationEffect(Angle(degrees: rotation), anchor: .center)
+                ZStack {
+                    // Top-left corner
+                    VStack {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 20, height: 20)
+                            .gesture(dragGesture(for: .topLeft))
+                    }
+                    .padding(50)
+                    .position(cornerPosition(for: .topLeft, in: geometry))
 
-                }
+                    // Top-right corner
+                    VStack {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 20, height: 20)
+                            
+                            .gesture(dragGesture(for: .topRight))
+                    }
+                    .padding(50)
+                    .position(cornerPosition(for: .topRight, in: geometry))
 
-                // **Center Circle for Rotation**
-                Circle()
-                    .frame(width: 40, height: 40)
-                    .foregroundColor(.blue)
-                    .opacity(0.8)
-                    .overlay(
+                    // Bottom-left corner
+                    VStack {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 20, height: 20)
+                            .gesture(dragGesture(for: .bottomLeft))
+                    }.padding(50)
+                        .position(
+                            cornerPosition(for: .bottomLeft, in: geometry))
+
+                    // Bottom-right corner
+                    VStack {
+                    Circle()
+                        .fill(Color.blue)
+                        .frame(width: 20, height: 20)
+                        .gesture(dragGesture(for: .bottomRight))
+                }.padding(50)
+                        .position(
+                            cornerPosition(for: .bottomRight, in: geometry))
+
+                    Button(action: {
+                        // Add your action here, such as removing the view or triggering some logic
+                        print("Close button tapped")
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 30, height: 30)
+                            Image(systemName: "xmark")
+                                .foregroundColor(.white)  // Icon color
+                                .font(.system(size: 16))  // Optional: Adjust size
+                        }
+                    }
+
+                    .position(x: size.width / 2, y: -20)
+
+                    // ImageView inside the frame
+                    if let path = path, let uiImage = UIImage(contentsOfFile: path)
+                    {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .frame(width: size.width, height: size.height)
+                            .allowsHitTesting(selectMode)
+                            
+
+                    } else {
+                        Image(systemName: "photo")
+                            .resizable()
+                            .frame(width: size.width, height: size.height)
+                            .allowsHitTesting(selectMode)
+                            
+
+                    }
+
+                    ZStack {
                         Image(systemName: "arrow.clockwise")
-                            .foregroundColor(.white)
+                            .resizable()
+                            .scaledToFit()
+                            .foregroundColor(.white)  // Border color
+                            .frame(
+                                width: geometry.size.width * 0.8,
+                                height: geometry.size.height * 0.8
+                            )
+                            .position(
+                                x: geometry.size.width / 2,
+                                y: geometry.size.height / 2)
+
+                    }.position(
+                        x: geometry.size.width / 2, y: geometry.size.height / 2
+                    ).opacity(0.2)
+                        .background(.blue.opacity(0.5))
+                }
+
+                .border(Color.blue, width: 1)  // Border syncs with scaling
+                .frame(width: size.width, height: size.height)
+                .rotationEffect(.degrees(Double(self.angle)))
+                .gesture(
+                    updateRotation()
+                )
+
+            }
+
+            Circle()
+                .fill(Color.gray)
+                .frame(width: 50, height: 50)
+
+                .opacity(0.2)  // Semi-transparent background
+                .overlay(
+                    Image(
+                        systemName: "arrow.up.and.down.and.arrow.left.and.right"
                     )
-                    .gesture(
-                        LongPressGesture(minimumDuration: 0.3)
-                            .sequenced(before: DragGesture())
-                            .onChanged { value in
-                                switch value {
-                                case .second(true, let dragGesture):
-                                    if let drag = dragGesture {
-                                        let center = CGPoint(
-                                            x: size.width / 2,
-                                            y: size.height / 2)
-                                        let dragLocation = drag.location
+                    .frame(width: 30, height: 30)
+                    .foregroundColor(.blue)  // Icon color
+                    .opacity(0.8)  // Adjust icon opacity
+                )
 
-                                        // Calculate the angle of rotation relative to the center of the image
-                                        let dx = dragLocation.x - center.x
-                                        let dy = dragLocation.y - center.y
-                                        let angle = atan2(dy, dx) * 180 / .pi
+                .gesture(updateMovement())  // Gesture for movement
 
-                                        self.rotation = angle
-                                    }
-                                default:
-                                    break
-                                }
-                            }
-                    )
+        }
+        .frame(width: size.width, height: size.height)
+        .offset(viewOffset)
+        .onAppear {
+          // Update length initially
+          length = calculatedLength
+        }
+        .onChange(of: size) { _ in
+                // Update length when size changes
+                length = max(size.height, size.width)
+            }
+        
+    }
 
-                if selectMode && isFocused {
-                    // Frame with 10px space around the image
-                    Rectangle()
-                        .strokeBorder(Color.blue, lineWidth: 2)
-                        .frame(width: size.width + 20, height: size.height + 20)
+    private func updateMovement() -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+                let transformedTranslation = rotatePoint(
+                    CGPoint(
+                        x: value.translation.width, y: value.translation.height),
+                    by: -.degrees(Double(0.0))  // Reverse rotation to correctly align movement
+                )
 
-                    // Top-left circle
-                    Circle()
-                        .frame(width: 20, height: 20)
-                        .foregroundColor(.blue)
-                        .position(
-                            x: 0,
-                            y: 0
-                        )
-                        .gesture(
-                            DragGesture()
-                                .onChanged { gesture in
-                                    let newPointTLX = gesture.location.x - 10
-                                    let newPointTLY = gesture.location.y - 10
-                                    let newPointTRX = size.width + 10
-                                    let newPointBRY = size.height + 10
+                // Update the view offset based on the drag translation
+                viewOffset.width += transformedTranslation.x
+                viewOffset.height += transformedTranslation.y
 
-                                    let newWidth = max(
-                                        0, newPointTRX - newPointTLX)
-                                    let newHeight = max(
-                                        0, newPointBRY - newPointTLY)
+            }
+            .onEnded { value in
+                let transformedTranslation = rotatePoint(
+                    CGPoint(
+                        x: value.translation.width, y: value.translation.height),
+                    by: -.degrees(Double(0.0))  // Reverse rotation to correctly align movement
+                )
 
-                                    let newPositionX =
-                                        self.position.x
-                                        - ((newWidth - self.size.width) / 2)
-                                    let newPositionY =
-                                        self.position.y
-                                        - ((newHeight - self.size.height) / 2)
+                viewOffset.width += transformedTranslation.x
+                viewOffset.height += transformedTranslation.y
+            }
+    }
 
-                                    self.position = CGPoint(
-                                        x: newPositionX, y: newPositionY)
-                                    self.size = CGSize(
-                                        width: newWidth, height: newHeight)
-                                }
-                        )
+    // Calculate corner positions
+    private func cornerPosition(for corner: Corner, in geometry: GeometryProxy)
+        -> CGPoint
+    {
+        switch corner {
+        case .topLeft:
+            return CGPoint(x: 0, y: 0)
+        case .topRight:
+            return CGPoint(x: geometry.size.width, y: 0)
+        case .bottomLeft:
+            return CGPoint(x: 0, y: geometry.size.height)
+        case .bottomRight:
+            return CGPoint(x: geometry.size.width, y: geometry.size.height)
+        }
+    }
 
-                    // Top-right circle
-                    Circle()
-                        .frame(width: 20, height: 20)
-                        .foregroundColor(.blue)
-                        .position(
-                            x: size.width + 20,
-                            y: 0
-                        )
-                        .gesture(
-                            DragGesture()
-                                .onChanged { gesture in
-                                    let newPointTRX = gesture.location.x - 10
-                                    let newPointTRY = gesture.location.y - 10
-                                    let newPointBLX = 0.0
-                                    let newPointBLY = size.height
+    private func updateRotation() -> some Gesture {
+        DragGesture()
+            .onChanged { v in
+                var theta =
+                    (atan2(
+                        v.location.x - self.length / 2,
+                        self.length / 2 - v.location.y)
+                        - atan2(
+                            v.startLocation.x - self.length / 2,
+                            self.length / 2 - v.startLocation.y)) * 180 / .pi
+                if theta < 0 { theta += 360 }
+                print("angle \(self.angle)");
+                self.angle = theta + self.lastAngle
+            }
+            .onEnded { v in
+              
+                self.lastAngle = self.angle
+            }
+    }
 
-                                    let newWidth = max(
-                                        0, newPointTRX - newPointBLX)
-                                    let newHeight = max(
-                                        0, newPointBLY - newPointTRY)
+    // Scaling gesture logic for each corner
+    private func dragGesture(for corner: Corner) -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+               
+                // Transform the drag translation based on the current rotation angle
+                let transformedTranslation = rotatePoint(
+                    CGPoint(
+                        x: value.translation.width, y: value.translation.height),
+                    by: -.degrees(Double(0.0))
+                )
 
-                                    let newPositionX =
-                                        self.position.x
-                                        + ((newWidth - self.size.width) / 2)
-                                    let newPositionY =
-                                        self.position.y
-                                        - ((newHeight - self.size.height) / 2)
-                                    self.size = CGSize(
-                                        width: newWidth, height: newHeight)
-                                    self.position = CGPoint(
-                                        x: newPositionX, y: newPositionY)
-                                }
-                        )
+                // Initialize variables for new dimensions
+                var newWidth = size.width
+                var newHeight = size.height
 
-                    // Bottom-left circle
-                    Circle()
-                        .frame(width: 20, height: 20)
-                        .foregroundColor(.blue)
-                        .position(
-                            x: 0,
-                            y: size.height + 20
-                        )
-                        .gesture(
-                            DragGesture()
-                                .onChanged { gesture in
-                                    let newPointBLX = gesture.location.x - 10
-                                    let newPointBLY = gesture.location.y - 10
-                                    let newPointTRX = size.width + 10
-                                    let newPointTRY = 0.0
+                // Use incremental changes instead of total translation
+                let deltaX = transformedTranslation.x
+                let deltaY = transformedTranslation.y
+                switch corner {
+                case .topLeft:
+                    newWidth -= deltaX
+                    newHeight -= deltaY
 
-                                    let newWidth = max(
-                                        0, newPointTRX - newPointBLX)
-                                    let newHeight = max(
-                                        0, newPointBLY - newPointTRY)
+                case .topRight:
+                    newWidth += deltaX
+                    newHeight -= deltaY
 
-                                    let newPositionX =
-                                        self.position.x
-                                        - ((newWidth - self.size.width) / 2)
-                                    let newPositionY =
-                                        self.position.y
-                                        + ((newHeight - self.size.height) / 2)
-                                    self.size = CGSize(
-                                        width: newWidth, height: newHeight)
-                                    self.position = CGPoint(
-                                        x: newPositionX, y: newPositionY)
-                                }
-                        )
+                case .bottomLeft:
+                    newWidth -= deltaX
+                    newHeight += deltaY
 
-                    // Bottom-right circle
-                    Circle()
-                        .frame(width: 20, height: 20)
-                        .foregroundColor(.blue)
-                        .position(
-                            x: size.width + 20,
-                            y: size.height + 20
-                        )
-                        .gesture(
-                            DragGesture()
-                                .onChanged { gesture in
-                                    let newPointBRX = gesture.location.x - 10
-                                    let newPointBRY = gesture.location.y - 10
-                                    let newPointTLX = 0.0
-                                    let newPointTLY = 0.0
-
-                                    let newWidth = max(
-                                        0, newPointBRX - newPointTLX)
-                                    let newHeight = max(
-                                        0, newPointBRY - newPointTLY)
-
-                                    let newPositionX =
-                                        self.position.x
-                                        + ((newWidth - self.size.width) / 2)
-                                    let newPositionY =
-                                        self.position.y
-                                        + ((newHeight - self.size.height) / 2)
-                                    self.size = CGSize(
-                                        width: newWidth, height: newHeight)
-                                    self.position = CGPoint(
-                                        x: newPositionX, y: newPositionY)
-                                }
-                        )
+                case .bottomRight:
+                    newWidth += deltaX
+                    newHeight += deltaY
 
                 }
 
-            }
-            .frame(width: size.width + 20, height: size.height + 20)
-            .background(Color.blue.opacity(0.1))
-            
-            .onTapGesture {
-                isFocused = true  // Focus the image on tap
-            }
+                print("\(deltaX) \(deltaY) \(newWidth), \(newHeight)")
+                // Constrain new width and height to minimum size
+                newWidth = max(50, newWidth)
+                newHeight = max(50, newHeight)
 
-        }.position(self.position)
-           
-           
+                // Update state
+                size = CGSize(width: newWidth, height: newHeight)
+            }
+    }
 
-       
+    private func rotatePoint(_ point: CGPoint, by angle: Angle) -> CGPoint {
+        let radians = CGFloat(angle.radians)
+        let x = point.x * cos(radians) - point.y * sin(radians)
+        let y = point.x * sin(radians) + point.y * cos(radians)
+        return CGPoint(x: x, y: y)
+    }
+
+    // Enum for identifying corners
+    private enum Corner {
+        case topLeft, topRight, bottomLeft, bottomRight
     }
 }
-
-/*  .gesture(
-        SimultaneousGesture(
-            DragGesture()
-                .onChanged { gesture in
-                    self.position = CGPoint(
-                        x: gesture.location.x,
-                        y: gesture.location.y
-                    )
-                },
-            RotationGesture()
-                .onChanged { angle in
-                    self.rotation = angle.degrees
-                }
-        )
-    )*/
-
-
-
-
-
-/* HStack {
- Spacer()
- Button(action: {
-     // Add your delete image logic here
-     self.path = nil  // Example: Clear the image path
-     self.isFocused = false
- }) {
-     Image(systemName: "xmark.circle.fill")
-         .resizable()
-         .frame(width: 30, height: 30)
-         .foregroundColor(.red)
- }
- Spacer()
-}
-
-.background(Color.white)
-.frame(width: size.width + 20, height: 50)
-.position(
-
- y: size.height + 5
-)*/
-
-

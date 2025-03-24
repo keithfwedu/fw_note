@@ -122,16 +122,17 @@ struct CanvasView: View {
                 handleDrop(providers: providers)
             }
 
-            ForEach($notePage.imageObjs) { $imageView in
-                InteractiveImageView(
-                    position: $imageView.position,
-                    size: $imageView.size,
+            ForEach($notePage.imageObjs) { $imageObj in
+                InteractiveImageView2(
+                    position: $imageObj.position,
+                    size: $imageObj.size,
                     selectMode: Binding<Bool>(
                         get: { canvasState.selectionModeIndex != 2 },
                         set: { _ in }  // No-op setter since the condition is derived
                     ),
-                    path: $imageView.path
+                    path: $imageObj.path
                         //rotation:  $imageView.rotation
+                    
                 )
 
             }
