@@ -33,7 +33,7 @@
 		B25CAA082D9163BC0024D14D /* Exceptions for "fw_note" folder in "fw_note" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Views/UIKit/MetalImageView.metal,
+				Views/UIKit/MetalImageView/MetalImageView.metal,
 			);
 			target = B27CDBFF2D8276A80039E783 /* fw_note */;
 		};
@@ -44,7 +44,7 @@
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			buildPhase = B27CDBFE2D8276A80039E783 /* Resources */;
 			membershipExceptions = (
-				Views/UIKit/MetalImageView.metal,
+				Views/UIKit/MetalImageView/MetalImageView.metal,
 			);
 		};
 /* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */

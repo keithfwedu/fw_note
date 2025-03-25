@@ -44,28 +44,72 @@ struct CanvasView: View {
 
             Canvas { context, size in
 
-                /*for image in notePage.imageStack {
+               
+            }
 
-                    var rectPath = Path()
-                    rectPath.addRect(image.rect)
+            .allowsHitTesting(canvasState.isCanvasInteractive)  // Toggle interaction
+            .onChange(of: canvasState.selectionModeIndex) {
+                newModeIndex in
+                handleModeChange(index: newModeIndex)
+            }
+            .gesture(
+                DragGesture()
+                    .onChanged(handleDragChange)
+                    .onEnded({ _ in handleDragEnded() })
+            )
+            .onAppear {
+                //canvasState.saveToUndo(forPageIndex: pageIndex)
+            }
+            .onDrop(of: ["public.image"], isTargeted: nil) { providers in
+                handleDrop(providers: providers)
+            }
+            .drawingGroup()
+            .clipped()
 
-                    // Fill the rectangle with a color
-                    // context.fill(rectPath, with: .color(.gray))  // Replace .gray with any color
+            ForEach($notePage.imageStack, id: \.id) { $imageObj in
+                InteractiveImageView(
+                    imageObj: $imageObj,
+                    selectMode: .constant(canvasState.selectionModeIndex != 2),  // Avoid binding if it's derived
+                    isFocused: .constant(focusedID == $imageObj.id),
+                    onTap: { id in
+                        focusedID = id
 
-                    // Highlight selected images
-                    if selectedImageObjIds.contains(
-                        image.id)
-                    {
-                        let selectionRect = image.rect.insetBy(
-                            dx: -2, dy: -2)
-                        var borderPath = Path()
-                        borderPath.addRect(selectionRect)
-                        context.stroke(
-                            borderPath, with: .color(.blue),
-                            style: StrokeStyle(lineWidth: 2))
+                    },
+                    onRemove: { id in
+                        if let index = notePage.imageStack.firstIndex(where: {
+                            $0.id == imageObj.id
+                        }) {
+                            notePage.imageStack.remove(at: index)
+                            noteFile.addToUndo(
+                                pageIndex: self.pageIndex,
+                                lineStack: self.notePage.lineStack,
+                                imageStack: self.notePage.imageStack)
+
+                        }
+                    },
+                    afterMove: { id in
+                        noteFile.addToUndo(
+                            pageIndex: self.pageIndex,
+                            lineStack: self.notePage.lineStack,
+                            imageStack: self.notePage.imageStack)
+                    },
+                    afterScale: { id in
+                        noteFile.addToUndo(
+                            pageIndex: self.pageIndex,
+                            lineStack: self.notePage.lineStack,
+                            imageStack: self.notePage.imageStack)
+                    },
+                    afterRotate: { id in
+                        noteFile.addToUndo(
+                            pageIndex: self.pageIndex,
+                            lineStack: self.notePage.lineStack,
+                            imageStack: self.notePage.imageStack)
                     }
-                }*/
+                )
 
+            }.clipped()
+
+            Canvas { context, size in
                 // Draw all lines
                 for line in notePage.lineStack {
                     var path = Path()
@@ -91,7 +135,7 @@ struct CanvasView: View {
                         }
                     }
                 }
-
+                
                 // Draw selection path if in select mode
                 if CanvasMode(
                     rawValue: canvasState.selectionModeIndex)
@@ -106,64 +150,12 @@ struct CanvasView: View {
                         selectionDrawing, with: .color(.green),
                         style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
                 }
+
             }
-            .allowsHitTesting(canvasState.isCanvasInteractive)  // Toggle interaction
-            .onChange(of: canvasState.selectionModeIndex) {
-                newModeIndex in
-                handleModeChange(index: newModeIndex)
-            }
-            .gesture(
-                DragGesture()
-                    .onChanged(handleDragChange)
-                    .onEnded({ _ in handleDragEnded() })
-            )
-            .onAppear {
-                //canvasState.saveToUndo(forPageIndex: pageIndex)
-            }
-            .onDrop(of: ["public.image"], isTargeted: nil) { providers in
-                handleDrop(providers: providers)
-            }
+            .allowsHitTesting(false)
             .drawingGroup()
-             .clipped()
+            .clipped()
 
-            ForEach($notePage.imageStack, id: \.id) { $imageObj in
-               InteractiveImageView(
-                    imageObj: $imageObj,
-                    selectMode: .constant(canvasState.selectionModeIndex != 2), // Avoid binding if it's derived
-                        isFocused: .constant(focusedID == $imageObj.id),
-                    onTap: { id in
-                        focusedID = id
-
-                    },
-                    onRemove: { id in
-                        if let index = notePage.imageStack.firstIndex(where: {
-                            $0.id == imageObj.id
-                        }) {
-                            notePage.imageStack.remove(at: index)
-                            noteFile.addToUndo(
-                                pageIndex: self.pageIndex, lineStack: self.notePage.lineStack,
-                                imageStack: self.notePage.imageStack)
-
-                        }
-                    },
-                    afterMove: {id in 
-                        noteFile.addToUndo(
-                            pageIndex: self.pageIndex, lineStack: self.notePage.lineStack,
-                            imageStack: self.notePage.imageStack)
-                    },
-                    afterScale: {id in 
-                        noteFile.addToUndo(
-                            pageIndex: self.pageIndex, lineStack: self.notePage.lineStack,
-                            imageStack: self.notePage.imageStack)
-                    },
-                    afterRotate: {id in 
-                        noteFile.addToUndo(
-                            pageIndex: self.pageIndex, lineStack: self.notePage.lineStack,
-                            imageStack: self.notePage.imageStack)
-                    }
-                )
-
-            }
         }.onTapGesture {
             focusedID = nil  // Reset focus if background is tapped
         }.onAppear {
