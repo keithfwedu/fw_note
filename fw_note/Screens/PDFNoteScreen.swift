@@ -28,13 +28,31 @@ struct PdfNoteScreen: View {
                         url: URL(fileURLWithPath: absolutePath))
                     {
                         // Embedding the PDFView
+
                         PDFCanvasView(
                             pdfDocument: pdfDocument,
                             canvasState: canvasState,
                             noteFile: noteFile,
                             displayDirection: $canvasState.displayDirection
                         ).frame(maxWidth: .infinity, maxHeight: .infinity)  // Ensure it occupies space
-                            .background(Color.green)
+
+                        // Sliding view
+                        VStack {
+                            ImagePickerView(
+                                noteFile: noteFile, canvasState: canvasState
+                            )
+                        }
+                        .frame(maxWidth: 300, maxHeight: .infinity)
+                        .background(Color.gray)
+                        .edgesIgnoringSafeArea(.vertical)  // Ensure it fills top and bottom
+                        .offset(
+                            x: canvasState.showImagePicker
+                                ? (UIScreen.main.bounds.width / 2) - 150
+                                : (UIScreen.main.bounds.width / 2) + 150
+                        )  // Animate horizontally
+                        .animation(
+                            .easeInOut(duration: 0.3),
+                            value: canvasState.showImagePicker)  // Smooth animation
 
                     } else {
                         Text("Unable to load PDF")

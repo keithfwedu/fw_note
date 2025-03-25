@@ -18,7 +18,7 @@ struct CanvasToolBar: View {
                 Button(action: toggleDisplayDirection) {
                     Image(
                         systemName: canvasState.displayDirection == .vertical
-                            ? "arrow.left.and.right" : "arrow.up.and.down")
+                        ? "arrow.up.and.down": "arrow.left.and.right" )
                 }
                 .frame(width: 40, height: 40)
                 .background(Color.gray.opacity(0.2))
@@ -66,12 +66,7 @@ struct CanvasToolBar: View {
                 )
                 .cornerRadius(8)
 
-                Button(action: addImage) {
-                    Image(systemName: "photo")
-                }
-                .frame(width: 40, height: 40)
-                .cornerRadius(8)
-                .disabled(canvasState.canvasMode == CanvasMode.laser)
+                
 
                 if canvasState.canvasMode != CanvasMode.laser {
                     Slider(value: $canvasState.penSize, in: 3...10, step: 0.1) {
@@ -108,6 +103,9 @@ struct CanvasToolBar: View {
                 }
                 .frame(width: 40)
 
+              
+                // Flexible Spacer
+                Spacer()
                 Button(action: redoAction) {
                     Image(systemName: "arrow.uturn.forward")
                 }
@@ -118,6 +116,12 @@ struct CanvasToolBar: View {
                     Image(systemName: "square.and.arrow.down")
                 }
                 .frame(width: 40, height: 40)
+                Button(action: addImage) {
+                    Image(systemName: "photo")
+                }
+                .frame(width: 40, height: 40)
+                .cornerRadius(8)
+                .disabled(canvasState.canvasMode == CanvasMode.laser)
             }
             .padding()
             .background(Color(UIColor.systemGray6))  // Toolbar background
@@ -145,7 +149,7 @@ struct CanvasToolBar: View {
     }
     func addImage() {
         print("addImage")
-        let newImageObj = ImageObj(
+       /* let newImageObj = ImageObj(
             id: UUID(),
             path: nil,
             position: CGPoint(x: 100, y: 100),
@@ -161,7 +165,8 @@ struct CanvasToolBar: View {
             ].lineStack,
             imageStack: self.noteFile.notePages[
                 self.canvasState.currentPageIndex
-            ].imageStack)
+            ].imageStack)*/
+        canvasState.showImagePicker.toggle()
     }
     func undoAction() {
         print("undoAction")

@@ -108,7 +108,7 @@ struct InteractiveImageView: View {
                     }
 
                     // ImageView inside the frame
-                  /* if let path = self.imageObj.path,
+                   /*if let path = self.imageObj.path,
                         let uiImage = UIImage(contentsOfFile: path)
                     {
                         Image(uiImage: uiImage)
@@ -125,8 +125,8 @@ struct InteractiveImageView: View {
                                 height: self.imageObj.size.height
                             )
                     }*/
-                    
-                  if let imagePath = Bundle.main.path(forResource: "example", ofType: "png") {
+                    //Bundle.main.path(forResource: "example", ofType: "png")
+                  if let imagePath =  self.imageObj.path {
                        MetalImageView(imagePath: imagePath, targetSize: CGSize(width: self.imageObj.size.width, height: self.imageObj.size.height))
                            .frame(width: self.imageObj.size.width, height: self.imageObj.size.height)
                    } else {

@@ -18,6 +18,7 @@ class CanvasState: ObservableObject {
     @Published var timerManager = TimerManager()
     @Published var canvasMode: CanvasMode = CanvasMode.draw
     @Published var eraseMode: EraseMode = EraseMode.rubber
+    @Published var showImagePicker: Bool = false
     
     //Configs
     @Published var penSize: CGFloat = 3.0
