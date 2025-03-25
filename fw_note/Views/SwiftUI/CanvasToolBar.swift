@@ -98,24 +98,26 @@ struct CanvasToolBar: View {
                 Spacer()
 
                 // Undo/Redo Buttons
-                Button(action: undoAction) {
-                    Image(systemName: "arrow.uturn.backward")
-                }
-                .frame(width: 40)
-
-              
-                // Flexible Spacer
-                Spacer()
-                Button(action: redoAction) {
-                    Image(systemName: "arrow.uturn.forward")
-                }
-                .frame(width: 40)
-
+               
                 // Save PDF Button
                 Button(action: savePDF) {
                     Image(systemName: "square.and.arrow.down")
                 }
                 .frame(width: 40, height: 40)
+              
+                // Flexible Spacer
+                Spacer()
+               
+            
+                Button(action: redoAction) {
+                    Image(systemName: "arrow.uturn.forward")
+                }
+                .frame(width: 40)
+
+                Button(action: undoAction) {
+                    Image(systemName: "arrow.uturn.backward")
+                }
+                .frame(width: 40)
                 Button(action: addImage) {
                     Image(systemName: "photo")
                 }
