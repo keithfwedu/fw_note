@@ -12,7 +12,7 @@ class NotePage: Identifiable, Codable, ObservableObject {
     @Published var pageIndex: Int
     @Published var lineStack: [LineObj] = []
     @Published var imageStack: [ImageObj] = []
-    @Published var gifStack: [GifObj] = []
+
 
 
     init(pageIndex: Int) {
@@ -31,7 +31,6 @@ class NotePage: Identifiable, Codable, ObservableObject {
         pageIndex = try container.decode(Int.self, forKey: .pageIndex)
         lineStack = try container.decode([LineObj].self, forKey: .lineStack)
         imageStack = try container.decode([ImageObj].self, forKey: .imageStack)
-        gifStack = try container.decode([GifObj].self, forKey: .gifStack)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -40,6 +39,6 @@ class NotePage: Identifiable, Codable, ObservableObject {
         try container.encode(pageIndex, forKey: .pageIndex)
         try container.encode(lineStack, forKey: .lineStack)
         try container.encode(imageStack, forKey: .imageStack)
-        try container.encode(gifStack, forKey: .gifStack)
+       
     }
 }

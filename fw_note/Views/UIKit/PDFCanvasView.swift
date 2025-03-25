@@ -8,14 +8,11 @@
 import PDFKit
 import SwiftUI
 
-import SwiftUI
-import PDFKit
-
 struct PDFCanvasView: UIViewRepresentable {
     let pdfDocument: PDFDocument
     var canvasState: CanvasState
     var noteFile: NoteFile
-    @Binding var displayDirection: PDFDisplayDirection // Bindable property to change display direction
+    @Binding var displayDirection: PDFDisplayDirection  // Bindable property to change display direction
 
     func makeUIView(context: Context) -> PDFView {
         let pdfView = PDFView()
@@ -26,7 +23,8 @@ struct PDFCanvasView: UIViewRepresentable {
         pdfView.usePageViewController(false)
 
         // Access the internal UIScrollView and configure two-finger scrolling
-        if let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }) as? UIScrollView {
+        if let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }
+        ) as? UIScrollView {
             scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
         }
@@ -51,7 +49,7 @@ struct PDFCanvasView: UIViewRepresentable {
     func updateUIView(_ uiView: PDFView, context: Context) {
         // Update the display direction dynamically
         uiView.displayDirection = displayDirection
-        uiView.layoutIfNeeded() // Ensure layout is updated if necessary
+        uiView.layoutIfNeeded()  // Ensure layout is updated if necessary
     }
 
     func makeCoordinator() -> Coordinator {
@@ -65,7 +63,7 @@ struct PDFCanvasView: UIViewRepresentable {
         let pdfDocument: PDFDocument
         private var canvasState: CanvasState
         var noteFile: NoteFile
-        var pageIndicatorLabel: UILabel? // Page indicator label to show current/total pages
+        var pageIndicatorLabel: UILabel?  // Page indicator label to show current/total pages
 
         init(
             pdfDocument: PDFDocument, noteFile: NoteFile,
@@ -84,31 +82,47 @@ struct PDFCanvasView: UIViewRepresentable {
                 if $0 is CanvasViewWrapper { $0.removeFromSuperview() }
             }
 
-            guard let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }) as? UIScrollView else { return }
+            guard
+                let scrollView = pdfView.subviews.first(where: {
+                    $0 is UIScrollView
+                }) as? UIScrollView
+            else { return }
+
+            let screenBounds = UIScreen.main.bounds
+            let screenCenter = CGPoint(
+                x: screenBounds.midX,
+                y: screenBounds.midY
+            )
 
             for pageIndex in 0..<document.pageCount {
                 guard let page = document.page(at: pageIndex) else { continue }
 
+                // Get the page's bounds in the PDFView's coordinate system
                 let pageBounds = page.bounds(for: .mediaBox)
                 let pageFrame = pdfView.convert(pageBounds, from: page)
 
-                if let renderedSubview = scrollView.subviews.first(where: { $0.frame.contains(pageFrame.origin) }) {
-                    let canvasViewWrapper = CanvasViewWrapper(
-                        frame: pageFrame,
-                        pageIndex: pageIndex,
-                        canvasState: canvasState,
-                        noteFile: noteFile,
-                        notePage: noteFile.notePages[pageIndex]
-                    )
-                    canvasViewWrapper.backgroundColor = UIColor.clear
-                    renderedSubview.addSubview(canvasViewWrapper)
-                }
+               
+                let canvasViewWrapper = CanvasViewWrapper(
+                    frame: pageFrame,
+                    pageIndex: pageIndex,
+                    canvasState: canvasState,
+                    noteFile: noteFile,
+                    notePage: noteFile.notePages[pageIndex]
+                )
+
+                canvasViewWrapper.backgroundColor = UIColor.clear
+                canvasViewWrapper.layer.position.x = screenCenter.x
+
+                scrollView.addSubview(canvasViewWrapper)
+
             }
         }
 
         func addPageIndicator(to pdfView: PDFView) {
             // Remove any existing page indicator first
-            pdfView.subviews.filter { $0 is UILabel }.forEach { $0.removeFromSuperview() }
+            pdfView.subviews.filter { $0 is UILabel }.forEach {
+                $0.removeFromSuperview()
+            }
 
             let label = UILabel()
             label.backgroundColor = UIColor.black.withAlphaComponent(0.7)
@@ -122,21 +136,26 @@ struct PDFCanvasView: UIViewRepresentable {
 
             // Position label at the bottom-left corner
             NSLayoutConstraint.activate([
-                label.leadingAnchor.constraint(equalTo: pdfView.leadingAnchor, constant: 16),
-                label.bottomAnchor.constraint(equalTo: pdfView.bottomAnchor, constant: -16),
+                label.leadingAnchor.constraint(
+                    equalTo: pdfView.leadingAnchor, constant: 16),
+                label.bottomAnchor.constraint(
+                    equalTo: pdfView.bottomAnchor, constant: -16),
                 label.widthAnchor.constraint(equalToConstant: 120),
-                label.heightAnchor.constraint(equalToConstant: 30)
+                label.heightAnchor.constraint(equalToConstant: 30),
             ])
 
             self.pageIndicatorLabel = label
-            updatePageIndicator(for: pdfView) // Update immediately
+            updatePageIndicator(for: pdfView)  // Update immediately
         }
 
         func updatePageIndicator(for pdfView: PDFView) {
-            guard let document = pdfView.document, let currentPage = pdfView.currentPage else { return }
-            let currentPageIndex = document.index(for: currentPage) + 1 // Page indices are 0-based
+            guard let document = pdfView.document,
+                let currentPage = pdfView.currentPage
+            else { return }
+            let currentPageIndex = document.index(for: currentPage) + 1  // Page indices are 0-based
             let totalPageCount = document.pageCount
-            pageIndicatorLabel?.text = "Page \(currentPageIndex) / \(totalPageCount)"
+            pageIndicatorLabel?.text =
+                "Page \(currentPageIndex) / \(totalPageCount)"
         }
 
         @objc func pageDidChange(notification: Notification) {

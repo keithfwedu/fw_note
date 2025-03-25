@@ -42,119 +42,181 @@ struct CanvasView: View {
                     .position(self.touchPoint!)  // Dynamically update circle position
             }
 
-            Canvas { context, size in
+            GeometryReader { geometry in
+                Canvas { context, size in
+                    /* for imageObj in notePage.imageStack {
+                        if let imagePath = Bundle.main.path(forResource: "example", ofType: "png"),
+                           let cgImage = UIImage(contentsOfFile: imagePath)?.cgImage {
+                            let rect = CGRect(
+                                x: imageObj.position.x - imageObj.size.width / 2,  // Center the image
+                                y: imageObj.position.y - imageObj.size.height / 2,
+                                width: imageObj.size.width,
+                                height: imageObj.size.height
+                            )
 
-               
-            }
+                            context.withCGContext { cgContext in
+                                // Save the current state of CGContext
+                                cgContext.saveGState()
 
-            .allowsHitTesting(canvasState.isCanvasInteractive)  // Toggle interaction
-            .onChange(of: canvasState.selectionModeIndex) {
-                newModeIndex in
-                handleModeChange(index: newModeIndex)
-            }
-            .gesture(
-                DragGesture()
-                    .onChanged(handleDragChange)
-                    .onEnded({ _ in handleDragEnded() })
-            )
-            .onAppear {
-                //canvasState.saveToUndo(forPageIndex: pageIndex)
-            }
-            .onDrop(of: ["public.image"], isTargeted: nil) { providers in
-                handleDrop(providers: providers)
-            }
-            .drawingGroup()
-            .clipped()
+                                // Translate to the center of the image
+                                cgContext.translateBy(x: imageObj.position.x, y: imageObj.position.y)
 
-            ForEach($notePage.imageStack, id: \.id) { $imageObj in
-                InteractiveImageView(
-                    imageObj: $imageObj,
-                    selectMode: .constant(canvasState.selectionModeIndex != 2),  // Avoid binding if it's derived
-                    isFocused: .constant(focusedID == $imageObj.id),
-                    onTap: { id in
-                        focusedID = id
+                                // Normalize the angle to 0–360
+                                var normalizedAngle = imageObj.angle.truncatingRemainder(dividingBy: 360)
+                                if normalizedAngle < 0 {
+                                    normalizedAngle += 360
+                                }
 
-                    },
-                    onRemove: { id in
-                        if let index = notePage.imageStack.firstIndex(where: {
-                            $0.id == imageObj.id
-                        }) {
-                            notePage.imageStack.remove(at: index)
+                                // Convert to radians
+                                let radians = CGFloat(normalizedAngle) * .pi / 180
+
+                                // Apply rotation (in radians)
+                                cgContext.rotate(by: radians)
+
+                                // Flip the Y-axis to correct UIImage flipping
+                                cgContext.scaleBy(x: 1.0, y: -1.0)
+
+                                // Draw the image centered around (0, 0)
+                                cgContext.draw(cgImage, in: CGRect(
+                                    origin: CGPoint(x: -rect.size.width / 2, y: -rect.size.height / 2),
+                                    size: rect.size
+                                ))
+
+                                // Restore CGContext state
+                                cgContext.restoreGState()
+                            }
+                        }
+                    }*/
+
+                    // Draw selection path if in select mode
+                    if CanvasMode(
+                        rawValue: canvasState.selectionModeIndex)
+                        == .lasso
+                        && !selectionPaths.isEmpty
+                    {
+                        var selectionDrawing = Path()
+                        selectionDrawing.addLines(
+                            selectionPaths)
+                        selectionDrawing.closeSubpath()
+                        context.stroke(
+                            selectionDrawing, with: .color(.green),
+                            style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
+                    }
+
+                }
+                .background(.blue.opacity(0.1))
+                .allowsHitTesting(canvasState.isCanvasInteractive)  // Toggle interaction
+                .onChange(of: canvasState.selectionModeIndex) {
+                    newModeIndex in
+                    handleModeChange(index: newModeIndex)
+                }
+
+                .gesture(
+                    DragGesture(minimumDistance: 0)  // Handles both taps and drags
+                        .onChanged { value in
+                            focusedID = nil
+
+                            /*if value.translation == .zero {
+                                // Handle as a tap gesture
+                                handleTap(at: value.startLocation)
+                            } else {
+                                // Handle as a drag gesture
+                                handleDragChange(dragValue: value)
+                            }*/
+
+                            handleDragChange(dragValue: value)
+                        }
+                        .onEnded { value in
+                            handleDragEnded()  // Finalize drag action
+                        }
+                )
+
+                .onDrop(of: ["public.image"], isTargeted: nil) { providers in
+                    handleDrop(providers: providers)
+                }
+                .drawingGroup()
+                .clipped()
+
+                ForEach($notePage.imageStack, id: \.id) { $imageObj in
+                    InteractiveImageView(
+                        imageObj: $imageObj,
+                        selectMode: .constant(
+                            canvasState.selectionModeIndex != 2),  // Avoid binding if it's derived
+                        isFocused: .constant(focusedID == $imageObj.id),
+                        frameSize: geometry.size,
+                        onTap: { id in
+                            focusedID = id
+
+                        },
+                        onRemove: { id in
+                            if let index = notePage.imageStack.firstIndex(
+                                where: {
+                                    $0.id == imageObj.id
+                                })
+                            {
+                                notePage.imageStack.remove(at: index)
+                                noteFile.addToUndo(
+                                    pageIndex: self.pageIndex,
+                                    lineStack: self.notePage.lineStack,
+                                    imageStack: self.notePage.imageStack)
+
+                            }
+                        },
+                        afterMove: { id in
                             noteFile.addToUndo(
                                 pageIndex: self.pageIndex,
                                 lineStack: self.notePage.lineStack,
                                 imageStack: self.notePage.imageStack)
-
+                        },
+                        afterScale: { id in
+                            noteFile.addToUndo(
+                                pageIndex: self.pageIndex,
+                                lineStack: self.notePage.lineStack,
+                                imageStack: self.notePage.imageStack)
+                        },
+                        afterRotate: { id in
+                            noteFile.addToUndo(
+                                pageIndex: self.pageIndex,
+                                lineStack: self.notePage.lineStack,
+                                imageStack: self.notePage.imageStack)
                         }
-                    },
-                    afterMove: { id in
-                        noteFile.addToUndo(
-                            pageIndex: self.pageIndex,
-                            lineStack: self.notePage.lineStack,
-                            imageStack: self.notePage.imageStack)
-                    },
-                    afterScale: { id in
-                        noteFile.addToUndo(
-                            pageIndex: self.pageIndex,
-                            lineStack: self.notePage.lineStack,
-                            imageStack: self.notePage.imageStack)
-                    },
-                    afterRotate: { id in
-                        noteFile.addToUndo(
-                            pageIndex: self.pageIndex,
-                            lineStack: self.notePage.lineStack,
-                            imageStack: self.notePage.imageStack)
-                    }
-                )
+                    )
 
-            }.clipped()
+                }.clipped()
 
-            Canvas { context, size in
-                // Draw all lines
-                for line in notePage.lineStack {
-                    var path = Path()
-                    path.addLines(line.points)
+                Canvas { context, size in
 
-                    if selectedLineStack.contains(where: {
-                        $0.id == line.id
-                    }) {
-                        context.stroke(
-                            path, with: .color(.blue),
-                            style: StrokeStyle(lineWidth: line.lineWidth))
-                    } else {
-                        if line.mode == .draw {
-                            context.blendMode = .normal
+                    // Draw all lines
+                    for line in notePage.lineStack {
+                        var path = Path()
+                        path.addLines(line.points)
+
+                        if selectedLineStack.contains(where: {
+                            $0.id == line.id
+                        }) {
                             context.stroke(
-                                path, with: .color(line.color),
+                                path, with: .color(.blue),
                                 style: StrokeStyle(lineWidth: line.lineWidth))
-                        } else if line.mode == .eraser {
-                            context.blendMode = .clear
-                            context.stroke(
-                                path, with: .color(line.color),
-                                style: StrokeStyle(lineWidth: line.lineWidth))
+                        } else {
+                            if line.mode == .draw {
+                                context.blendMode = .normal
+                                context.stroke(
+                                    path, with: .color(line.color),
+                                    style: StrokeStyle(
+                                        lineWidth: line.lineWidth))
+                            } else if line.mode == .eraser {
+                                context.blendMode = .clear
+                                context.stroke(
+                                    path, with: .color(line.color),
+                                    style: StrokeStyle(
+                                        lineWidth: line.lineWidth))
+                            }
                         }
                     }
-                }
-                
-                // Draw selection path if in select mode
-                if CanvasMode(
-                    rawValue: canvasState.selectionModeIndex)
-                    == .lasso
-                    && !selectionPaths.isEmpty
-                {
-                    var selectionDrawing = Path()
-                    selectionDrawing.addLines(
-                        selectionPaths)
-                    selectionDrawing.closeSubpath()
-                    context.stroke(
-                        selectionDrawing, with: .color(.green),
-                        style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
-                }
+
+                }.allowsHitTesting(false)
 
             }
-            .allowsHitTesting(false)
-            .drawingGroup()
-            .clipped()
 
         }.onTapGesture {
             focusedID = nil  // Reset focus if background is tapped
@@ -162,6 +224,28 @@ struct CanvasView: View {
             noteFile.addToUndo(
                 pageIndex: self.pageIndex, lineStack: self.notePage.lineStack,
                 imageStack: self.notePage.imageStack)
+        }
+    }
+
+    // Modularized Tap Handling Function
+    private func handleTap(at location: CGPoint) {
+
+        // Perform hit-testing for images
+        for imageObj in notePage.imageStack {
+            let rect = CGRect(
+                x: imageObj.position.x - imageObj.size.width / 2,
+                y: imageObj.position.y - imageObj.size.height / 2,
+                width: imageObj.size.width,
+                height: imageObj.size.height
+            )
+
+            if rect.contains(location) {
+                print("Tapped on image: \(imageObj)")
+                focusedID = imageObj.id
+
+                // Exit early after finding the tapped image
+                return
+            }
         }
     }
 
@@ -185,7 +269,6 @@ struct CanvasView: View {
                             image: uiImage,
                             targetSize: CGSize(width: 500, height: 500))
                         {
-                            print("imagePath: \(imagePath)")
                             let newImageObj = ImageObj(
                                 id: UUID(),
                                 path: imagePath,
@@ -271,7 +354,7 @@ struct CanvasView: View {
     private func handleDragChange(dragValue: DragGesture.Value) {
 
         self.touchPoint = dragValue.location
-        print("drag \(self.touchPoint)")
+
         isTouching = true
         if let mode = CanvasMode(rawValue: canvasState.selectionModeIndex) {
             switch mode {

@@ -7,12 +7,13 @@
 import SwiftUI
 
 struct InteractiveImageView: View {
-
+    
     @Binding var imageObj: ImageObj
 
     @Binding var selectMode: Bool
     @Binding var isFocused: Bool
 
+    var frameSize: CGSize
     var onTap: (_ id: UUID) -> Void
     var onRemove: (_ id: UUID) -> Void
     var afterMove: (_ id: UUID) -> Void
@@ -36,7 +37,7 @@ struct InteractiveImageView: View {
                                 .fill(Color.blue)
                                 .frame(width: 20, height: 20)
                         }
-                        .frame(width: 80, height: 80)
+                        .frame(width: 40, height: 40)
                         .background(.clear)
                         .contentShape(Rectangle())
                         .gesture(dragGesture(for: .topLeft))
@@ -51,7 +52,7 @@ struct InteractiveImageView: View {
                                 .fill(Color.blue)
                                 .frame(width: 20, height: 20)
                         }
-                        .frame(width: 80, height: 80)
+                        .frame(width: 40, height: 40)
                         .background(.clear)
                         .contentShape(Rectangle())
                         .gesture(dragGesture(for: .topRight))
@@ -65,7 +66,7 @@ struct InteractiveImageView: View {
                                 .fill(Color.blue)
                                 .frame(width: 20, height: 20)
                         }
-                        .frame(width: 80, height: 80)
+                        .frame(width: 40, height: 40)
                         .background(.clear)
                         .contentShape(Rectangle())
                         .gesture(dragGesture(for: .bottomLeft))
@@ -80,7 +81,7 @@ struct InteractiveImageView: View {
                                 .fill(Color.blue)
                                 .frame(width: 20, height: 20)
                         }
-                        .frame(width: 80, height: 80)
+                        .frame(width: 40, height: 40)
                         .background(.clear)
                         .contentShape(Rectangle())
                         .gesture(dragGesture(for: .bottomRight))
@@ -125,20 +126,21 @@ struct InteractiveImageView: View {
                             )
                     }*/
                     
-                   if let imagePath = Bundle.main.path(forResource: "example", ofType: "png") {
+                  if let imagePath = Bundle.main.path(forResource: "example", ofType: "png") {
                        MetalImageView(imagePath: imagePath, targetSize: CGSize(width: self.imageObj.size.width, height: self.imageObj.size.height))
                            .frame(width: self.imageObj.size.width, height: self.imageObj.size.height)
                    } else {
                        Text("Image not found") // Fallback in case the image cannot be loaded
                    }
                 }
+               //.background(.blue.opacity(0.1))
                 .border(Color.blue, width: selectMode && isFocused ? 1 : 0)  // Border syncs with scaling
                 .frame(
                     width: self.imageObj.size.width,
                     height: self.imageObj.size.height
                 )
                 .rotationEffect(.degrees(Double(self.imageObj.angle)))
-                .gesture(updateMovement())  // Gesture for movement
+                .gesture(updateMovement(screenSize: frameSize))  // Gesture for movement
                 .allowsHitTesting(selectMode)
             }
 
@@ -189,38 +191,50 @@ struct InteractiveImageView: View {
 
     }
 
-    private func updateMovement() -> some Gesture {
+    private func updateMovement(screenSize: CGSize) -> some Gesture {
         DragGesture()
             .onChanged { value in
-
                 if !isFocused {
                     onTap(self.imageObj.id)
                 }
+
                 let transformedTranslation = rotatePoint(
                     CGPoint(
-                        x: value.translation.width, y: value.translation.height),
+                        x: value.translation.width,
+                        y: value.translation.height
+                    ),
                     by: -.degrees(Double(0.0))  // Reverse rotation to correctly align movement
                 )
 
-                // Update the view offset based on the drag translation
-                self.imageObj.position.x += transformedTranslation.x
-                self.imageObj.position.y += transformedTranslation.y
+                // Update position with constraints
+                let newX = self.imageObj.position.x + transformedTranslation.x
+                let newY = self.imageObj.position.y + transformedTranslation.y
 
+                // Clamp the new position to stay within the screen or parent bounds
+                self.imageObj.position.x = min(max(newX, 0), screenSize.width)
+                self.imageObj.position.y = min(max(newY, 0), screenSize.height)
             }
             .onEnded { value in
                 let transformedTranslation = rotatePoint(
                     CGPoint(
-                        x: value.translation.width, y: value.translation.height),
+                        x: value.translation.width,
+                        y: value.translation.height
+                    ),
                     by: -.degrees(Double(0.0))  // Reverse rotation to correctly align movement
                 )
 
-                self.imageObj.position.x += transformedTranslation.x
-                self.imageObj.position.y += transformedTranslation.y
+                // Update position with constraints
+                let newX = self.imageObj.position.x + transformedTranslation.x
+                let newY = self.imageObj.position.y + transformedTranslation.y
+
+                // Clamp the new position to stay within the screen or parent bounds
+                self.imageObj.position.x = min(max(newX, 0), screenSize.width)
+                self.imageObj.position.y = min(max(newY, 0), screenSize.height)
 
                 afterMove(imageObj.id)
             }
     }
-    
+
     /*private func updateMovement() -> some Gesture {
         DragGesture()
             .onChanged { value in
@@ -310,7 +324,7 @@ struct InteractiveImageView: View {
                             v.startLocation.x - self.length / 2,
                             self.length / 2 - v.startLocation.y)) * 180 / .pi
                 if theta < 0 { theta += 360 }
-                print("angle \(self.imageObj.angle)")
+                //print("angle \(self.imageObj.angle)")
                 self.imageObj.angle = theta + self.lastAngle
             }
             .onEnded { v in
@@ -362,7 +376,7 @@ struct InteractiveImageView: View {
 
                 }
 
-                print("\(deltaX) \(deltaY) \(newWidth), \(newHeight)")
+           
                 // Constrain new width and height to minimum size
                 newWidth = max(50, newWidth)
                 newHeight = max(50, newHeight)

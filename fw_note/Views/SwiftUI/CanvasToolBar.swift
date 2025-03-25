@@ -43,7 +43,7 @@ struct CanvasToolBar: View {
                 .cornerRadius(8)
 
                 Button(action: selectEraserTool) {
-                    Image(systemName: "eraser")
+                    Image(systemName: "trash")
                 }
                 .frame(width: 40, height: 40)
                 .background(
@@ -53,7 +53,7 @@ struct CanvasToolBar: View {
                 .cornerRadius(8)
 
                 Button(action: selectEraserFillTool) {
-                    Image(systemName: "eraser.fill")
+                    Image(systemName: "trash")
                 }
                 .frame(width: 40, height: 40)
                 .background(
