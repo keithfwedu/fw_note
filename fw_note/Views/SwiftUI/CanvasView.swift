@@ -15,10 +15,17 @@ struct CanvasView: View {
     @ObservedObject var notePage: NotePage
 
     @State var focusedID: UUID?
+    @State var laserStack:[LineObj] = []
     @State var selectionPaths: [CGPoint] = []
     @State var selectedImageObjIds: [UUID] = []
     @State var selectedGifObjIds: [UUID] = []
     @State var selectedLineStack: [LineObj] = []
+    
+    @State var laserOpacity: Double = 1.0
+    @State var laserTimerManager = LaserTimerManager()
+   
+    @State var lastDrawLaserPosition: CGPoint? = nil
+   
 
     @State var isTouching: Bool = false
     @State var isLassoCreated: Bool = false
@@ -44,6 +51,32 @@ struct CanvasView: View {
 
             GeometryReader { geometry in
                 Canvas { context, size in
+                    
+                    for laser in laserStack {
+                        var path = Path()
+                        path.addLines(laser.points)
+                        
+                        // Simulate the glow effect with a red aura
+                        context.blendMode = .plusLighter  // Additive blending for glow effects
+                      
+                            context.stroke(
+                                path,
+                                with: .color(Color.red.opacity(laserOpacity)),
+                                style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round)
+                            )
+                       
+                        
+                        // Render the core white laser beam
+                        context.blendMode = .normal
+                        context.stroke(
+                            path,
+                            with: .color(.white.opacity(laserOpacity)),
+                            style: StrokeStyle(lineWidth: laser.lineWidth, lineCap: .round, lineJoin: .round)
+                        )
+                    }
+
+
+
                     /* for imageObj in notePage.imageStack {
                         if let imagePath = Bundle.main.path(forResource: "example", ofType: "png"),
                            let cgImage = UIImage(contentsOfFile: imagePath)?.cgImage {
@@ -213,6 +246,9 @@ struct CanvasView: View {
                             }
                         }
                     }
+                    
+                    
+                    
 
                 }.allowsHitTesting(false)
 
@@ -365,7 +401,7 @@ struct CanvasView: View {
             case .lasso:  // Select Mode
                 handleSelection(dragValue: dragValue)
             case .laser:  // Laser Mode
-                print("Laser Mode")
+                handleLaser(dragValue: dragValue)
             }
         } else {
             print("Invalid mode selected.")
@@ -375,6 +411,7 @@ struct CanvasView: View {
     private func handleDragEnded() {
         print("Erase Mode Gesture Ended")
         lastDrawPosition = nil
+        lastDrawLaserPosition = nil
         isTouching = false
 
         if let mode = CanvasMode(rawValue: canvasState.selectionModeIndex) {
@@ -391,7 +428,6 @@ struct CanvasView: View {
                     pageIndex: pageIndex, lineStack: notePage.lineStack,
                     imageStack: nil)
             case .lasso:  // Select Mode
-
                 if !selectionPaths.isEmpty
                     && isLassoCreated == false
                 {
@@ -414,12 +450,34 @@ struct CanvasView: View {
                             selectedImages: selectedImageObjIds)
                 }
             case .laser:  // Laser Mode
-                print("Laser Mode")
+              
+               
+                laserTimerManager.setLaserTimer(onFadout: {
+                    if(lastDrawLaserPosition == nil) {
+                        fadeOutLasers()
+                    }
+                })
+
+                
             }
         } else {
             print("Invalid mode selected.")
         }
     }
+    
+    private func fadeOutLasers() {
+        laserOpacity = 1;
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+            laserOpacity -= 0.3
+
+            if laserOpacity <= 0 {
+                laserOpacity = 1.0;
+                timer.invalidate()
+                laserStack = [] // Clear the stack when all lasers have faded
+            }
+        }
+    }
+
 
     private func findCurrentDrawingLine() -> LineObj? {
         guard let drawingLineID = currentDrawingLineID else {
@@ -474,6 +532,37 @@ struct CanvasView: View {
         } else {
             lastDrawPosition = dragValue.location
         }
+    }
+    
+    private func handleLaser(dragValue: DragGesture.Value) {
+         if lastDrawLaserPosition == nil {
+            // Start a new stroke when drag begins
+            print("First drag detected for a new Laser")
+            let newLine = LineObj(
+                color: Color.white,
+                points: [dragValue.location],
+                lineWidth: canvasState.penSize,
+                mode: .draw
+            )
+            laserStack.append(newLine)  // Add a new line
+           
+        } else {
+            // Add points to the current stroke
+            print("drag detected for a new Laser")
+            if let lastLine = laserStack.last {
+                let interpolatedPoints = PointHelper.interpolatePoints(
+                    from: lastLine.points.last ?? dragValue.location,
+                    to: dragValue.location
+                )
+                let lastIndex: Int = laserStack.count - 1
+                laserStack[lastIndex].points.append(
+                    contentsOf: interpolatedPoints)
+            }
+        }
+
+
+        lastDrawLaserPosition = dragValue.location
+     
     }
 
     private func processLineForTransformation(_ line: LineObj) {

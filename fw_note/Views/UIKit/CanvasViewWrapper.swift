@@ -10,35 +10,35 @@ import SwiftUI
 import UIKit
 
 class CanvasViewWrapper: UIView {
+    var pageIndex: Int
+    private var hostingController: UIHostingController<CanvasView>?
 
-        private var hostingController: UIHostingController<CanvasView>?
+    init(frame: CGRect, pageIndex: Int, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage) {
+        self.pageIndex = pageIndex // Store the page index
+        super.init(frame: frame)
 
-        init(frame: CGRect, pageIndex: Int, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage) {
-            super.init(frame: frame)
-            
-            // Create the SwiftUI `CanvasView` with the necessary properties
-            let canvasView = CanvasView(pageIndex: pageIndex, canvasState: canvasState, noteFile: noteFile, notePage: notePage)
-            
-            // Embed the SwiftUI `CanvasView` in a `UIHostingController`
-            let hostingController = UIHostingController(rootView: canvasView)
-            self.hostingController = hostingController
-            
-            // Add the hosting controller's view as a child of this wrapper
-            if let hostingView = hostingController.view {
-                hostingView.frame = self.bounds
-                hostingView.backgroundColor = .clear // Ensure transparent background
-                hostingView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-                self.addSubview(hostingView)
-            }
-        }
+        let canvasView = CanvasView(
+            pageIndex: pageIndex,
+            canvasState: canvasState,
+            noteFile: noteFile,
+            notePage: notePage
+        )
 
-        required init?(coder: NSCoder) {
-            fatalError("init(coder:) has not been implemented")
-        }
-
-        override func layoutSubviews() {
-            super.layoutSubviews()
-            // Ensure the hosting controller's view matches the size of the wrapper
-            hostingController?.view.frame = self.bounds
+        hostingController = UIHostingController(rootView: canvasView)
+        if let hostingView = hostingController?.view {
+            hostingView.frame = self.bounds
+            hostingView.backgroundColor = .clear
+            hostingView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            self.addSubview(hostingView)
         }
     }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        hostingController?.view.frame = self.bounds
+    }
+}

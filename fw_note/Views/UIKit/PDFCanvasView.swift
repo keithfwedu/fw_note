@@ -76,7 +76,7 @@ struct PDFCanvasView: UIViewRepresentable {
 
         func addCanvasesToPages(pdfView: PDFView) {
             guard let document = pdfView.document else { return }
-
+           
             // Remove existing custom canvases to avoid duplication
             pdfView.subviews.forEach {
                 if $0 is CanvasViewWrapper { $0.removeFromSuperview() }
@@ -93,14 +93,15 @@ struct PDFCanvasView: UIViewRepresentable {
                 x: screenBounds.midX,
                 y: screenBounds.midY
             )
-
+            
+        
             for pageIndex in 0..<document.pageCount {
                 guard let page = document.page(at: pageIndex) else { continue }
 
                 // Get the page's bounds in the PDFView's coordinate system
                 let pageBounds = page.bounds(for: .mediaBox)
                 let pageFrame = pdfView.convert(pageBounds, from: page)
-
+               
                
                 let canvasViewWrapper = CanvasViewWrapper(
                     frame: pageFrame,
@@ -109,11 +110,15 @@ struct PDFCanvasView: UIViewRepresentable {
                     noteFile: noteFile,
                     notePage: noteFile.notePages[pageIndex]
                 )
-
+               
                 canvasViewWrapper.backgroundColor = UIColor.clear
-                canvasViewWrapper.layer.position.x = screenCenter.x
+                //canvasViewWrapper.layer.position.x = screenCenter.x
 
-                scrollView.addSubview(canvasViewWrapper)
+                pdfView.documentView!.addSubview(canvasViewWrapper)
+                canvasViewWrapper.layer.zPosition = 1
+              
+                //scrollView.subviews.first?.bringSubviewToFront(canvasViewWrapper)
+               // scrollView.addSubview(canvasViewWrapper)
 
             }
         }

@@ -34,7 +34,8 @@ struct PdfNoteScreen: View {
                             canvasState: canvasState,
                             noteFile: noteFile,
                             displayDirection: $canvasState.displayDirection
-                        )
+                        ).frame(maxWidth: .infinity, maxHeight: .infinity) // Ensure it occupies space
+                            .background(Color.green)
 
                     } else {
                         Text("Unable to load PDF")
@@ -47,12 +48,12 @@ struct PdfNoteScreen: View {
                         .font(.headline)
                 }
 
-                if canvasState.selectionModeIndex == 3 {
+                /*if canvasState.selectionModeIndex == 3 {
                     LaserCanvasView()
                         .allowsHitTesting(true)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                }
+                }*/
 
             }
         }.navigationTitle(noteFile.title) // Set the navigation title

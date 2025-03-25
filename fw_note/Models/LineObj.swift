@@ -12,6 +12,7 @@ struct LineObj: Identifiable, Codable, Equatable {
     var color: Color
     var points: [CGPoint]
     var lineWidth: CGFloat
+    var opacity: Double = 1.0
     var mode: CanvasMode
 
     // Equatable conformance
