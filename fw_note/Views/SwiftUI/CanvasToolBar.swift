@@ -107,15 +107,12 @@ struct CanvasToolBar: View {
               
                 // Flexible Spacer
                 Spacer()
-               
-            
-                Button(action: redoAction) {
-                    Image(systemName: "arrow.uturn.forward")
-                }
-                .frame(width: 40)
-
                 Button(action: undoAction) {
                     Image(systemName: "arrow.uturn.backward")
+                }
+                .frame(width: 40)
+                Button(action: redoAction) {
+                    Image(systemName: "arrow.uturn.forward")
                 }
                 .frame(width: 40)
                 Button(action: addImage) {
