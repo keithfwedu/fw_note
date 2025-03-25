@@ -7,17 +7,56 @@
 import SwiftUI
 
 class EraseHelper {
-    static func eraseLines(lines: [LineObj], dragValue: DragGesture.Value, eraserRadius: CGFloat = 8) -> [LineObj] {
+    static func eraseLineObjs(
+        lines: [LineObj], dragValue: DragGesture.Value,
+        eraserRadius: CGFloat = 8
+    ) -> [LineObj] {
+        let adjustedLocation = dragValue.location
+        var updatedLines: [LineObj] = []
+
+        for line in lines {
+            var isErased = false  // Flag to determine if the line should be erased
+
+            // Iterate through consecutive pairs of points in the line (segments)
+
+            let interpolatedPoints = interpolatePoints(
+                points: line.points, maxDistance: eraserRadius/10)
+
+            for point in interpolatedPoints {
+                let currentDistance = PointHelper.distance(
+                    point, adjustedLocation)
+
+                if currentDistance <= eraserRadius {
+                    isErased = true
+                    break
+                }
+            }
+
+            // Add the line to the updatedLines array only if it should not be erased
+            if !isErased {
+                updatedLines.append(line)
+            }
+        }
+
+        return updatedLines
+    }
+
+    static func eraseLines(
+        lines: [LineObj], dragValue: DragGesture.Value,
+        eraserRadius: CGFloat = 8
+    ) -> [LineObj] {
         let adjustedLocation = dragValue.location
         var updatedLines: [LineObj] = []
 
         for line in lines {
             // Step 1: Interpolate points to ensure there are no large gaps
-            let interpolatedPoints = interpolatePoints(points: line.points, maxDistance: eraserRadius / 2)
+            let interpolatedPoints = interpolatePoints(
+                points: line.points, maxDistance: eraserRadius / 2)
             var newSegments: [[CGPoint]] = [[]]
 
             for point in interpolatedPoints {
-                let currentDistance = PointHelper.distance(point, adjustedLocation)
+                let currentDistance = PointHelper.distance(
+                    point, adjustedLocation)
 
                 if currentDistance > eraserRadius {
                     // Point is outside the eraser radius, add it to the current segment
@@ -25,7 +64,7 @@ class EraseHelper {
                 } else {
                     // Point is within the eraser radius, split the line
                     if !newSegments[newSegments.count - 1].isEmpty {
-                        newSegments.append([]) // Start a new segment
+                        newSegments.append([])  // Start a new segment
                     }
                 }
             }
@@ -45,9 +84,11 @@ class EraseHelper {
 
         return updatedLines
     }
-    
-    static func interpolatePoints(points: [CGPoint], maxDistance: CGFloat) -> [CGPoint] {
-        guard points.count > 1 else { return points } // Return as-is if there are no points to interpolate
+
+    static func interpolatePoints(points: [CGPoint], maxDistance: CGFloat)
+        -> [CGPoint]
+    {
+        guard points.count > 1 else { return points }  // Return as-is if there are no points to interpolate
         var interpolatedPoints: [CGPoint] = []
 
         for i in 0..<points.count - 1 {
@@ -69,11 +110,9 @@ class EraseHelper {
             }
         }
 
-        interpolatedPoints.append(points.last!) // Add the final point
+        interpolatedPoints.append(points.last!)  // Add the final point
         return interpolatedPoints
     }
-
-
 
     /*static func eraseLines(lines: [LineObj], dragValue: DragGesture.Value) -> [LineObj] {
         let adjustedLocation = dragValue.location  // Adjust location if necessary
@@ -112,6 +151,5 @@ class EraseHelper {
 
         return updatedLines
     }*/
-    
-  
+
 }

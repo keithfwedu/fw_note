@@ -52,28 +52,7 @@ struct CanvasView: View {
             GeometryReader { geometry in
                 Canvas { context, size in
                     
-                    for laser in laserStack {
-                        var path = Path()
-                        path.addLines(laser.points)
-                        
-                        // Simulate the glow effect with a red aura
-                        context.blendMode = .plusLighter  // Additive blending for glow effects
-                      
-                            context.stroke(
-                                path,
-                                with: .color(Color.red.opacity(laserOpacity)),
-                                style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round)
-                            )
-                       
-                        
-                        // Render the core white laser beam
-                        context.blendMode = .normal
-                        context.stroke(
-                            path,
-                            with: .color(.white.opacity(laserOpacity)),
-                            style: StrokeStyle(lineWidth: laser.lineWidth, lineCap: .round, lineJoin: .round)
-                        )
-                    }
+                   
 
 
 
@@ -122,8 +101,7 @@ struct CanvasView: View {
                     }*/
 
                     // Draw selection path if in select mode
-                    if CanvasMode(
-                        rawValue: canvasState.selectionModeIndex)
+                    if canvasState.canvasMode
                         == .lasso
                         && !selectionPaths.isEmpty
                     {
@@ -138,10 +116,10 @@ struct CanvasView: View {
 
                 }
                 .background(.blue.opacity(0.1))
-                .allowsHitTesting(canvasState.isCanvasInteractive)  // Toggle interaction
-                .onChange(of: canvasState.selectionModeIndex) {
-                    newModeIndex in
-                    handleModeChange(index: newModeIndex)
+                .allowsHitTesting(true)  // Toggle interaction
+                .onChange(of: canvasState.canvasMode) {
+                    newMode in
+                    handleModeChange(mode: newMode)
                 }
 
                 .gesture(
@@ -174,7 +152,7 @@ struct CanvasView: View {
                     InteractiveImageView(
                         imageObj: $imageObj,
                         selectMode: .constant(
-                            canvasState.selectionModeIndex != 2),  // Avoid binding if it's derived
+                            canvasState.canvasMode != CanvasMode.lasso),  // Avoid binding if it's derived
                         isFocused: .constant(focusedID == $imageObj.id),
                         frameSize: geometry.size,
                         onTap: { id in
@@ -247,7 +225,27 @@ struct CanvasView: View {
                         }
                     }
                     
-                    
+                    for laser in laserStack {
+                        var path = Path()
+                        path.addLines(laser.points)
+                        
+                        // Simulate the glow effect with a red aura
+                        context.blendMode = .plusLighter  // Additive blending for glow effects
+                
+                       context.stroke(
+                            path,
+                            with: .color(Color.red.opacity(laserOpacity)),
+                            style: StrokeStyle(lineWidth: 9, lineCap: .round, lineJoin: .round)
+                        )
+             
+                        // Render the core white laser beam
+                        context.blendMode = .normal
+                        context.stroke(
+                            path,
+                            with: .color(.white.opacity(laserOpacity)),
+                            style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round)
+                        )
+                    }
                     
 
                 }.allowsHitTesting(false)
@@ -369,13 +367,11 @@ struct CanvasView: View {
     }
 
     private func handleModeChange(
-        index: Int
+        mode: CanvasMode
     ) {
-        guard let newMode = CanvasMode(rawValue: index) else {
-            return
-        }
-        print("Mode changed to \(newMode.rawValue).")
-        switch newMode {
+
+        print("Mode changed to \(mode).")
+        switch mode {
         case .draw:
             resetSelection()
         case .eraser:
@@ -383,17 +379,16 @@ struct CanvasView: View {
         case .lasso:
             print("Erase Mode")
         case .laser:
-            print("Laser Mode")
+            resetSelection()
         }
     }
 
     private func handleDragChange(dragValue: DragGesture.Value) {
-
+        self.isTouching = true
         self.touchPoint = dragValue.location
-
-        isTouching = true
-        if let mode = CanvasMode(rawValue: canvasState.selectionModeIndex) {
-            switch mode {
+        
+   
+            switch canvasState.canvasMode {
             case .draw:  // Draw Mode
                 handleDrawing(dragValue: dragValue)
             case .eraser:  // Erase Mode
@@ -403,9 +398,7 @@ struct CanvasView: View {
             case .laser:  // Laser Mode
                 handleLaser(dragValue: dragValue)
             }
-        } else {
-            print("Invalid mode selected.")
-        }
+        
     }
 
     private func handleDragEnded() {
@@ -414,8 +407,8 @@ struct CanvasView: View {
         lastDrawLaserPosition = nil
         isTouching = false
 
-        if let mode = CanvasMode(rawValue: canvasState.selectionModeIndex) {
-            switch mode {
+      
+            switch canvasState.canvasMode {
             case .draw:  // Draw Mode
                 lastDragPosition = nil
                 canvasState.timerManager.cancelHoldTimer()
@@ -460,9 +453,7 @@ struct CanvasView: View {
 
                 
             }
-        } else {
-            print("Invalid mode selected.")
-        }
+      
     }
     
     private func fadeOutLasers() {
@@ -584,9 +575,17 @@ struct CanvasView: View {
     }
 
     private func handleErasing(dragValue: DragGesture.Value) {
-        notePage.lineStack = EraseHelper.eraseLines(
-            lines: notePage.lineStack, dragValue: dragValue,
-            eraserRadius: canvasState.penSize)
+        if(canvasState.eraseMode == EraseMode.whole) {
+            notePage.lineStack = EraseHelper.eraseLineObjs(
+                lines: notePage.lineStack, dragValue: dragValue,
+                eraserRadius: canvasState.penSize)
+            
+        } else {
+            notePage.lineStack = EraseHelper.eraseLines(
+                lines: notePage.lineStack, dragValue: dragValue,
+                eraserRadius: canvasState.penSize)
+        }
+       
     }
 
     private func handleSelection(dragValue: DragGesture.Value) {
@@ -614,6 +613,8 @@ struct CanvasView: View {
                     imageStack: notePage.imageStack,
                     selectedLines: selectedLineStack,
                     selectedImages: selectedImageObjIds)
+                
+                
 
                 // Move selected lines
                 for i in 0..<selectedLineStack.count {

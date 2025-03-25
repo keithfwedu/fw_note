@@ -11,7 +11,6 @@ import SwiftUI
 struct PdfNoteScreen: View {
     @StateObject private var canvasState = CanvasState()
     @State var noteFile: NoteFile
-   
 
     var body: some View {
 
@@ -34,7 +33,7 @@ struct PdfNoteScreen: View {
                             canvasState: canvasState,
                             noteFile: noteFile,
                             displayDirection: $canvasState.displayDirection
-                        ).frame(maxWidth: .infinity, maxHeight: .infinity) // Ensure it occupies space
+                        ).frame(maxWidth: .infinity, maxHeight: .infinity)  // Ensure it occupies space
                             .background(Color.green)
 
                     } else {
@@ -48,17 +47,10 @@ struct PdfNoteScreen: View {
                         .font(.headline)
                 }
 
-                /*if canvasState.selectionModeIndex == 3 {
-                    LaserCanvasView()
-                        .allowsHitTesting(true)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                }*/
-
             }
-        }.navigationTitle(noteFile.title) // Set the navigation title
-            .navigationBarTitleDisplayMode(.inline) // Optional: inline style for the title
-            .navigationBarBackButtonHidden(false) // Ensure the default back button is visible
+        }.navigationTitle(noteFile.title)  // Set the navigation title
+            .navigationBarTitleDisplayMode(.inline)  // Optional: inline style for the title
+            .navigationBarBackButtonHidden(false)  // Ensure the default back button is visible
 
     }
 

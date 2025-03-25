@@ -10,16 +10,20 @@ import SwiftUI
 struct CanvasToolBar: View {
     @StateObject var noteFile: NoteFile
     @StateObject var canvasState: CanvasState
-    @State private var isHorizontalScroll: Bool = true // State variable for scroll direction
 
     var body: some View {
         HStack {
-            HStack(spacing: 10) { // Fixed spacing between items
-                // Save PDF Button
-                Button(action: savePDF) {
-                    Image(systemName: "square.and.arrow.down")
+            HStack(spacing: 10) {  // Fixed spacing between items
+                // Scroll Direction Button
+                Button(action: toggleDisplayDirection) {
+                    Image(
+                        systemName: canvasState.displayDirection == .vertical
+                            ? "arrow.left.and.right" : "arrow.up.and.down")
                 }
                 .frame(width: 40, height: 40)
+                .background(Color.gray.opacity(0.2))
+                .cornerRadius(8)
+                .accessibilityLabel("Change Scroll Direction")
 
                 // Tool Buttons
                 Button(action: selectPenTool) {
@@ -27,7 +31,7 @@ struct CanvasToolBar: View {
                 }
                 .frame(width: 40, height: 40)
                 .background(
-                    canvasState.selectionModeIndex == CanvasMode.draw.rawValue
+                    canvasState.canvasMode == CanvasMode.draw
                         ? Color.blue.opacity(0.2) : Color.clear
                 )
                 .cornerRadius(8)
@@ -37,7 +41,7 @@ struct CanvasToolBar: View {
                 }
                 .frame(width: 40, height: 40)
                 .background(
-                    canvasState.selectionModeIndex == CanvasMode.laser.rawValue
+                    canvasState.canvasMode == CanvasMode.laser
                         ? Color.blue.opacity(0.2) : Color.clear
                 )
                 .cornerRadius(8)
@@ -47,17 +51,7 @@ struct CanvasToolBar: View {
                 }
                 .frame(width: 40, height: 40)
                 .background(
-                    canvasState.selectionModeIndex == CanvasMode.eraser.rawValue
-                        ? Color.blue.opacity(0.2) : Color.clear
-                )
-                .cornerRadius(8)
-
-                Button(action: selectEraserFillTool) {
-                    Image(systemName: "trash")
-                }
-                .frame(width: 40, height: 40)
-                .background(
-                    canvasState.selectionModeIndex == CanvasMode.eraser.rawValue
+                    canvasState.canvasMode == CanvasMode.eraser
                         ? Color.blue.opacity(0.2) : Color.clear
                 )
                 .cornerRadius(8)
@@ -67,7 +61,7 @@ struct CanvasToolBar: View {
                 }
                 .frame(width: 40, height: 40)
                 .background(
-                    canvasState.selectionModeIndex == CanvasMode.lasso.rawValue
+                    canvasState.canvasMode == CanvasMode.lasso
                         ? Color.blue.opacity(0.2) : Color.clear
                 )
                 .cornerRadius(8)
@@ -77,9 +71,9 @@ struct CanvasToolBar: View {
                 }
                 .frame(width: 40, height: 40)
                 .cornerRadius(8)
-                .disabled(canvasState.selectionModeIndex == CanvasMode.laser.rawValue)
+                .disabled(canvasState.canvasMode == CanvasMode.laser)
 
-                if canvasState.selectionModeIndex != CanvasMode.laser.rawValue {
+                if canvasState.canvasMode != CanvasMode.laser {
                     Slider(value: $canvasState.penSize, in: 3...10, step: 0.1) {
                         Text("Tool Size")
                     }
@@ -87,11 +81,22 @@ struct CanvasToolBar: View {
                 }
 
                 // Conditional Color Picker
-                if canvasState.selectionModeIndex == CanvasMode.draw.rawValue {
+                if canvasState.canvasMode == CanvasMode.draw {
                     ColorPickerView(
-                        selectedColor: $canvasState.penColor,
-                        recentColors: $canvasState.recentColors
+                        initialColors: $canvasState.recentColors,  // Input five colors from another view
+                        onChanged: { selectedColor in
+                            canvasState.penColor = selectedColor
+                        }
+
                     )
+                }
+                if canvasState.canvasMode == CanvasMode.eraser {
+                    Picker("Eraser Mode", selection: $canvasState.eraseMode) {
+                        Text("Rubber").tag(EraseMode.rubber)
+                        Text("Erase Whole Path").tag(EraseMode.whole)
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .padding()
                 }
 
                 // Flexible Spacer
@@ -108,17 +113,14 @@ struct CanvasToolBar: View {
                 }
                 .frame(width: 40)
 
-                // Scroll Direction Button
-                Button(action: toggleDisplayDirection) {
-                    Image(systemName: isHorizontalScroll ? "arrow.left.and.right" : "arrow.up.and.down")
+                // Save PDF Button
+                Button(action: savePDF) {
+                    Image(systemName: "square.and.arrow.down")
                 }
                 .frame(width: 40, height: 40)
-                .background(Color.gray.opacity(0.2))
-                .cornerRadius(8)
-                .accessibilityLabel("Change Scroll Direction")
             }
             .padding()
-            .background(Color(UIColor.systemGray6)) // Toolbar background
+            .background(Color(UIColor.systemGray6))  // Toolbar background
         }
     }
 
@@ -126,20 +128,20 @@ struct CanvasToolBar: View {
     func savePDF() { print("Save PDF") }
     func selectPenTool() {
         print("selectPenTool")
-        canvasState.selectionModeIndex = CanvasMode.draw.rawValue
+        canvasState.canvasMode = CanvasMode.draw
     }
     func toggleLaserMode() {
         print("toggleLaserMode")
-        canvasState.selectionModeIndex = CanvasMode.laser.rawValue
+        canvasState.canvasMode = CanvasMode.laser
     }
     func selectEraserTool() {
         print("selectEraserTool")
-        canvasState.selectionModeIndex = CanvasMode.eraser.rawValue
+        canvasState.canvasMode = CanvasMode.eraser
     }
     func selectEraserFillTool() { print("selectEraserFillTool") }
     func selectLassorTool() {
         print("selectLassorTool")
-        canvasState.selectionModeIndex = CanvasMode.lasso.rawValue
+        canvasState.canvasMode = CanvasMode.lasso
     }
     func addImage() {
         print("addImage")
@@ -149,11 +151,17 @@ struct CanvasToolBar: View {
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 100, height: 100)
         )
-        
-        noteFile.notePages[canvasState.currentPageIndex].imageStack.append(newImageObj)
+
+        noteFile.notePages[canvasState.currentPageIndex].imageStack.append(
+            newImageObj)
         noteFile.addToUndo(
-            pageIndex: self.canvasState.currentPageIndex, lineStack: self.noteFile.notePages[self.canvasState.currentPageIndex].lineStack,
-            imageStack: self.noteFile.notePages[self.canvasState.currentPageIndex].imageStack)
+            pageIndex: self.canvasState.currentPageIndex,
+            lineStack: self.noteFile.notePages[
+                self.canvasState.currentPageIndex
+            ].lineStack,
+            imageStack: self.noteFile.notePages[
+                self.canvasState.currentPageIndex
+            ].imageStack)
     }
     func undoAction() {
         print("undoAction")
@@ -165,8 +173,12 @@ struct CanvasToolBar: View {
     }
 
     func toggleDisplayDirection() {
-        isHorizontalScroll.toggle()
-        canvasState.displayDirection = isHorizontalScroll ? .horizontal : .vertical
-        print("Scroll direction changed to \(canvasState.displayDirection == .horizontal ? "Horizontal" : "Vertical")")
+
+        canvasState.displayDirection =
+            canvasState.displayDirection == .horizontal
+            ? .vertical : .horizontal
+        print(
+            "Scroll direction changed to \(canvasState.displayDirection == .horizontal ? "Horizontal" : "Vertical")"
+        )
     }
 }

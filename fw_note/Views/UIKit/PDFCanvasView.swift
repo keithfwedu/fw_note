@@ -38,7 +38,7 @@ struct PDFCanvasView: UIViewRepresentable {
         )
 
         // Add canvases as annotations to each page
-        context.coordinator.addCanvasesToPages(pdfView: pdfView)
+        context.coordinator.addCanvasesToPages(pdfView: pdfView, displayDirection: displayDirection)
 
         // Add page information (Current Page / Total Pages)
         context.coordinator.addPageIndicator(to: pdfView)
@@ -47,10 +47,16 @@ struct PDFCanvasView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: PDFView, context: Context) {
-        // Update the display direction dynamically
-        uiView.displayDirection = displayDirection
-        uiView.layoutIfNeeded()  // Ensure layout is updated if necessary
-    }
+            // Update the display direction dynamically
+            if uiView.displayDirection != displayDirection {
+                uiView.displayDirection = displayDirection
+                uiView.layoutIfNeeded() // Ensure layout is updated
+                context.coordinator.addCanvasesToPages(pdfView: uiView, displayDirection: displayDirection)
+            }
+
+           
+        }
+
 
     func makeCoordinator() -> Coordinator {
         Coordinator(
@@ -74,54 +80,49 @@ struct PDFCanvasView: UIViewRepresentable {
             self.canvasState = canvasState
         }
 
-        func addCanvasesToPages(pdfView: PDFView) {
-            guard let document = pdfView.document else { return }
-           
+        func addCanvasesToPages(pdfView: PDFView, displayDirection: PDFDisplayDirection) {
+            guard let document = pdfView.document, let documentView = pdfView.documentView else { return }
+
             // Remove existing custom canvases to avoid duplication
-            pdfView.subviews.forEach {
+            documentView.subviews.forEach {
                 if $0 is CanvasViewWrapper { $0.removeFromSuperview() }
             }
+ 
+            var originOffset: CGPoint = .zero
+                if let firstPage = document.page(at: 0) {
+                    let firstPageBounds = firstPage.bounds(for: .mediaBox)
+                    originOffset = pdfView.convert(firstPageBounds.origin, to: documentView)
+                }
 
-            guard
-                let scrollView = pdfView.subviews.first(where: {
-                    $0 is UIScrollView
-                }) as? UIScrollView
-            else { return }
-
-            let screenBounds = UIScreen.main.bounds
-            let screenCenter = CGPoint(
-                x: screenBounds.midX,
-                y: screenBounds.midY
-            )
-            
-        
             for pageIndex in 0..<document.pageCount {
                 guard let page = document.page(at: pageIndex) else { continue }
 
                 // Get the page's bounds in the PDFView's coordinate system
                 let pageBounds = page.bounds(for: .mediaBox)
-                let pageFrame = pdfView.convert(pageBounds, from: page)
+                let rawPageFrame = pdfView.convert(pageBounds, from: page)
                
-               
+                let normalizedPageFrame = CGRect(
+                    x: displayDirection == .horizontal ? rawPageFrame.origin.x : rawPageFrame.origin.x + originOffset.x,
+                    y: displayDirection == .horizontal ? rawPageFrame.origin.y + originOffset.y : rawPageFrame.origin.y,
+                            width: rawPageFrame.width,
+                            height: rawPageFrame.height
+                        )
+                
+                print("pageFrame \(originOffset.x), \(originOffset.y) - \(rawPageFrame) - \(normalizedPageFrame)")
                 let canvasViewWrapper = CanvasViewWrapper(
-                    frame: pageFrame,
+                    frame: normalizedPageFrame ,
                     pageIndex: pageIndex,
                     canvasState: canvasState,
                     noteFile: noteFile,
                     notePage: noteFile.notePages[pageIndex]
                 )
-               
+
                 canvasViewWrapper.backgroundColor = UIColor.clear
-                //canvasViewWrapper.layer.position.x = screenCenter.x
-
-                pdfView.documentView!.addSubview(canvasViewWrapper)
+                documentView.addSubview(canvasViewWrapper)
                 canvasViewWrapper.layer.zPosition = 1
-              
-                //scrollView.subviews.first?.bringSubviewToFront(canvasViewWrapper)
-               // scrollView.addSubview(canvasViewWrapper)
-
             }
         }
+
 
         func addPageIndicator(to pdfView: PDFView) {
             // Remove any existing page indicator first

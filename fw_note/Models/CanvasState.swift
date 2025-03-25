@@ -10,16 +10,18 @@ import PencilKit
 import SwiftUI
 
 class CanvasState: ObservableObject {
-    @Published var timerManager = TimerManager()
+    //PDF State
     @Published var currentPageIndex: Int = 0
-    @Published var selectionModeIndex: Int = 0
+    @Published var displayDirection: PDFDisplayDirection = .vertical
+    
+    //State
+    @Published var timerManager = TimerManager()
+    @Published var canvasMode: CanvasMode = CanvasMode.draw
+    @Published var eraseMode: EraseMode = EraseMode.rubber
+    
+    //Configs
     @Published var penSize: CGFloat = 3.0
     @Published var penColor: Color = .black
-    @Published var recentColors: [Color] = []
+    @Published var recentColors: [Color] = [Color.black, Color.blue, Color.red, Color.yellow, Color.green];
 
-    @Published var isCanvasInteractive: Bool = true
-    @Published var isLaserCanvasInteractive: Bool = true
-    @Published var displayDirection: PDFDisplayDirection = .vertical
-
-    
 }
