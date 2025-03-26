@@ -6,22 +6,24 @@
 //
 
 
+import PDFKit
 import SwiftUI
-import UIKit
 
+// CanvasViewWrapper Class
 class CanvasViewWrapper: UIView {
     var pageIndex: Int
     private var hostingController: UIHostingController<CanvasView>?
 
-    init(frame: CGRect, pageIndex: Int, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage) {
-        self.pageIndex = pageIndex // Store the page index
+    init(frame: CGRect, pageIndex: Int, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage, scaleFactor: CGFloat) {
+        self.pageIndex = pageIndex
         super.init(frame: frame)
 
         let canvasView = CanvasView(
             pageIndex: pageIndex,
             canvasState: canvasState,
             noteFile: noteFile,
-            notePage: notePage
+            notePage: notePage,
+            scaleFactor: scaleFactor // Pass scale factor to CanvasView
         )
 
         hostingController = UIHostingController(rootView: canvasView)
@@ -29,6 +31,7 @@ class CanvasViewWrapper: UIView {
             hostingView.frame = self.bounds
             hostingView.backgroundColor = .clear
             hostingView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+          
             self.addSubview(hostingView)
         }
     }
@@ -40,5 +43,18 @@ class CanvasViewWrapper: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         hostingController?.view.frame = self.bounds
+    }
+
+    func updateScaleFactor(scaleFactor: CGFloat) {
+        if let hostingController = hostingController {
+            let canvasView = CanvasView(
+                pageIndex: pageIndex,
+                canvasState: hostingController.rootView.canvasState,
+                noteFile: hostingController.rootView.noteFile,
+                notePage: hostingController.rootView.notePage,
+                scaleFactor: scaleFactor // Update scale factor
+            )
+            hostingController.rootView = canvasView
+        }
     }
 }

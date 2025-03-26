@@ -89,9 +89,6 @@ struct ImagePickerView: View {
                 .padding(10) // Add padding around the entire grid
             }
 
-
-           
-
             if isLoading {
                 ProgressView("Loading...")
                     .padding()
@@ -112,8 +109,7 @@ struct ImagePickerView: View {
             .padding()
             .frame(width: 200, height: 100)
         }
-
-        .sheet(isPresented: $isShowingImagePicker) {
+        .fullScreenCover(isPresented: $isShowingImagePicker) {
             ImagePicker(sourceType: selectedSourceType) { image, path in
                 if let image = image, let path = path {
                     saveImage(image, originalFilePath: path)
@@ -122,6 +118,7 @@ struct ImagePickerView: View {
                 }
             }
         }
+
         .onAppear {
             loadSavedImagePaths()
         }

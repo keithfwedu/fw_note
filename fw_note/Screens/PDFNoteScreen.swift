@@ -17,7 +17,7 @@ struct PdfNoteScreen: View {
         VStack {
 
             CanvasToolBar(noteFile: noteFile, canvasState: canvasState)
-            ZStack {
+            HStack {
                 if let pdfFilePath = noteFile.pdfFilePath {
                     let absolutePath = FileManager.default.urls(
                         for: .applicationSupportDirectory, in: .userDomainMask
@@ -34,10 +34,15 @@ struct PdfNoteScreen: View {
                             canvasState: canvasState,
                             noteFile: noteFile,
                             displayDirection: $canvasState.displayDirection
-                        ).frame(maxWidth: .infinity, maxHeight: .infinity)  // Ensure it occupies space
-
-                        // Sliding view
+                        )
                         VStack {
+                            ImagePickerView(
+                                noteFile: noteFile, canvasState: canvasState
+                            )
+                        }
+                        .frame(width: 200)
+                        // Sliding view
+                        /* VStack {
                             ImagePickerView(
                                 noteFile: noteFile, canvasState: canvasState
                             )
@@ -53,7 +58,7 @@ struct PdfNoteScreen: View {
                         .animation(
                             .easeInOut(duration: 0.3),
                             value: canvasState.showImagePicker)  // Smooth animation
-
+*/
                     } else {
                         Text("Unable to load PDF")
                             .foregroundColor(.red)

@@ -13,6 +13,7 @@ struct CanvasView: View {
     @ObservedObject var canvasState: CanvasState
     @ObservedObject var noteFile: NoteFile
     @ObservedObject var notePage: NotePage
+    
 
     @State var focusedID: UUID?
     @State var laserStack: [LineObj] = []
@@ -141,10 +142,11 @@ struct CanvasView: View {
                     }
 
                 }
+                .frame(width: geometry.size.width, height: geometry.size.height)
+                .border(.red, width: 1)
                 .onAppear {
                     redrawTrigger.toggle()
                 }
-                .background(.blue.opacity(0.1))
                 .allowsHitTesting(true)  // Toggle interaction
                 .onChange(of: canvasState.canvasMode) {
                     newMode in
@@ -173,11 +175,10 @@ struct CanvasView: View {
                             handleDragEnded()  // Finalize drag action
                         }
                 )
+                .drawingGroup()
                 /*.onDrop(of: ["public.image"], isTargeted: nil) { providers in
                     handleDrop(providers: providers)
                 }*/
-                .drawingGroup()
-                .clipped()
 
                 ForEach($imageStack, id: \.id) { imageObj in
 
@@ -205,41 +206,40 @@ struct CanvasView: View {
                     )
 
                 }.clipped()
-
-                Canvas { context, size in
-
-                    for laser in laserStack {
-                        var path = Path()
-                        path.addLines(laser.points)
-
-                        // Simulate the glow effect with a red aura
-                        context.blendMode = .plusLighter  // Additive blending for glow effects
-
-                        context.stroke(
-                            path,
-                            with: .color(Color.red.opacity(laserOpacity)),
-                            style: StrokeStyle(
-                                lineWidth: 9, lineCap: .round, lineJoin: .round)
-                        )
-
-                        // Render the core white laser beam
-                        context.blendMode = .normal
-                        context.stroke(
-                            path,
-                            with: .color(.white.opacity(laserOpacity)),
-                            style: StrokeStyle(
-                                lineWidth: 5, lineCap: .round, lineJoin: .round)
-                        )
-                    }
-
-                }.allowsHitTesting(false)
-
             }
+            Canvas { context, size in
 
-        }.onTapGesture {
+                for laser in laserStack {
+                    var path = Path()
+                    path.addLines(laser.points)
+
+                    // Simulate the glow effect with a red aura
+                    context.blendMode = .plusLighter  // Additive blending for glow effects
+
+                    context.stroke(
+                        path,
+                        with: .color(Color.red.opacity(laserOpacity)),
+                        style: StrokeStyle(
+                            lineWidth: 9, lineCap: .round, lineJoin: .round)
+                    )
+
+                    // Render the core white laser beam
+                    context.blendMode = .normal
+                    context.stroke(
+                        path,
+                        with: .color(.white.opacity(laserOpacity)),
+                        style: StrokeStyle(
+                            lineWidth: 5, lineCap: .round, lineJoin: .round)
+                    )
+                }
+
+            }.allowsHitTesting(false)
+
+        }
+        .background(.blue.opacity(0.1))
+        .onTapGesture {
             focusedID = nil  // Reset focus if background is tapped
         }.onAppear {
-
             noteFile.addToUndo(
                 pageIndex: self.pageIndex,
                 canvasStack: self.notePage.canvasStack

@@ -20,7 +20,7 @@ struct PDFCanvasView: UIViewRepresentable {
         pdfView.autoScales = false
         pdfView.displayMode = .singlePageContinuous
         pdfView.displayDirection = displayDirection
-        
+
         pdfView.usePageViewController(false)
 
         // Access the internal UIScrollView and configure two-finger scrolling
@@ -28,6 +28,10 @@ struct PDFCanvasView: UIViewRepresentable {
         ) as? UIScrollView {
             scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
+            scrollView.delaysContentTouches = false
+            scrollView.minimumZoomScale = 1
+            scrollView.bouncesZoom = false
+
         }
 
         // Add observer for page changes
@@ -38,10 +42,12 @@ struct PDFCanvasView: UIViewRepresentable {
             object: pdfView
         )
 
+        // context.coordinator.configure(pdfView: pdfView, displayDirection: displayDirection)  // Pass PDFView to the Coordinator
+
         // Add canvases as annotations to each page
         context.coordinator.addCanvasesToPages(
             pdfView: pdfView, displayDirection: displayDirection)
-        print("test1");
+
         // Add page information (Current Page / Total Pages)
         context.coordinator.addPageIndicator(to: pdfView)
 
@@ -52,7 +58,7 @@ struct PDFCanvasView: UIViewRepresentable {
         // Update the display direction dynamically
         if uiView.displayDirection != displayDirection {
             uiView.displayDirection = displayDirection
-           
+
             context.coordinator.addCanvasesToPages(
                 pdfView: uiView, displayDirection: displayDirection)
             uiView.layoutIfNeeded()  // Ensure layout is updated
@@ -68,6 +74,8 @@ struct PDFCanvasView: UIViewRepresentable {
     }
 
     class Coordinator: NSObject {
+        weak var pdfView: PDFView?  // Weak reference to avoid retain cycles
+
         let pdfDocument: PDFDocument
         private var canvasState: CanvasState
         var noteFile: NoteFile
@@ -83,8 +91,31 @@ struct PDFCanvasView: UIViewRepresentable {
 
         }
 
+        /* func configure(pdfView: PDFView, displayDirection: PDFDisplayDirection) {
+            self.pdfView = pdfView
+
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(scaleChanged(_:)),
+                name: Notification.Name.PDFViewScaleChanged,
+                object: pdfView
+            )
+        }
+
+
+
+        @objc func scaleChanged(_ notification: Notification) {
+            if let pdfView = notification.object as? PDFView {
+                let scaleFactor = pdfView.scaleFactor
+                print("Scale factor changed: \(scaleFactor)")
+            //  addCanvasesToPages(pdfView: pdfView, displayDirection: .vertical, scaleFactor: scaleFactor)
+            }
+        }
+*/
+
         func addCanvasesToPages(
-            pdfView: PDFView, displayDirection: PDFDisplayDirection
+            pdfView: PDFView, displayDirection: PDFDisplayDirection,
+            scaleFactor: CGFloat = 1.0
         ) {
             guard let document = pdfView.document,
                 let documentView = pdfView.documentView
@@ -101,9 +132,6 @@ struct PDFCanvasView: UIViewRepresentable {
                 originOffset = pdfView.convert(
                     firstPageBounds.origin, to: documentView)
             }
-            
-            // Add observer to listen for zooming or bounds changes
-                pdfView.addObserver(self, forKeyPath: "transform", options: [.new, .old], context: nil)
 
             for pageIndex in 0..<document.pageCount {
                 guard let page = document.page(at: pageIndex) else { continue }
@@ -111,41 +139,35 @@ struct PDFCanvasView: UIViewRepresentable {
                 // Get the page's bounds in the PDFView's coordinate system
                 let pageBounds = page.bounds(for: .mediaBox)
                 let rawPageFrame = pdfView.convert(pageBounds, from: page)
-                
+
                 let normalizedPageFrame = CGRect(
-                    x: displayDirection == .horizontal
+                    x: (displayDirection == .horizontal
                         ? rawPageFrame.origin.x
-                        : rawPageFrame.origin.x + originOffset.x,
-                    y: displayDirection == .horizontal
+                        : rawPageFrame.origin.x + originOffset.x) * scaleFactor,
+                    y: (displayDirection == .horizontal
                         ? rawPageFrame.origin.y + originOffset.y
-                        : rawPageFrame.origin.y,
-                    width: rawPageFrame.width,
-                    height: rawPageFrame.height
+                        : rawPageFrame.origin.y) * scaleFactor,
+                    width: rawPageFrame.width * scaleFactor,
+                    height: rawPageFrame.height * scaleFactor
                 )
 
                 print(
                     "pageFrame \(originOffset.x), \(originOffset.y) - \(rawPageFrame) - \(normalizedPageFrame)"
                 )
                 let canvasViewWrapper = CanvasViewWrapper(
-                    frame: rawPageFrame,
+                    frame: normalizedPageFrame,
                     pageIndex: pageIndex,
                     canvasState: canvasState,
                     noteFile: noteFile,
                     notePage: noteFile.notePages[pageIndex]
-
                 )
 
                 canvasViewWrapper.backgroundColor = UIColor.clear
                 documentView.addSubview(canvasViewWrapper)
                 canvasViewWrapper.layer.zPosition = 1
-                
-                
+
             }
         }
-        
-    
-        
-        
 
         func addPageIndicator(to pdfView: PDFView) {
             // Remove any existing page indicator first
@@ -191,11 +213,6 @@ struct PDFCanvasView: UIViewRepresentable {
             guard let pdfView = notification.object as? PDFView else { return }
             updatePageIndicator(for: pdfView)
         }
- 
+
     }
-    
-   
-
 }
-
-
