@@ -14,7 +14,7 @@ class CanvasViewWrapper: UIView {
     var pageIndex: Int
     private var hostingController: UIHostingController<CanvasView>?
 
-    init(frame: CGRect, pageIndex: Int, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage, scaleFactor: CGFloat) {
+    init(frame: CGRect, pageIndex: Int, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage) {
         self.pageIndex = pageIndex
         super.init(frame: frame)
 
@@ -22,8 +22,7 @@ class CanvasViewWrapper: UIView {
             pageIndex: pageIndex,
             canvasState: canvasState,
             noteFile: noteFile,
-            notePage: notePage,
-            scaleFactor: scaleFactor // Pass scale factor to CanvasView
+            notePage: notePage
         )
 
         hostingController = UIHostingController(rootView: canvasView)
@@ -45,16 +44,4 @@ class CanvasViewWrapper: UIView {
         hostingController?.view.frame = self.bounds
     }
 
-    func updateScaleFactor(scaleFactor: CGFloat) {
-        if let hostingController = hostingController {
-            let canvasView = CanvasView(
-                pageIndex: pageIndex,
-                canvasState: hostingController.rootView.canvasState,
-                noteFile: hostingController.rootView.noteFile,
-                notePage: hostingController.rootView.notePage,
-                scaleFactor: scaleFactor // Update scale factor
-            )
-            hostingController.rootView = canvasView
-        }
-    }
 }
