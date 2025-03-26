@@ -20,6 +20,7 @@ struct PDFCanvasView: UIViewRepresentable {
         pdfView.autoScales = false
         pdfView.displayMode = .singlePageContinuous
         pdfView.displayDirection = displayDirection
+        
         pdfView.usePageViewController(false)
 
         // Access the internal UIScrollView and configure two-finger scrolling
@@ -38,8 +39,9 @@ struct PDFCanvasView: UIViewRepresentable {
         )
 
         // Add canvases as annotations to each page
-        context.coordinator.addCanvasesToPages(pdfView: pdfView, displayDirection: displayDirection)
-
+        context.coordinator.addCanvasesToPages(
+            pdfView: pdfView, displayDirection: displayDirection)
+        print("test1");
         // Add page information (Current Page / Total Pages)
         context.coordinator.addPageIndicator(to: pdfView)
 
@@ -47,16 +49,16 @@ struct PDFCanvasView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: PDFView, context: Context) {
-            // Update the display direction dynamically
-            if uiView.displayDirection != displayDirection {
-                uiView.displayDirection = displayDirection
-                uiView.layoutIfNeeded() // Ensure layout is updated
-                context.coordinator.addCanvasesToPages(pdfView: uiView, displayDirection: displayDirection)
-            }
-
+        // Update the display direction dynamically
+        if uiView.displayDirection != displayDirection {
+            uiView.displayDirection = displayDirection
            
+            context.coordinator.addCanvasesToPages(
+                pdfView: uiView, displayDirection: displayDirection)
+            uiView.layoutIfNeeded()  // Ensure layout is updated
         }
 
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(
@@ -70,7 +72,7 @@ struct PDFCanvasView: UIViewRepresentable {
         private var canvasState: CanvasState
         var noteFile: NoteFile
         var pageIndicatorLabel: UILabel?  // Page indicator label to show current/total pages
-        
+
         init(
             pdfDocument: PDFDocument, noteFile: NoteFile,
             canvasState: CanvasState
@@ -78,22 +80,30 @@ struct PDFCanvasView: UIViewRepresentable {
             self.pdfDocument = pdfDocument
             self.noteFile = noteFile
             self.canvasState = canvasState
-         
+
         }
 
-        func addCanvasesToPages(pdfView: PDFView, displayDirection: PDFDisplayDirection) {
-            guard let document = pdfView.document, let documentView = pdfView.documentView else { return }
+        func addCanvasesToPages(
+            pdfView: PDFView, displayDirection: PDFDisplayDirection
+        ) {
+            guard let document = pdfView.document,
+                let documentView = pdfView.documentView
+            else { return }
 
             // Remove existing custom canvases to avoid duplication
             documentView.subviews.forEach {
                 if $0 is CanvasViewWrapper { $0.removeFromSuperview() }
             }
- 
+
             var originOffset: CGPoint = .zero
-                if let firstPage = document.page(at: 0) {
-                    let firstPageBounds = firstPage.bounds(for: .mediaBox)
-                    originOffset = pdfView.convert(firstPageBounds.origin, to: documentView)
-                }
+            if let firstPage = document.page(at: 0) {
+                let firstPageBounds = firstPage.bounds(for: .mediaBox)
+                originOffset = pdfView.convert(
+                    firstPageBounds.origin, to: documentView)
+            }
+            
+            // Add observer to listen for zooming or bounds changes
+                pdfView.addObserver(self, forKeyPath: "transform", options: [.new, .old], context: nil)
 
             for pageIndex in 0..<document.pageCount {
                 guard let page = document.page(at: pageIndex) else { continue }
@@ -101,30 +111,41 @@ struct PDFCanvasView: UIViewRepresentable {
                 // Get the page's bounds in the PDFView's coordinate system
                 let pageBounds = page.bounds(for: .mediaBox)
                 let rawPageFrame = pdfView.convert(pageBounds, from: page)
-               
-                let normalizedPageFrame = CGRect(
-                    x: displayDirection == .horizontal ? rawPageFrame.origin.x : rawPageFrame.origin.x + originOffset.x,
-                    y: displayDirection == .horizontal ? rawPageFrame.origin.y + originOffset.y : rawPageFrame.origin.y,
-                            width: rawPageFrame.width,
-                            height: rawPageFrame.height
-                        )
                 
-                print("pageFrame \(originOffset.x), \(originOffset.y) - \(rawPageFrame) - \(normalizedPageFrame)")
+                let normalizedPageFrame = CGRect(
+                    x: displayDirection == .horizontal
+                        ? rawPageFrame.origin.x
+                        : rawPageFrame.origin.x + originOffset.x,
+                    y: displayDirection == .horizontal
+                        ? rawPageFrame.origin.y + originOffset.y
+                        : rawPageFrame.origin.y,
+                    width: rawPageFrame.width,
+                    height: rawPageFrame.height
+                )
+
+                print(
+                    "pageFrame \(originOffset.x), \(originOffset.y) - \(rawPageFrame) - \(normalizedPageFrame)"
+                )
                 let canvasViewWrapper = CanvasViewWrapper(
-                    frame: normalizedPageFrame ,
+                    frame: rawPageFrame,
                     pageIndex: pageIndex,
                     canvasState: canvasState,
                     noteFile: noteFile,
                     notePage: noteFile.notePages[pageIndex]
-                    
+
                 )
 
                 canvasViewWrapper.backgroundColor = UIColor.clear
                 documentView.addSubview(canvasViewWrapper)
                 canvasViewWrapper.layer.zPosition = 1
+                
+                
             }
         }
-
+        
+    
+        
+        
 
         func addPageIndicator(to pdfView: PDFView) {
             // Remove any existing page indicator first
@@ -170,5 +191,11 @@ struct PDFCanvasView: UIViewRepresentable {
             guard let pdfView = notification.object as? PDFView else { return }
             updatePageIndicator(for: pdfView)
         }
+ 
     }
+    
+   
+
 }
+
+
