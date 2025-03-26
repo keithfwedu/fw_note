@@ -28,7 +28,7 @@ struct CanvasView: View {
 
     @State var isTouching: Bool = false
     @State var isLassoCreated: Bool = false
-    
+
     @State var redrawTrigger = false
 
     @State var touchPoint: CGPoint? = nil
@@ -43,10 +43,10 @@ struct CanvasView: View {
     var body: some View {
         ZStack {
             //For force refresh UI
-            if  redrawTrigger {
+            if redrawTrigger {
                 VStack {}
             }
-            
+
             // Add a dynamic circle that syncs with the touch position
             if self.touchPoint != nil && isTouching {
                 Circle()
@@ -176,7 +176,7 @@ struct CanvasView: View {
                 }
                 .onChange(of: notePage.canvasStack) { newStack in
                     imageStack = newStack.compactMap { $0.imageObj }
-                    print("change2");
+                    print("change2")
                 }
                 .gesture(
                     DragGesture(minimumDistance: 0)  // Handles both taps and drags
@@ -191,7 +191,7 @@ struct CanvasView: View {
                                 handleDragChange(dragValue: value)
                             }
 
-                          //  handleDragChange(dragValue: value)
+                            //  handleDragChange(dragValue: value)
                         }
                         .onEnded { value in
                             handleDragEnded()  // Finalize drag action
@@ -441,16 +441,16 @@ struct CanvasView: View {
 
     private func handleDragEnded() {
         print("Gesture Ended")
-       lastDrawPosition = nil
-      lastDrawLaserPosition = nil
-     isTouching = false
+        lastDrawPosition = nil
+        lastDrawLaserPosition = nil
+        isTouching = false
 
         switch canvasState.canvasMode {
         case .draw:  // Draw Mode
             lastDragPosition = nil
             canvasState.timerManager.cancelHoldTimer()
-            /*  noteFile.addToUndo(
-                pageIndex: pageIndex, canvasStack: self.notePage.canvasStack)*/
+            noteFile.addToUndo(
+                pageIndex: pageIndex, canvasStack: self.notePage.canvasStack)
         case .eraser:  // Erase Mode
             lastDragPosition = nil
             noteFile.addToUndo(
@@ -561,7 +561,7 @@ struct CanvasView: View {
 
                     guard let line = findCurrentDrawingLine() else { return }
                     processLineForTransformation(line)
-                   
+
                 }
 
             }
@@ -569,7 +569,7 @@ struct CanvasView: View {
             lastDrawPosition = dragValue.location
         }
     }
-    
+
     private func processLineForTransformation(_ line: LineObj) {
         guard
             let index = notePage.canvasStack.firstIndex(where: {
@@ -591,13 +591,12 @@ struct CanvasView: View {
         let shapePoints = ShapeHelper.lineToShape(currentLineObj)
         if !shapePoints.isEmpty {
             // Update the points of the lineObj in the canvasStack
-            print("changed");
-            
-                notePage.canvasStack[index].lineObj?.points.removeAll()
-                notePage.canvasStack[index].lineObj?.points.append(
-                    contentsOf: shapePoints)
-              
-           
+            print("changed")
+
+            notePage.canvasStack[index].lineObj?.points.removeAll()
+            notePage.canvasStack[index].lineObj?.points.append(
+                contentsOf: shapePoints)
+
             self.lastDrawPosition = nil  // Reset the last draw position
             redrawTrigger.toggle()
         }
@@ -632,8 +631,6 @@ struct CanvasView: View {
         lastDrawLaserPosition = dragValue.location
 
     }
-
-    
 
     private func handleErasing(dragValue: DragGesture.Value) {
         if canvasState.eraseMode == EraseMode.whole {

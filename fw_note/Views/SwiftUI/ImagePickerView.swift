@@ -30,11 +30,22 @@ struct ImagePickerView: View {
                     ForEach($imagePaths, id: \.self) { path in
                         
                         ZStack {
-                            if let uiImage = UIImage(
+                          /*  if let uiImage = UIImage(
                                 contentsOfFile: path.wrappedValue)
-                            {
+                            {*/
                                 if FileManager.default.fileExists(atPath: path.wrappedValue) {
-                                    Image(uiImage: uiImage)
+                                    MetalImageView(imagePath: path.wrappedValue, targetSize: CGSize(width: 100, height: 100))
+                                        .frame(width: 100, height: 100)
+                                        .cornerRadius(10)
+                                        .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color.gray)
+                                    )
+                                    .onTapGesture {
+                                        // Directly pass the plain String path to addImageToStack
+                                        addImageToStack(path: path.wrappedValue)
+                                    }
+                                   /* Image(uiImage: uiImage)
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 100, height: 100)
@@ -46,13 +57,13 @@ struct ImagePickerView: View {
                                         .onTapGesture {
                                             // Directly pass the plain String path to addImageToStack
                                             addImageToStack(path: path.wrappedValue)
-                                        }
+                                        }*/
                                 } else {
                                     Text("Not Exist")
                                 }
                                
                                 
-                            }
+                            //}
                            
                             Button(action: {
                                 removeImage(path.wrappedValue)
@@ -90,8 +101,10 @@ struct ImagePickerView: View {
         }
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePicker(sourceType: selectedSourceType) { image, path in
-                if let image = image {
-                    saveImage(image)
+                if let image = image, let path = path {
+                    saveImage(image, originalFilePath: path)
+                } else {
+                    print("Image or path is nil")
                 }
             }
         }
@@ -135,59 +148,72 @@ struct ImagePickerView: View {
 
 
     // Save image paths for persistence
-    private func saveImage(_ image: UIImage) {
+    private func saveImage(_ image: UIImage, originalFilePath: String) {
         DispatchQueue.global(qos: .background).async {
             do {
-            let imagesDirectory = appSupportDirectory.appendingPathComponent(
-                "fw_notes_images", isDirectory: true)
-            try FileManager.default.createDirectory(at: imagesDirectory, withIntermediateDirectories: true, attributes: nil)
-            let fileName = UUID().uuidString + ".png" // Save as PNG for compatibility
-            let fileURL = imagesDirectory.appendingPathComponent(fileName)
+                let imagesDirectory = appSupportDirectory.appendingPathComponent(
+                    "fw_notes_images", isDirectory: true)
+                try FileManager.default.createDirectory(at: imagesDirectory, withIntermediateDirectories: true, attributes: nil)
 
-            // Check image dimensions and resize if necessary
-            let resizedImage: UIImage
-            if image.size.width > 500 || image.size.height > 500 {
-                let maxDimension: CGFloat = 500
-                let aspectRatio = image.size.width / image.size.height
+                // Determine the file type based on the original file path extension
+                let fileExtension = (originalFilePath as NSString).pathExtension.lowercased()
 
-                // Calculate new size while maintaining aspect ratio
-                let newSize: CGSize
-                if aspectRatio > 1 {
-                    newSize = CGSize(width: maxDimension, height: maxDimension / aspectRatio)
+                if fileExtension == "gif" {
+                    // Save GIF directly
+                    let fileName = UUID().uuidString + ".gif"
+                    let fileURL = imagesDirectory.appendingPathComponent(fileName)
+
+                    // Copy the original GIF file
+                    try FileManager.default.copyItem(at: URL(fileURLWithPath: originalFilePath), to: fileURL)
+                    print("GIF saved at \(fileURL)")
+                    
+                    DispatchQueue.main.async {
+                        imagePaths.append(fileURL.path) // Save the new path
+                        saveImagePaths() // Persist paths to a JSON file
+                    }
                 } else {
-                    newSize = CGSize(width: maxDimension * aspectRatio, height: maxDimension)
-                }
-                
-                print("newSize: \(newSize)");
+                    // Handle other image types (e.g., resizing and saving as PNG)
+                    let fileName = UUID().uuidString + ".png"
+                    let fileURL = imagesDirectory.appendingPathComponent(fileName)
 
-                // Resize image
-                UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-                image.draw(in: CGRect(origin: .zero, size: newSize))
-                resizedImage = UIGraphicsGetImageFromCurrentImageContext() ?? image
-                UIGraphicsEndImageContext()
-            } else {
-                print("No newSize: \(image.size)");
-                resizedImage = image // No resize needed
-            }
+                    let resizedImage: UIImage
+                    if image.size.width > 500 || image.size.height > 500 {
+                        let maxDimension: CGFloat = 500
+                        let aspectRatio = image.size.width / image.size.height
 
-            // Compress as PNG
-            let imageData = resizedImage.pngData()
+                        let newSize: CGSize
+                        if aspectRatio > 1 {
+                            newSize = CGSize(width: maxDimension, height: maxDimension / aspectRatio)
+                        } else {
+                            newSize = CGSize(width: maxDimension * aspectRatio, height: maxDimension)
+                        }
+                        
+                        print("newSize: \(newSize)");
 
-          
-                // Save the image to disk
-                try imageData?.write(to: fileURL)
-                print("Image saved at \(fileURL)")
-                print("Image saved at \(fileURL.path)")
-                // Update imagePaths and save paths to disk
-                DispatchQueue.main.async {
-                    imagePaths.append(fileURL.path) // Save the new path
-                    saveImagePaths() // Persist paths to a JSON file
+                        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+                        image.draw(in: CGRect(origin: .zero, size: newSize))
+                        resizedImage = UIGraphicsGetImageFromCurrentImageContext() ?? image
+                        UIGraphicsEndImageContext()
+                    } else {
+                        print("No newSize: \(image.size)");
+                        resizedImage = image // No resize needed
+                    }
+
+                    let imageData = resizedImage.pngData()
+                    try imageData?.write(to: fileURL)
+                    print("Image saved at \(fileURL)")
+                    
+                    DispatchQueue.main.async {
+                        imagePaths.append(fileURL.path) // Save the new path
+                        saveImagePaths() // Persist paths to a JSON file
+                    }
                 }
             } catch {
                 print("Error handling file saveImage: \(error)")
             }
         }
     }
+
 
     private func saveImagePaths() {
         let appSupportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
