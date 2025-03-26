@@ -19,6 +19,7 @@ struct InteractiveImageView: View {
     var afterMove: (_ id: UUID) -> Void
     var afterScale: (_ id: UUID) -> Void
     var afterRotate: (_ id: UUID) -> Void
+    var onChanged: (_ id: UUID, _ imageObj: ImageObj) -> Void
 
     @State private var lastAngle: CGFloat = 0
     @State private var length: CGFloat = 0
@@ -126,14 +127,14 @@ struct InteractiveImageView: View {
                             )
                     }*/
                     //Bundle.main.path(forResource: "example", ofType: "png")
-                  if let imagePath =  self.imageObj.path {
+                 /* if let imagePath =  self.imageObj.path {
                        MetalImageView(imagePath: imagePath, targetSize: CGSize(width: self.imageObj.size.width, height: self.imageObj.size.height))
                            .frame(width: self.imageObj.size.width, height: self.imageObj.size.height)
                    } else {
                        Text("Image not found") // Fallback in case the image cannot be loaded
-                   }
+                   }*/
                 }
-               //.background(.blue.opacity(0.1))
+               .background(.blue.opacity(0.1))
                 .border(Color.blue, width: selectMode && isFocused ? 1 : 0)  // Border syncs with scaling
                 .frame(
                     width: self.imageObj.size.width,
@@ -184,6 +185,13 @@ struct InteractiveImageView: View {
         }
         .onChange(of: self.imageObj.size) { _ in
             length = min(self.imageObj.size.height, self.imageObj.size.width)
+            onChanged(imageObj.id ,imageObj)
+        }
+        .onChange(of: self.imageObj.position) { _ in
+            onChanged(imageObj.id ,imageObj)
+        }
+        .onChange(of: self.imageObj.angle) { _ in
+            onChanged(imageObj.id ,imageObj)
         }
         .onTapGesture {
             onTap(self.imageObj.id)
@@ -235,64 +243,7 @@ struct InteractiveImageView: View {
             }
     }
 
-    /*private func updateMovement() -> some Gesture {
-        DragGesture()
-            .onChanged { value in
-
-                if !isFocused {
-                    onTap(self.imageObj.id)
-                }
-
-                let transformedTranslation = rotatePoint(
-                    CGPoint(
-                        x: value.translation.width, y: value.translation.height),
-                    by: -.degrees(Double(0.0))  // Reverse rotation to correctly align movement
-                )
-
-                // Calculate the proposed new position
-                let proposedX = self.imageObj.position.x + transformedTranslation.x
-                let proposedY = self.imageObj.position.y + transformedTranslation.y
-
-                let imageWidth = self.imageObj.rect.width
-                let imageHeight = self.imageObj.rect.height
-
-                // Check boundaries and restrict movement
-                if proposedX >= parentBounds.minX &&
-                    proposedX + imageWidth <= parentBounds.maxX &&
-                    proposedY >= parentBounds.minY &&
-                    proposedY + imageHeight <= parentBounds.maxY {
-                    // Update the view offset based on the drag translation
-                    self.imageObj.position.x += transformedTranslation.x
-                    self.imageObj.position.y += transformedTranslation.y
-                }
-            }
-            .onEnded { value in
-                let transformedTranslation = rotatePoint(
-                    CGPoint(
-                        x: value.translation.width, y: value.translation.height),
-                    by: -.degrees(Double(0.0))  // Reverse rotation to correctly align movement
-                )
-
-                // Calculate the proposed new position
-                let proposedX = self.imageObj.position.x + transformedTranslation.x
-                let proposedY = self.imageObj.position.y + transformedTranslation.y
-
-                let imageWidth = self.imageObj.rect.width
-                let imageHeight = self.imageObj.rect.height
-
-                // Check boundaries before finalizing the position
-                if proposedX >= parentBounds.minX &&
-                    proposedX + imageWidth <= parentBounds.maxX &&
-                    proposedY >= parentBounds.minY &&
-                    proposedY + imageHeight <= parentBounds.maxY {
-                    self.imageObj.position.x += transformedTranslation.x
-                    self.imageObj.position.y += transformedTranslation.y
-                }
-
-                afterMove(imageObj.id)
-            }
-    }*/
-
+   
 
     // Calculate corner positions
     private func cornerPosition(for corner: Corner, in geometry: GeometryProxy)

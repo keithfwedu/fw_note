@@ -14,13 +14,12 @@ class NoteFile: ObservableObject, Identifiable, Codable {
     @Published var redoStack: [ActionStack] = []  // Published property properly initialized
 
     func addToUndo(
-        pageIndex: Int, lineStack: [LineObj]?, imageStack: [ImageObj]?
+        pageIndex: Int, canvasStack: [CanvasObj]?
     ) {
      print(
-            "add to undo \(pageIndex) \((lineStack ?? []).count) \((imageStack ?? []).count)"
-        )
+        "add to undo \(pageIndex) \((canvasStack ?? []).count)")
         let action = ActionStack(
-            pageIndex: pageIndex, lineStack: lineStack, imageStack: imageStack)
+            pageIndex: pageIndex, canvasStack: canvasStack)
         undoStack.append(action)
     }
 
@@ -65,22 +64,18 @@ class NoteFile: ObservableObject, Identifiable, Codable {
     }
 
     private func updateStacks(for action: ActionStack) {
-        print("Undoing action for pageIndex: \(action.pageIndex). \((action.lineStack ?? []).count), \((action.imageStack ?? []).count)")
+        print("Undoing action for pageIndex: \(action.pageIndex). \((action.canvasStack ?? []).count)")
         guard notePages.indices.contains(action.pageIndex) else {
             print("Index out of bounds")
             return
         }
     
-        if action.lineStack != nil {
+        if action.canvasStack != nil {
             print("undo lineStack");
-            notePages[action.pageIndex].lineStack = action.lineStack!
+            notePages[action.pageIndex].canvasStack = action.canvasStack!
         }
 
-        if action.imageStack != nil {
-            print("undo imageStack");
-            notePages[action.pageIndex].imageStack = action.imageStack!
-        }
-
+      
         self.notePages = notePages
     }
 

@@ -10,9 +10,9 @@ import SwiftUI
 class NotePage: Identifiable, Codable, ObservableObject {
     var id = UUID()
     @Published var pageIndex: Int
-    @Published var lineStack: [LineObj] = []
-    @Published var imageStack: [ImageObj] = []
 
+    @Published var canvasStack: [CanvasObj] = []
+    
 
 
     init(pageIndex: Int) {
@@ -22,23 +22,26 @@ class NotePage: Identifiable, Codable, ObservableObject {
 
     // Codable conformance
     private enum CodingKeys: String, CodingKey {
-        case id, pageIndex, lineStack, imageStack, gifStack
+        case id, pageIndex, canvasStack
     }
 
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         pageIndex = try container.decode(Int.self, forKey: .pageIndex)
-        lineStack = try container.decode([LineObj].self, forKey: .lineStack)
-        imageStack = try container.decode([ImageObj].self, forKey: .imageStack)
+        canvasStack = try container.decode(
+            [CanvasObj].self, forKey: .canvasStack)
+        //lineStack = try container.decode([LineObj].self, forKey: .lineStack)
+        //imageStack = try container.decode([ImageObj].self, forKey: .imageStack)
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(pageIndex, forKey: .pageIndex)
-        try container.encode(lineStack, forKey: .lineStack)
-        try container.encode(imageStack, forKey: .imageStack)
-       
+        try container.encode(canvasStack, forKey: .canvasStack)
+        //try container.encode(lineStack, forKey: .lineStack)
+        //try container.encode(imageStack, forKey: .imageStack)
+
     }
 }

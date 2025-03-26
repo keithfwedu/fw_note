@@ -5,14 +5,21 @@
 //  Created by Fung Wing on 13/3/2025.
 //
 
-import SwiftUI
+import UIKit
 
 struct ImageObj: Identifiable, Codable, Equatable {
     let id: UUID
-    var path: String?
+    var path: String? {
+        didSet {
+            loadImageFromPath()
+        }
+    }
     var position: CGPoint
     var size: CGSize
     var angle: CGFloat
+
+    // CGImage is excluded from Codable
+    private(set) var cgImage: CGImage?
 
     // Computed property to calculate the rectangle
     var rect: CGRect {
@@ -47,12 +54,62 @@ struct ImageObj: Identifiable, Codable, Equatable {
                lhs.angle == rhs.angle
     }
 
-    // Initializer for convenience
+    // Initializer
     init(id: UUID = UUID(), path: String? = nil, position: CGPoint, size: CGSize, angle: CGFloat = 0) {
         self.id = id
         self.path = path
         self.position = position
         self.size = size
         self.angle = angle
+        self.cgImage = nil
+
+        // Load the CGImage during initialization
+        loadImageFromPath()
+    }
+
+    // Load the CGImage from the path
+    mutating func loadImageFromPath() {
+        guard let path = path, let uiImage = UIImage(contentsOfFile: path) else {
+            print("Error: Unable to load image from path \(path ?? "nil")")
+            self.cgImage = nil
+            return
+        }
+        self.cgImage = uiImage.cgImage
+
+        // Immediately redraw the image with the current transformations
+        //redrawCGImage()
+    }
+
+   
+    // MARK: - Codable Conformance
+    enum CodingKeys: String, CodingKey {
+        case id
+        case path
+        case position
+        case size
+        case angle
+        // Exclude cgImage from Codable
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(path, forKey: .path)
+        try container.encode(position, forKey: .position)
+        try container.encode(size, forKey: .size)
+        try container.encode(angle, forKey: .angle)
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        path = try container.decode(String?.self, forKey: .path)
+        position = try container.decode(CGPoint.self, forKey: .position)
+        size = try container.decode(CGSize.self, forKey: .size)
+        angle = try container.decode(CGFloat.self, forKey: .angle)
+
+        // Load the CGImage during decoding
+        self.cgImage = nil
+        loadImageFromPath()
     }
 }

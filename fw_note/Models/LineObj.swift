@@ -14,6 +14,10 @@ struct LineObj: Identifiable, Codable, Equatable {
     var lineWidth: CGFloat
     var opacity: Double = 1.0
     var mode: CanvasMode
+    
+    func updatePoints(_ newPoints: [CGPoint]) -> LineObj {
+        LineObj(id: id, color: color, points: newPoints, lineWidth: lineWidth, mode: mode)
+    }
 
     // Equatable conformance
     static func == (lhs: LineObj, rhs: LineObj) -> Bool {

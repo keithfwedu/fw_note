@@ -16,7 +16,10 @@ struct ImagePickerView: View {
     @State private var isLoading = false
     @ObservedObject var noteFile: NoteFile
     @ObservedObject var canvasState: CanvasState
-
+    let appSupportDirectory = FileManager.default.urls(
+        for: .applicationSupportDirectory, in: .userDomainMask
+    ).first!
+    
     var body: some View {
         VStack {
             // Image display area
@@ -25,25 +28,32 @@ struct ImagePickerView: View {
                     columns: [GridItem(.adaptive(minimum: 100))], spacing: 10
                 ) {
                     ForEach($imagePaths, id: \.self) { path in
+                        
                         ZStack {
                             if let uiImage = UIImage(
                                 contentsOfFile: path.wrappedValue)
                             {
-                                Image(uiImage: uiImage)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 100, height: 100)
-                                    .cornerRadius(10)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color.gray)
-                                    )
-                                    .onTapGesture {
-                                        // Directly pass the plain String path to addImageToStack
-                                        addImageToStack(path: path.wrappedValue)
-                                    }
+                                if FileManager.default.fileExists(atPath: path.wrappedValue) {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 100, height: 100)
+                                        .cornerRadius(10)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(Color.gray)
+                                        )
+                                        .onTapGesture {
+                                            // Directly pass the plain String path to addImageToStack
+                                            addImageToStack(path: path.wrappedValue)
+                                        }
+                                } else {
+                                    Text("Not Exist")
+                                }
+                               
+                                
                             }
-
+                           
                             Button(action: {
                                 removeImage(path.wrappedValue)
                             }) {
@@ -81,7 +91,7 @@ struct ImagePickerView: View {
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePicker(sourceType: selectedSourceType) { image, path in
                 if let image = image {
-                    addImageToStack(path: path)
+                    saveImage(image)
                 }
             }
         }
@@ -92,7 +102,6 @@ struct ImagePickerView: View {
 
     // Add image to stack
     private func addImageToStack(path: String? = nil) {
-
         // Create the ImageObj with the file path
         let newImageObj = ImageObj(
             id: UUID(),
@@ -101,35 +110,39 @@ struct ImagePickerView: View {
             size: CGSize(width: 100, height: 100)
         )
 
-        // Add the new image object to the image stack
-        noteFile.notePages[canvasState.currentPageIndex].imageStack.append(
-            newImageObj)
+        // Create a new CanvasObj containing the ImageObj
+        let newCanvasObj = CanvasObj();
+        newCanvasObj.imageObj = newImageObj
+
+        // Add the new CanvasObj to the canvas stack
+        noteFile.notePages[canvasState.currentPageIndex].canvasStack.append(newCanvasObj)
 
         // Add the operation to the undo stack
         noteFile.addToUndo(
             pageIndex: canvasState.currentPageIndex,
-            lineStack: noteFile.notePages[canvasState.currentPageIndex]
-                .lineStack,
-            imageStack: noteFile.notePages[canvasState.currentPageIndex]
-                .imageStack
+            canvasStack: noteFile.notePages[canvasState.currentPageIndex].canvasStack
         )
 
         // Add the file path to the list and save for persistence
-        if path != nil {
-            imagePaths.append(path ?? "")
+        if let filePath = path {
+            imagePaths.append(filePath)
             saveImagePaths()
         }
 
-        canvasState.showImagePicker = false
-
+        // Close the image picker if applicable
+        // canvasState.showImagePicker = false
     }
+
 
     // Save image paths for persistence
     private func saveImage(_ image: UIImage) {
         DispatchQueue.global(qos: .background).async {
-            let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first! // Updated for long-term storage
+            do {
+            let imagesDirectory = appSupportDirectory.appendingPathComponent(
+                "fw_notes_images", isDirectory: true)
+            try FileManager.default.createDirectory(at: imagesDirectory, withIntermediateDirectories: true, attributes: nil)
             let fileName = UUID().uuidString + ".png" // Save as PNG for compatibility
-            let fileURL = directory.appendingPathComponent(fileName)
+            let fileURL = imagesDirectory.appendingPathComponent(fileName)
 
             // Check image dimensions and resize if necessary
             let resizedImage: UIImage
@@ -144,6 +157,8 @@ struct ImagePickerView: View {
                 } else {
                     newSize = CGSize(width: maxDimension * aspectRatio, height: maxDimension)
                 }
+                
+                print("newSize: \(newSize)");
 
                 // Resize image
                 UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
@@ -151,56 +166,82 @@ struct ImagePickerView: View {
                 resizedImage = UIGraphicsGetImageFromCurrentImageContext() ?? image
                 UIGraphicsEndImageContext()
             } else {
+                print("No newSize: \(image.size)");
                 resizedImage = image // No resize needed
             }
 
             // Compress as PNG
             let imageData = resizedImage.pngData()
 
-            do {
+          
                 // Save the image to disk
                 try imageData?.write(to: fileURL)
                 print("Image saved at \(fileURL)")
-
+                print("Image saved at \(fileURL.path)")
                 // Update imagePaths and save paths to disk
                 DispatchQueue.main.async {
                     imagePaths.append(fileURL.path) // Save the new path
                     saveImagePaths() // Persist paths to a JSON file
                 }
             } catch {
-                print("Failed to save image: \(error)")
+                print("Error handling file saveImage: \(error)")
             }
         }
     }
 
     private func saveImagePaths() {
-        let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first! // Path for storing paths
-        let fileURL = directory.appendingPathComponent("imagePaths.json") // JSON file name
+        let appSupportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let uniqueDirectory = appSupportDirectory.appendingPathComponent("fw_notes_images", isDirectory: true)
+
+        // Ensure the directory exists
+        if !FileManager.default.fileExists(atPath: uniqueDirectory.path) {
+            do {
+                try FileManager.default.createDirectory(at: uniqueDirectory, withIntermediateDirectories: true, attributes: nil)
+            } catch {
+                print("Failed to create directory: \(error)")
+                return
+            }
+        }
+
+        let relativePaths = imagePaths.map { URL(fileURLWithPath: $0).lastPathComponent } // Extract relative file names
+        let jsonFileURL = uniqueDirectory.appendingPathComponent("imagePaths.json")
 
         do {
-            let data = try JSONEncoder().encode(imagePaths) // Encode paths into JSON
-            try data.write(to: fileURL) // Write the JSON to disk
-            print("Image paths saved at \(fileURL)")
+            let encoder = JSONEncoder()
+            let jsonData = try encoder.encode(relativePaths)
+            try jsonData.write(to: jsonFileURL)
+            print("Saved image paths to \(jsonFileURL.path)")
         } catch {
             print("Failed to save image paths: \(error)")
         }
     }
 
+
     // Load saved image paths
     private func loadSavedImagePaths() {
-        let directory = FileManager.default.urls(
-            for: .documentDirectory, in: .userDomainMask
-        ).first!
-        let fileURL = directory.appendingPathComponent("imagePaths.json")
+        let appSupportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let uniqueDirectory = appSupportDirectory.appendingPathComponent("fw_notes_images", isDirectory: true)
+        let jsonFileURL = uniqueDirectory.appendingPathComponent("imagePaths.json")
+
+        print("Loading image paths from \(jsonFileURL.path)")
 
         do {
-            let data = try Data(contentsOf: fileURL)
-            imagePaths = try JSONDecoder().decode([String].self, from: data)
-            print("Loaded image paths: \(imagePaths)")
+            if FileManager.default.fileExists(atPath: jsonFileURL.path) {
+                let data = try Data(contentsOf: jsonFileURL)
+                let relativePaths = try JSONDecoder().decode([String].self, from: data)
+
+                // Reconstruct full paths from relative paths
+                imagePaths = relativePaths.map { uniqueDirectory.appendingPathComponent($0).path }
+                print("Loaded image paths: \(imagePaths)")
+            } else {
+                print("No image paths file found.")
+                imagePaths = []
+            }
         } catch {
             print("Failed to load image paths: \(error)")
         }
     }
+
 
     // Remove image
     private func removeImage(_ path: String) {
