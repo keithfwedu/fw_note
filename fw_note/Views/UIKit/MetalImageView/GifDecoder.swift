@@ -23,7 +23,7 @@ class GIFDecoder {
 
         for i in 0..<frameCount {
             if let cgImage = CGImageSourceCreateImageAtIndex(source, i, nil) {
-                let duration = GIFDecoder.frameDuration(source: source, index: i)
+                let duration = frameDuration(source: source, index: i)
                 let uiImage = UIImage(cgImage: cgImage)
                 frames.append((uiImage, duration))
             }
@@ -37,6 +37,8 @@ class GIFDecoder {
         let gifProperties = frameProperties?[kCGImagePropertyGIFDictionary as String] as? [String: Any]
         let duration = gifProperties?[kCGImagePropertyGIFUnclampedDelayTime as String] as? Double ??
                        gifProperties?[kCGImagePropertyGIFDelayTime as String] as? Double ?? 0.1
+        
+       
         return max(duration, 0.01) // Avoid zero-duration frames
     }
 }

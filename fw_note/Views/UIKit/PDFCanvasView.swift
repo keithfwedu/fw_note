@@ -70,7 +70,7 @@ struct PDFCanvasView: UIViewRepresentable {
         private var canvasState: CanvasState
         var noteFile: NoteFile
         var pageIndicatorLabel: UILabel?  // Page indicator label to show current/total pages
-
+        
         init(
             pdfDocument: PDFDocument, noteFile: NoteFile,
             canvasState: CanvasState
@@ -78,6 +78,7 @@ struct PDFCanvasView: UIViewRepresentable {
             self.pdfDocument = pdfDocument
             self.noteFile = noteFile
             self.canvasState = canvasState
+         
         }
 
         func addCanvasesToPages(pdfView: PDFView, displayDirection: PDFDisplayDirection) {
@@ -115,6 +116,7 @@ struct PDFCanvasView: UIViewRepresentable {
                     canvasState: canvasState,
                     noteFile: noteFile,
                     notePage: noteFile.notePages[pageIndex]
+                    
                 )
 
                 canvasViewWrapper.backgroundColor = UIColor.clear

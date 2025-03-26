@@ -11,6 +11,7 @@ struct ImagePickerView: View {
     @State private var images: [UIImage] = []
     @State private var imagePaths: [String] = []  // Paths for persistence
     @State private var isShowingImagePicker = false
+    @State private var isShowingPopover = false
     @State private var selectedSourceType: UIImagePickerController.SourceType =
         .photoLibrary
     @State private var isLoading = false
@@ -22,83 +23,96 @@ struct ImagePickerView: View {
     
     var body: some View {
         VStack {
+            // Top bar with Add and Close buttons
+               HStack {
+                   Button(action: {
+                       // Show popover logic
+                       isShowingPopover = true
+                   }) {
+                       Image(systemName: "plus.circle")
+                           .font(.system(size: 24))
+                           .foregroundColor(.blue)
+                   }
+                   Spacer()
+                   Button(action: {
+                       // Close action logic
+                       canvasState.showImagePicker = false
+                   }) {
+                       Image(systemName: "xmark.circle")
+                           .font(.system(size: 24))
+                           .foregroundColor(.red)
+                   }
+               }
+               .padding()
             // Image display area
             ScrollView {
                 LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 100))], spacing: 10
+                    columns: [GridItem(.adaptive(minimum: 100, maximum: 120), spacing: 10)],
+                    spacing: 10
                 ) {
                     ForEach($imagePaths, id: \.self) { path in
-                        
                         ZStack {
-                          /*  if let uiImage = UIImage(
-                                contentsOfFile: path.wrappedValue)
-                            {*/
-                                if FileManager.default.fileExists(atPath: path.wrappedValue) {
-                                    MetalImageView(imagePath: path.wrappedValue, targetSize: CGSize(width: 100, height: 100))
-                                        .frame(width: 100, height: 100)
-                                        .cornerRadius(10)
-                                        .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color.gray)
-                                    )
-                                    .onTapGesture {
-                                        // Directly pass the plain String path to addImageToStack
-                                        addImageToStack(path: path.wrappedValue)
-                                    }
-                                   /* Image(uiImage: uiImage)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 100, height: 100)
-                                        .cornerRadius(10)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(Color.gray)
-                                        )
-                                        .onTapGesture {
-                                            // Directly pass the plain String path to addImageToStack
-                                            addImageToStack(path: path.wrappedValue)
-                                        }*/
-                                } else {
-                                    Text("Not Exist")
+                            if FileManager.default.fileExists(atPath: path.wrappedValue) {
+                                MetalImageView(
+                                    imagePath: path.wrappedValue,
+                                    targetSize: CGSize(width: 100, height: 100)
+                                )
+                                .frame(width: 100, height: 100)
+                                .cornerRadius(10)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.gray, lineWidth: 1)
+                                )
+                                .onTapGesture {
+                                    addImageToStack(path: path.wrappedValue)
                                 }
-                               
-                                
-                            //}
-                           
+                            } else {
+                                Text("Not Exist")
+                                    .frame(width: 100, height: 100)
+                                    .background(Color.gray.opacity(0.2))
+                                    .cornerRadius(10)
+                            }
+
                             Button(action: {
                                 removeImage(path.wrappedValue)
                             }) {
                                 Image(systemName: "trash")
                                     .foregroundColor(.red)
+                                    .padding(5)
                                     .background(Color.white)
                                     .clipShape(Circle())
-                                    .padding(4)
                             }
                             .offset(x: 30, y: -30)
                         }
                     }
                 }
+                .padding(10) // Add padding around the entire grid
             }
 
-            // Add buttons
-            HStack {
-                Button("Add from Gallery") {
-                    selectedSourceType = .photoLibrary
-                    isShowingImagePicker = true
-                }
-                Button("Take Photo") {
-                    selectedSourceType = .camera
-                    isShowingImagePicker = true
-                }
-            }
-            .padding()
-            .buttonStyle(.borderedProminent)
+
+           
 
             if isLoading {
                 ProgressView("Loading...")
                     .padding()
             }
         }
+        .popover(isPresented: $isShowingPopover) {
+            VStack {
+                Button("Add from Gallery") {
+                    selectedSourceType = .photoLibrary
+                    isShowingImagePicker = true
+                }
+                Divider()
+                Button("Take Photo") {
+                    selectedSourceType = .camera
+                    isShowingImagePicker = true
+                }
+            }
+            .padding()
+            .frame(width: 200, height: 100)
+        }
+
         .sheet(isPresented: $isShowingImagePicker) {
             ImagePicker(sourceType: selectedSourceType) { image, path in
                 if let image = image, let path = path {
@@ -136,14 +150,7 @@ struct ImagePickerView: View {
             canvasStack: noteFile.notePages[canvasState.currentPageIndex].canvasStack
         )
 
-        // Add the file path to the list and save for persistence
-        if let filePath = path {
-            imagePaths.append(filePath)
-            saveImagePaths()
-        }
-
-        // Close the image picker if applicable
-        // canvasState.showImagePicker = false
+      
     }
 
 

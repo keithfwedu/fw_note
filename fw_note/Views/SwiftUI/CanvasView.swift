@@ -63,57 +63,33 @@ struct CanvasView: View {
                 Canvas { context, size in
 
                     for canvasObj in notePage.canvasStack {
-                        // Handle ImageObj
-                        if let imageObj = canvasObj.imageObj,
-                            let cgImage = imageObj.cgImage
-                        {
-                            let rect = CGRect(
-                                x: imageObj.position.x - imageObj.size.width
-                                    / 2,  // Center the image
-                                y: imageObj.position.y - imageObj.size.height
-                                    / 2,
-                                width: imageObj.size.width,
-                                height: imageObj.size.height
-                            )
+                        if let imageObj = canvasObj.imageObj {
+                            if !imageObj.isAnimatedGIF,
+                                let cgImage = imageObj.cgImage
+                            {
+                                // Existing logic for static images
+                                context.withCGContext { cgContext in
+                                    cgContext.saveGState()
 
-                            context.withCGContext { cgContext in
-                                // Save the current state of CGContext
-                                cgContext.saveGState()
+                                    cgContext.translateBy(
+                                        x: imageObj.position.x,
+                                        y: imageObj.position.y)
+                                    let radians =
+                                        CGFloat(imageObj.angle) * .pi / 180
+                                    cgContext.rotate(by: radians)
+                                    cgContext.scaleBy(x: 1.0, y: -1.0)
 
-                                // Translate to the center of the image
-                                cgContext.translateBy(
-                                    x: imageObj.position.x,
-                                    y: imageObj.position.y)
+                                    cgContext.draw(
+                                        cgImage,
+                                        in: CGRect(
+                                            origin: CGPoint(
+                                                x: -imageObj.size.width / 2,
+                                                y: -imageObj.size.height / 2),
+                                            size: imageObj.size
+                                        ))
 
-                                // Normalize the angle to 0–360
-                                var normalizedAngle = imageObj.angle
-                                    .truncatingRemainder(dividingBy: 360)
-                                if normalizedAngle < 0 {
-                                    normalizedAngle += 360
+                                    cgContext.restoreGState()
                                 }
-
-                                // Convert to radians
-                                let radians =
-                                    CGFloat(normalizedAngle) * .pi / 180
-
-                                // Apply rotation (in radians)
-                                cgContext.rotate(by: radians)
-
-                                // Flip the Y-axis to correct UIImage flipping
-                                cgContext.scaleBy(x: 1.0, y: -1.0)
-
-                                // Draw the CGImage centered around (0, 0)
-                                cgContext.draw(
-                                    cgImage,
-                                    in: CGRect(
-                                        origin: CGPoint(
-                                            x: -rect.size.width / 2,
-                                            y: -rect.size.height / 2),
-                                        size: rect.size
-                                    ))
-
-                                // Restore CGContext state
-                                cgContext.restoreGState()
                             }
                         }
 
@@ -197,11 +173,9 @@ struct CanvasView: View {
                             handleDragEnded()  // Finalize drag action
                         }
                 )
-
                 /*.onDrop(of: ["public.image"], isTargeted: nil) { providers in
                     handleDrop(providers: providers)
                 }*/
-
                 .drawingGroup()
                 .clipped()
 

@@ -108,33 +108,14 @@ struct InteractiveImageView: View {
                         .position(x: self.imageObj.size.width / 2, y: -20)
                     }
 
-                    // ImageView inside the frame
-                   /*if let path = self.imageObj.path,
-                        let uiImage = UIImage(contentsOfFile: path)
-                    {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .frame(
-                                width: self.imageObj.size.width,
-                                height: self.imageObj.size.height
-                            )
-                    } else {
-                        Image("example.png")
-                            .resizable()
-                            .frame(
-                                width: self.imageObj.size.width,
-                                height: self.imageObj.size.height
-                            )
-                    }*/
+                  
                     //Bundle.main.path(forResource: "example", ofType: "png")
-                 /* if let imagePath =  self.imageObj.path {
+                if imageObj.isAnimatedGIF, let imagePath =  self.imageObj.path {
                        MetalImageView(imagePath: imagePath, targetSize: CGSize(width: self.imageObj.size.width, height: self.imageObj.size.height))
                            .frame(width: self.imageObj.size.width, height: self.imageObj.size.height)
-                   } else {
-                       Text("Image not found") // Fallback in case the image cannot be loaded
-                   }*/
+                   }
                 }
-               .background(.blue.opacity(0.1))
+               .background(.blue.opacity(imageObj.isAnimatedGIF ? 0:0.1))
                 .border(Color.blue, width: selectMode && isFocused ? 1 : 0)  // Border syncs with scaling
                 .frame(
                     width: self.imageObj.size.width,

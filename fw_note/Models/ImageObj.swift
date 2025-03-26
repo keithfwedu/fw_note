@@ -19,7 +19,14 @@ struct ImageObj: Identifiable, Codable, Equatable {
     var angle: CGFloat
 
     // CGImage is excluded from Codable
+  
     private(set) var cgImage: CGImage?
+    private(set) var animatedImage: UIImage? // For animated GIFs
+
+    var isAnimatedGIF: Bool {
+        return path?.lowercased().hasSuffix(".gif") ?? false
+    }
+
 
     // Computed property to calculate the rectangle
     var rect: CGRect {
@@ -69,15 +76,23 @@ struct ImageObj: Identifiable, Codable, Equatable {
 
     // Load the CGImage from the path
     mutating func loadImageFromPath() {
-        guard let path = path, let uiImage = UIImage(contentsOfFile: path) else {
-            print("Error: Unable to load image from path \(path ?? "nil")")
-            self.cgImage = nil
+        guard let path = path else {
+            print("Error: Path is nil")
             return
         }
-        self.cgImage = uiImage.cgImage
 
-        // Immediately redraw the image with the current transformations
-        //redrawCGImage()
+        if isAnimatedGIF, let data = try? Data(contentsOf: URL(fileURLWithPath: path)) {
+            // Load animated GIF as UIImage
+            animatedImage = UIImage.animatedImage(withAnimatedGIFData: data)
+            cgImage = animatedImage?.cgImage
+        } else if let uiImage = UIImage(contentsOfFile: path) {
+            // Load static image as CGImage
+            animatedImage = nil
+            cgImage = uiImage.cgImage
+        } else {
+            print("Error: Unable to load image at path \(path)")
+            cgImage = nil
+        }
     }
 
    
@@ -113,3 +128,30 @@ struct ImageObj: Identifiable, Codable, Equatable {
         loadImageFromPath()
     }
 }
+
+extension UIImage {
+    static func animatedImage(withAnimatedGIFData data: Data) -> UIImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+
+        let frameCount = CGImageSourceGetCount(source)
+        var frames: [UIImage] = []
+        var totalDuration: TimeInterval = 0
+
+        for i in 0..<frameCount {
+            if let cgImage = CGImageSourceCreateImageAtIndex(source, i, nil) {
+                frames.append(UIImage(cgImage: cgImage))
+            }
+
+            // Retrieve the exact frame duration from GIF metadata
+            if let properties = CGImageSourceCopyPropertiesAtIndex(source, i, nil) as? [CFString: Any],
+               let gifProperties = properties[kCGImagePropertyGIFDictionary] as? [CFString: Any],
+               let frameDuration = gifProperties[kCGImagePropertyGIFDelayTime] as? NSNumber {
+                totalDuration += frameDuration.doubleValue
+            }
+        }
+
+        // Generate the animated UIImage with accurate frame durations
+        return UIImage.animatedImage(with: frames, duration: totalDuration)
+    }
+}
+

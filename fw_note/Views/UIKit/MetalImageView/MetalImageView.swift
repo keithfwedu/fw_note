@@ -6,6 +6,7 @@ struct MetalImageView: UIViewRepresentable {
     let imagePath: String
     let targetSize: CGSize
 
+
     func makeUIView(context: Context) -> MTKView {
         guard let device = MTLCreateSystemDefaultDevice() else {
             fatalError("Metal is not supported on this device.")
@@ -41,6 +42,8 @@ struct MetalImageView: UIViewRepresentable {
         private var currentFrameIndex = 0
         private var frameDurations: [Double] = []
         private var timer: CADisplayLink?
+        private var currentFrameStartTime: CFTimeInterval = 0.0
+        private var elapsedTime: CFTimeInterval = 0.0
 
         override init() {
             self.device = MTLCreateSystemDefaultDevice()
@@ -48,8 +51,8 @@ struct MetalImageView: UIViewRepresentable {
 
             if let device = self.device {
                 let pipelineDescriptor = MTLRenderPipelineDescriptor()
-                pipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm // Support alpha transparency
-                pipelineDescriptor.colorAttachments[0].isBlendingEnabled = true // Enable blending
+                pipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+                pipelineDescriptor.colorAttachments[0].isBlendingEnabled = true
                 pipelineDescriptor.colorAttachments[0].rgbBlendOperation = .add
                 pipelineDescriptor.colorAttachments[0].alphaBlendOperation = .add
                 pipelineDescriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
@@ -84,50 +87,55 @@ struct MetalImageView: UIViewRepresentable {
 
             do {
                 textures = [try loader.newTexture(cgImage: cgImage, options: options)]
-                timer?.invalidate() // Stop any running GIF playback
+                timer?.invalidate()
             } catch {
                 print("Failed to load texture: \(error)")
             }
         }
-        
+
         func loadGIF(path: String) {
             guard let device = self.device,
-                let gifFrames = GIFDecoder.decodeGIF(from: path)
-            else {
+                  let gifFrames = GIFDecoder.decodeGIF(from: path) else {
                 print("Failed to load GIF frames")
                 return
             }
 
             let loader = MTKTextureLoader(device: device)
-            let options: [MTKTextureLoader.Option: Any] = [
-                .SRGB: false
-            ]
+            let options: [MTKTextureLoader.Option: Any] = [.SRGB: false]
 
             self.textures = gifFrames.compactMap { (image, _) in
                 guard let cgImage = image.cgImage else { return nil }
-                return try? loader.newTexture(
-                    cgImage: cgImage, options: options)
+                return try? loader.newTexture(cgImage: cgImage, options: options)
             }
 
             self.frameDurations = gifFrames.map { $0.1 }
             startPlayback()
         }
-        
-        
+
         private func startPlayback() {
             guard !textures.isEmpty, !frameDurations.isEmpty else { return }
 
-            timer?.invalidate()  // Stop any previous timer
-            timer = CADisplayLink(
-                target: self, selector: #selector(updateFrame))
+            timer?.invalidate()
+            currentFrameIndex = 0
+            currentFrameStartTime = CACurrentMediaTime()
+            timer = CADisplayLink(target: self, selector: #selector(updateFrame))
             timer?.add(to: .main, forMode: .default)
         }
 
         @objc private func updateFrame() {
-            currentFrameIndex = (currentFrameIndex + 1) % textures.count
+            guard !textures.isEmpty, !frameDurations.isEmpty else { return }
+
+            let currentTime = CACurrentMediaTime()
+            elapsedTime = currentTime - currentFrameStartTime
+
+            let currentFrameDuration = frameDurations[currentFrameIndex]
+
+            if elapsedTime >= currentFrameDuration {
+                currentFrameIndex = (currentFrameIndex + 1) % textures.count
+                currentFrameStartTime = currentTime
+                elapsedTime = 0.0
+            }
         }
-        
-        
 
         func draw(in view: MTKView) {
             guard let drawable = view.currentDrawable,
@@ -154,6 +162,7 @@ struct MetalImageView: UIViewRepresentable {
             // Handle view size changes
         }
     }
+
 }
 
 
