@@ -148,23 +148,7 @@ struct CanvasToolBar: View {
     }
     func addImage() {
         print("addImage")
-       /* let newImageObj = ImageObj(
-            id: UUID(),
-            path: nil,
-            position: CGPoint(x: 100, y: 100),
-            size: CGSize(width: 100, height: 100)
-        )
-
-        noteFile.notePages[canvasState.currentPageIndex].imageStack.append(
-            newImageObj)
-        noteFile.addToUndo(
-            pageIndex: self.canvasState.currentPageIndex,
-            lineStack: self.noteFile.notePages[
-                self.canvasState.currentPageIndex
-            ].lineStack,
-            imageStack: self.noteFile.notePages[
-                self.canvasState.currentPageIndex
-            ].imageStack)*/
+  
         canvasState.showImagePicker.toggle()
     }
     func undoAction() {
@@ -181,6 +165,8 @@ struct CanvasToolBar: View {
         canvasState.displayDirection =
             canvasState.displayDirection == .horizontal
             ? .vertical : .horizontal
+        
+        
         print(
             "Scroll direction changed to \(canvasState.displayDirection == .horizontal ? "Horizontal" : "Vertical")"
         )

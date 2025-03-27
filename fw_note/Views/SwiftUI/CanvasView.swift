@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-
-
 struct CanvasView: View {
     let pageIndex: Int
 
@@ -97,7 +95,7 @@ struct CanvasView: View {
 
                         // Handle LineObj
                         if let line = canvasObj.lineObj {
-                           
+
                             let path = PathHelper.createStableCurvedPath(
                                 points: line.points, maxOffsetForAverage: 4)
                             if selectedLineStack.contains(where: {
@@ -150,7 +148,7 @@ struct CanvasView: View {
                     }
 
                 }
-                .frame(width: geometry.size.width, height: geometry.size.height)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .border(.red, width: 1)
                 .onAppear {
                     redrawTrigger.toggle()
@@ -163,32 +161,33 @@ struct CanvasView: View {
                 .onChange(of: notePage.canvasStack) { newStack in
                     imageStack = newStack.compactMap { $0.imageObj }
                     print("change2")
-                }.drawingGroup()
-               
-                
-                MultiFingerGestureView(
-                               onSingleFingerDrag: { value in
-                                   focusedID = nil
-                                   print("touch1");
-                                   if value.translation == .zero {
-                                       // Handle as a tap gesture
-                                       handleTap(at: value.startLocation)
-                                   } else {
-                                       // Handle as a drag gesture
-                                       handleDragChange(dragValue: value)
-                                   }
+                }
+                .drawingGroup()
 
-                                   print("Single-finger drag at: \(value.location)")
-                               },
-                               onSingleFingerDragEnd: { value in
-                                   print("handleDragEnded")
-                                   handleDragEnded()
-                               },
-                               onMultiFingerGesture: {
-                                   print("Multi-finger gesture detected")
-                               }
-                           )
-              /*.gesture(
+                MultiFingerGestureView(
+                    onTap: { value in
+                        handleTap(at: value)
+                    },
+                    onSingleFingerDrag: { value in
+                        focusedID = nil
+                        print("touch1")
+
+                        // Handle as a drag gesture
+                        handleDragChange(dragValue: value)
+
+                        print("Single-finger drag at: \(value.location)")
+                    },
+                    onSingleFingerDragEnd: { value in
+                        print("handleDragEnded")
+                        handleDragEnded()
+                    },
+                    onMultiFingerGesture: {
+                        print("Multi-finger gesture detected")
+                        
+                    }
+
+                )
+                /*.gesture(
                     DragGesture(minimumDistance: 0)  // Handles both taps and drags
                         .onChanged { value in
                             focusedID = nil
@@ -207,9 +206,7 @@ struct CanvasView: View {
                             handleDragEnded()  // Finalize drag action
                         }
                 )*/
-                
-                
-               
+
                 /*.onDrop(of: ["public.image"], isTargeted: nil) { providers in
                     handleDrop(providers: providers)
                 }*/
@@ -273,7 +270,6 @@ struct CanvasView: View {
             .allowsHitTesting(false)
 
         }
-       
         .onTapGesture {
             focusedID = nil  // Reset focus if background is tapped
         }.onAppear {
@@ -427,9 +423,9 @@ struct CanvasView: View {
                         selectedImages: selectedImageObjIds)
             }
         case .laser:  // Laser Mode
-          
+
             laserTimerManager.setLaserTimer(onFadout: {
-                
+
                 if lastDrawLaserPosition == nil {
                     fadeOutLasers()
                 }
@@ -439,17 +435,17 @@ struct CanvasView: View {
 
     private func fadeOutLasers() {
         laserOpacity = 1
-        isLaserCreated = false;
+        isLaserCreated = false
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-            if(self.isLaserCreated == false) {
+            if self.isLaserCreated == false {
                 self.laserOpacity -= 0.3
-                
+
                 if laserOpacity <= 0 {
                     laserOpacity = 1.0
                     timer.invalidate()
                     laserStack = []  // Clear the stack when all lasers have faded
                 }
-            }else {
+            } else {
                 self.laserOpacity = 1
                 timer.invalidate()
             }
@@ -556,7 +552,7 @@ struct CanvasView: View {
     }
 
     private func handleLaser(dragValue: CustomDragValue) {
-        isLaserCreated = true;
+        isLaserCreated = true
         if lastDrawLaserPosition == nil {
             // Start a new stroke when drag begins
             print("First drag detected for a new Laser")
@@ -776,115 +772,4 @@ struct CanvasView: View {
 
         return newImage ?? image
     }*/
-}
-
-struct CustomDragValue {
-    let time: Date
-    let location: CGPoint
-    let startLocation: CGPoint
-    let translation: CGSize
-    let predictedEndTranslation: CGSize
-    let predictedEndLocation: CGPoint
-}
-
-struct MultiFingerGestureView: UIViewRepresentable {
-    
-
-    var onSingleFingerDrag: (CustomDragValue) -> Void
-    var onSingleFingerDragEnd: (CustomDragValue) -> Void
-    var onMultiFingerGesture: () -> Void
-
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        view.backgroundColor = .clear
-
-        let panGesture = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handlePan(_:)))
-        view.addGestureRecognizer(panGesture)
-
-        return view
-    }
-
-    func updateUIView(_ uiView: UIView, context: Context) {}
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(
-            onSingleFingerDrag: onSingleFingerDrag,
-            onSingleFingerDragEnd: onSingleFingerDragEnd,
-            onMultiFingerGesture: onMultiFingerGesture
-        )
-    }
-
-    class Coordinator: NSObject {
-        var onSingleFingerDrag: (CustomDragValue) -> Void
-        var onSingleFingerDragEnd: (CustomDragValue) -> Void
-        var onMultiFingerGesture: () -> Void
-        private var startLocation: CGPoint = .zero
-
-        init(
-            onSingleFingerDrag: @escaping (CustomDragValue) -> Void,
-            onSingleFingerDragEnd: @escaping (CustomDragValue) -> Void,
-            onMultiFingerGesture: @escaping () -> Void
-        ) {
-            self.onSingleFingerDrag = onSingleFingerDrag
-            self.onSingleFingerDragEnd = onSingleFingerDragEnd
-            self.onMultiFingerGesture = onMultiFingerGesture
-        }
-
-        @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
-            let numberOfTouches = gesture.numberOfTouches
-            let location = gesture.location(in: gesture.view)
-            let translation = gesture.translation(in: gesture.view)
-
-            let customDragValue = CustomDragValue(
-                time: Date(),
-                location: location,
-                startLocation: startLocation,
-                translation: CGSize(width: translation.x, height: translation.y),
-                predictedEndTranslation: CGSize.zero,
-                predictedEndLocation: location
-            )
-    
-            if numberOfTouches == 1 {
-                
-                switch gesture.state {
-                case .began:
-                    startLocation = location // Save the start location
-                    print("Gesture began at: \(startLocation)")
-                case .changed:
-                    onSingleFingerDrag(customDragValue)
-                    print("Dragging at: \(customDragValue.location)")
-                case .ended:
-                    print("Gesture ended at: \(customDragValue.location)")
-                    onSingleFingerDragEnd(customDragValue)
-                    startLocation = .zero // Reset start location for the next gesture
-                case .cancelled, .failed:
-                    print("Gesture cancelled or failed")
-                    startLocation = .zero // Reset start location for safety
-                default:
-                    break
-                }
-            } else if numberOfTouches > 1 {
-                if gesture.state == .began || gesture.state == .changed {
-                    onMultiFingerGesture()
-                }
-            } else {
-                switch gesture.state {
-              
-                case .ended:
-                    print("Gesture ended at: \(customDragValue.location) - \(numberOfTouches)")
-                   
-                    onSingleFingerDragEnd(customDragValue)
-                    startLocation = .zero // Reset start location for the next gesture
-                case .cancelled, .failed:
-                    print("Gesture cancelled at: \(customDragValue.location) - \(numberOfTouches)")
-                  
-                    onSingleFingerDragEnd(customDragValue)
-                    startLocation = .zero // Reset start location for the next gesture
-                default:
-                    break
-                }
-            }
-        }
-
-    }
 }
