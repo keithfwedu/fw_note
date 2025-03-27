@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension CGPoint: Codable {
+extension CGPoint {
     enum CodingKeys: String, CodingKey {
         case x, y
     }
@@ -24,6 +24,4 @@ extension CGPoint: Codable {
         let y = try container.decode(CGFloat.self, forKey: .y)
         self.init(x: x, y: y)
     }
-    
-    
 }

@@ -43,11 +43,14 @@ class ShapeHelper {
 
     static func lineToStraightLine(_ line: LineObj) -> [CGPoint] {
         print("Line \(line.id) converted to a refined straight line.")
+        print(line.points);
         guard let firstPoint = line.points.first,
             let lastPoint = line.points.last
         else {
             return []
         }
+        
+        print("Line \(line.id) converted to a refined straight line2. \(firstPoint), \(lastPoint)")
         return [firstPoint, lastPoint]
     }
 

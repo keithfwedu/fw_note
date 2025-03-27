@@ -15,12 +15,21 @@ class PointHelper {
         let distance = sqrt(pow(end.x - start.x, 2) + pow(end.y - start.y, 2))
         let steps = max(1, Int(distance / step))
         return (0...steps).map { i in
+            // Apply an easing function for smoother interpolation
             let t = CGFloat(i) / CGFloat(steps)
+            let easedT = cubicEaseOut(t) // Replace this with your desired easing function
             return CGPoint(
-                x: start.x + t * (end.x - start.x),
-                y: start.y + t * (end.y - start.y))
+                x: start.x + easedT * (end.x - start.x),
+                y: start.y + easedT * (end.y - start.y)
+            )
         }
     }
+
+    // Cubic easing out function
+    static func cubicEaseOut(_ t: CGFloat) -> CGFloat {
+        return 1 - pow(1 - t, 3) // Eases out, starts fast and slows down towards the end
+    }
+
 
   
     static func distance(_ a: CGPoint, _ b: CGPoint) -> CGFloat {

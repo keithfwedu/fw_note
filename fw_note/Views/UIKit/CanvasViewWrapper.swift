@@ -4,13 +4,10 @@
 //
 //  Created by Alex Ng on 20/3/2025.
 //
-
-
-import PDFKit
+import UIKit
 import SwiftUI
 
-// CanvasViewWrapper Class
-class CanvasViewWrapper: UIView {
+class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
     var pageIndex: Int
     private var hostingController: UIHostingController<CanvasView>?
 
@@ -30,9 +27,10 @@ class CanvasViewWrapper: UIView {
             hostingView.frame = self.bounds
             hostingView.backgroundColor = .clear
             hostingView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-          
             self.addSubview(hostingView)
         }
+
+      
     }
 
     required init?(coder: NSCoder) {
@@ -44,4 +42,12 @@ class CanvasViewWrapper: UIView {
         hostingController?.view.frame = self.bounds
     }
 
+    // Delegate to allow simultaneous two-finger gestures for zooming
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        if let panGesture = gestureRecognizer as? UIPanGestureRecognizer {
+            // Allow two-finger gestures for zooming
+            return panGesture.numberOfTouches == 2
+        }
+        return false
+    }
 }

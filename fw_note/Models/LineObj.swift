@@ -13,6 +13,7 @@ struct LineObj: Identifiable, Codable, Equatable {
     var points: [CGPoint]
     var lineWidth: CGFloat
     var opacity: Double = 1.0
+    
     var mode: CanvasMode
     
     

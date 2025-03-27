@@ -10,23 +10,25 @@ import SwiftUI
 class LaserTimerManager {
     private var laserTimer: Timer?
 
-    func cancelLaserTimer() {
-        laserTimer?.invalidate()
-        laserTimer = nil
+    private func cancelLaserTimer() {
+        print("cancel laser timer")
+        self.laserTimer?.invalidate()
+        self.laserTimer = nil
     }
 
-    func startLaserTimer(onFadout: @escaping () -> Void) {
-        laserTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
+    private func startLaserTimer(onFadout: @escaping () -> Void) {
+        self.laserTimer = Timer.scheduledTimer(withTimeInterval: 0.7, repeats: false) { _ in
+           
             DispatchQueue.main.async {
+                self.cancelLaserTimer()
                 onFadout()
             }
         }
     }
 
     func setLaserTimer(onFadout: @escaping () -> Void) {
-        print("Laser timer1")
-        cancelLaserTimer()
-        print("Laser timer2")
-        startLaserTimer(onFadout: onFadout)
+        self.cancelLaserTimer()
+        print("New laser timer")
+        self.startLaserTimer(onFadout: onFadout)
     }
 }
