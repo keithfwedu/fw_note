@@ -16,10 +16,8 @@ struct InteractiveImageView: View {
     var frameSize: CGSize
     var onTap: (_ id: UUID) -> Void
     var onRemove: (_ id: UUID) -> Void
-    var afterMove: (_ id: UUID) -> Void
-    var afterScale: (_ id: UUID) -> Void
-    var afterRotate: (_ id: UUID) -> Void
     var onChanged: (_ id: UUID, _ imageObj: ImageObj) -> Void
+    var afterChanged: (_ id: UUID, _ imageObj: ImageObj) -> Void
 
     @State private var lastAngle: CGFloat = 0
     @State private var length: CGFloat = 0
@@ -220,7 +218,7 @@ struct InteractiveImageView: View {
                 self.imageObj.position.x = min(max(newX, 0), screenSize.width)
                 self.imageObj.position.y = min(max(newY, 0), screenSize.height)
 
-                afterMove(imageObj.id)
+                afterChanged(imageObj.id,imageObj)
             }
     }
 
@@ -263,7 +261,7 @@ struct InteractiveImageView: View {
 
                 self.lastAngle = self.imageObj.angle
 
-                afterRotate(imageObj.id)
+                afterChanged(imageObj.id,imageObj)
 
             }
     }
@@ -316,7 +314,7 @@ struct InteractiveImageView: View {
                 // Update state
                 self.imageObj.size = CGSize(width: newWidth, height: newHeight)
             }.onEnded { v in
-                afterScale(imageObj.id)
+                afterChanged(imageObj.id,imageObj)
             }
     }
 

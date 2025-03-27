@@ -22,11 +22,28 @@ struct ImageObj: Identifiable, Codable, Equatable {
   
     private(set) var cgImage: CGImage?
     private(set) var animatedImage: UIImage? // For animated GIFs
+    
+    func clone() -> ImageObj {
+        return ImageObj(id: id, path: path, position: position, size: size, angle: angle)
+    }
+    
+    // Initializer
+    init(id: UUID = UUID(), path: String? = nil, position: CGPoint, size: CGSize, angle: CGFloat = 0) {
+        self.id = id
+        self.path = path
+        self.position = position
+        self.size = size
+        self.angle = angle
+        self.cgImage = nil
+
+        // Load the CGImage during initialization
+        loadImageFromPath()
+    }
+
 
     var isAnimatedGIF: Bool {
         return path?.lowercased().hasSuffix(".gif") ?? false
     }
-
 
     // Computed property to calculate the rectangle
     var rect: CGRect {
@@ -61,19 +78,7 @@ struct ImageObj: Identifiable, Codable, Equatable {
                lhs.angle == rhs.angle
     }
 
-    // Initializer
-    init(id: UUID = UUID(), path: String? = nil, position: CGPoint, size: CGSize, angle: CGFloat = 0) {
-        self.id = id
-        self.path = path
-        self.position = position
-        self.size = size
-        self.angle = angle
-        self.cgImage = nil
-
-        // Load the CGImage during initialization
-        loadImageFromPath()
-    }
-
+   
     // Load the CGImage from the path
     mutating func loadImageFromPath() {
         guard let path = path else {

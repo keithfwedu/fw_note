@@ -9,47 +9,40 @@ import SwiftUI
 
 struct ImagePickerView: View {
     @State private var images: [UIImage] = []
-    @State private var imagePaths: [String] = []  // Paths for persistence
+    @State private var imagePaths: [String] = [] // Paths for persistence
     @State private var isShowingImagePicker = false
     @State private var isShowingPopover = false
-    @State private var selectedSourceType: UIImagePickerController.SourceType =
-        .photoLibrary
+    @State private var selectedSourceType: UIImagePickerController.SourceType = .photoLibrary
     @State private var isLoading = false
     @ObservedObject var noteFile: NoteFile
     @ObservedObject var canvasState: CanvasState
-    let appSupportDirectory = FileManager.default.urls(
-        for: .applicationSupportDirectory, in: .userDomainMask
-    ).first!
+    let appSupportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
     
     var body: some View {
         VStack {
             // Top bar with Add and Close buttons
-               HStack {
-                   Button(action: {
-                       // Show popover logic
-                       isShowingPopover = true
-                   }) {
-                       Image(systemName: "plus.circle")
-                           .font(.system(size: 24))
-                           .foregroundColor(.blue)
-                   }
-                   Spacer()
-                   Button(action: {
-                       // Close action logic
-                       canvasState.showImagePicker = false
-                   }) {
-                       Image(systemName: "xmark.circle")
-                           .font(.system(size: 24))
-                           .foregroundColor(.red)
-                   }
-               }
-               .padding()
+            HStack {
+                Button(action: {
+                    isShowingPopover = true // Show popover
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 24))
+                        .foregroundColor(.blue)
+                }
+                Spacer()
+                Button(action: {
+                    canvasState.showImagePicker = false // Close action
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 24))
+                        .foregroundColor(.red)
+                }
+            }
+            .padding()
+            
             // Image display area
             ScrollView {
-                LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 100, maximum: 120), spacing: 10)],
-                    spacing: 10
-                ) {
+                VStack {
                     ForEach($imagePaths, id: \.self) { path in
                         ZStack {
                             if FileManager.default.fileExists(atPath: path.wrappedValue) {
@@ -67,9 +60,10 @@ struct ImagePickerView: View {
                                     addImageToStack(path: path.wrappedValue)
                                 }
                             } else {
-                                Text("Not Exist")
+                                Text("File Missing")
+                                    .foregroundColor(.red)
                                     .frame(width: 100, height: 100)
-                                    .background(Color.gray.opacity(0.2))
+                                    .background(Color.gray.opacity(0.3))
                                     .cornerRadius(10)
                             }
 
@@ -86,7 +80,7 @@ struct ImagePickerView: View {
                         }
                     }
                 }
-                .padding(10) // Add padding around the entire grid
+                .padding(10) // Add padding around the grid
             }
 
             if isLoading {
@@ -98,30 +92,33 @@ struct ImagePickerView: View {
             VStack {
                 Button("Add from Gallery") {
                     selectedSourceType = .photoLibrary
+                    isShowingPopover = false
                     isShowingImagePicker = true
                 }
                 Divider()
                 Button("Take Photo") {
                     selectedSourceType = .camera
+                    isShowingPopover = false
                     isShowingImagePicker = true
                 }
             }
             .padding()
-            .frame(width: 200, height: 100)
+          
         }
-        .fullScreenCover(isPresented: $isShowingImagePicker) {
+        .sheet(isPresented: $isShowingImagePicker){
+           
             ImagePicker(sourceType: selectedSourceType) { image, path in
                 if let image = image, let path = path {
-                    saveImage(image, originalFilePath: path)
+                    saveImage(image, originalFilePath: path.absoluteString)
                 } else {
-                    print("Image or path is nil")
+                    print("Failed to retrieve image or path.")
                 }
             }
         }
-
         .onAppear {
             loadSavedImagePaths()
         }
+        
     }
 
     // Add image to stack
@@ -135,8 +132,8 @@ struct ImagePickerView: View {
         )
 
         // Create a new CanvasObj containing the ImageObj
-        let newCanvasObj = CanvasObj();
-        newCanvasObj.imageObj = newImageObj
+        let newCanvasObj = CanvasObj(lineObj: nil, imageObj: newImageObj);
+  
 
         // Add the new CanvasObj to the canvas stack
         noteFile.notePages[canvasState.currentPageIndex].canvasStack.append(newCanvasObj)
@@ -285,52 +282,6 @@ struct ImagePickerView: View {
             print("Removed file at \(fileURL)")
         } catch {
             print("Failed to remove file: \(error)")
-        }
-    }
-}
-
-struct ImagePicker: UIViewControllerRepresentable {
-    var sourceType: UIImagePickerController.SourceType
-    var onImagePicked: (UIImage?, String?) -> Void
-
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.sourceType = sourceType
-        picker.delegate = context.coordinator
-        return picker
-    }
-
-    func updateUIViewController(
-        _ uiViewController: UIImagePickerController, context: Context
-    ) {}
-
-    func makeCoordinator() -> Coordinator {
-        return Coordinator(onImagePicked: onImagePicked)
-    }
-
-    class Coordinator: NSObject, UINavigationControllerDelegate,
-        UIImagePickerControllerDelegate
-    {
-        var onImagePicked: (UIImage?, String?) -> Void
-
-        init(onImagePicked: @escaping (UIImage?, String?) -> Void) {
-            self.onImagePicked = onImagePicked
-        }
-
-        func imagePickerController(
-            _ picker: UIImagePickerController,
-            didFinishPickingMediaWithInfo info: [UIImagePickerController
-                .InfoKey: Any]
-        ) {
-            let image = info[.originalImage] as? UIImage
-            let url = info[.imageURL] as? URL
-            onImagePicked(image, url?.path)  // Pass the image and path
-            picker.dismiss(animated: true)
-        }
-
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            onImagePicked(nil, nil)
-            picker.dismiss(animated: true)
         }
     }
 }

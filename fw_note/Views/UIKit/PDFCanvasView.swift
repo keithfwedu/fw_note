@@ -28,6 +28,7 @@ struct PDFCanvasView: UIViewRepresentable {
         ) as? UIScrollView {
             scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
+            
             scrollView.delaysContentTouches = false
             scrollView.minimumZoomScale = 1
             scrollView.bouncesZoom = false

@@ -8,26 +8,29 @@
 import SwiftUI
 
 class CanvasObj: ObservableObject, Identifiable, Codable, Equatable {
-    var id = UUID()
-    var lineObj: LineObj? = nil
-    var imageObj: ImageObj? = nil
+    let id: UUID
+    var lineObj: LineObj?
+    var imageObj: ImageObj?
 
-    // Default initializer
-    init() {
-        self.lineObj = nil
-        self.imageObj = nil
+    // Initializer
+    init(id: UUID = UUID(), lineObj: LineObj?, imageObj: ImageObj?) {
+        self.id = id
+        self.lineObj = lineObj ?? nil
+        self.imageObj = imageObj ?? nil
     }
-    
+
+    // Deep copy method
+    func clone() -> CanvasObj {
+        return CanvasObj(
+            id: id,
+            lineObj: lineObj?.clone() ?? nil,  // Assuming LineObj has a `clone` method
+            imageObj: imageObj?.clone()  ?? nil  // Assuming ImageObj has a `clone` method
+        )
+    }
+
     static func == (lhs: CanvasObj, rhs: CanvasObj) -> Bool {
-        return lhs.id == rhs.id &&
-               lhs.lineObj == rhs.lineObj &&
-               lhs.imageObj == rhs.imageObj
-    }
-
-    // Initializer with parameters
-    init(lineObj: LineObj?, imageObj: ImageObj?) {
-        self.lineObj = lineObj
-        self.imageObj = imageObj
+        return lhs.id == rhs.id && lhs.lineObj == rhs.lineObj
+            && lhs.imageObj == rhs.imageObj
     }
 
     // Codable conformance
@@ -48,11 +51,7 @@ class CanvasObj: ObservableObject, Identifiable, Codable, Equatable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         lineObj = try container.decodeIfPresent(LineObj.self, forKey: .lineObj)
-        imageObj = try container.decodeIfPresent(ImageObj.self, forKey: .imageObj)
-    }
-
-    // Helper method to validate object contents
-    func isEmpty() -> Bool {
-        [lineObj, imageObj].allSatisfy { $0 == nil }
+        imageObj = try container.decodeIfPresent(
+            ImageObj.self, forKey: .imageObj)
     }
 }

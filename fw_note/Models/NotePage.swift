@@ -10,10 +10,8 @@ import SwiftUI
 class NotePage: Identifiable, Codable, ObservableObject {
     var id = UUID()
     @Published var pageIndex: Int
-
     @Published var canvasStack: [CanvasObj] = []
     
-
 
     init(pageIndex: Int) {
         print("pageIndex: \(pageIndex)")
@@ -31,8 +29,6 @@ class NotePage: Identifiable, Codable, ObservableObject {
         pageIndex = try container.decode(Int.self, forKey: .pageIndex)
         canvasStack = try container.decode(
             [CanvasObj].self, forKey: .canvasStack)
-        //lineStack = try container.decode([LineObj].self, forKey: .lineStack)
-        //imageStack = try container.decode([ImageObj].self, forKey: .imageStack)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -40,8 +36,5 @@ class NotePage: Identifiable, Codable, ObservableObject {
         try container.encode(id, forKey: .id)
         try container.encode(pageIndex, forKey: .pageIndex)
         try container.encode(canvasStack, forKey: .canvasStack)
-        //try container.encode(lineStack, forKey: .lineStack)
-        //try container.encode(imageStack, forKey: .imageStack)
-
     }
 }

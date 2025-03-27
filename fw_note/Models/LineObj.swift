@@ -15,6 +15,11 @@ struct LineObj: Identifiable, Codable, Equatable {
     var opacity: Double = 1.0
     var mode: CanvasMode
     
+    
+    func clone() -> LineObj {
+        return LineObj(id: id, color: color, points: points, lineWidth: lineWidth, mode: mode)
+    }
+    
     func updatePoints(_ newPoints: [CGPoint]) -> LineObj {
         LineObj(id: id, color: color, points: newPoints, lineWidth: lineWidth, mode: mode)
     }

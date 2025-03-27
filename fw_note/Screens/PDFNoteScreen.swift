@@ -35,30 +35,13 @@ struct PdfNoteScreen: View {
                             noteFile: noteFile,
                             displayDirection: $canvasState.displayDirection
                         )
-                        VStack {
+                      VStack {
                             ImagePickerView(
                                 noteFile: noteFile, canvasState: canvasState
                             )
                         }
                         .frame(width: 200)
-                        // Sliding view
-                        /* VStack {
-                            ImagePickerView(
-                                noteFile: noteFile, canvasState: canvasState
-                            )
-                        }
-                        .frame(maxWidth: 300, maxHeight: .infinity)
-                        .background(Color.gray)
-                        .edgesIgnoringSafeArea(.vertical)  // Ensure it fills top and bottom
-                        .offset(
-                            x: canvasState.showImagePicker
-                                ? (UIScreen.main.bounds.width / 2) - 150
-                                : (UIScreen.main.bounds.width / 2) + 150
-                        )  // Animate horizontally
-                        .animation(
-                            .easeInOut(duration: 0.3),
-                            value: canvasState.showImagePicker)  // Smooth animation
-*/
+                       
                     } else {
                         Text("Unable to load PDF")
                             .foregroundColor(.red)

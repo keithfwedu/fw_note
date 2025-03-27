@@ -13,15 +13,21 @@ class NoteFile: ObservableObject, Identifiable, Codable {
     @Published var undoStack: [ActionStack] = []  // Published property properly initialized
     @Published var redoStack: [ActionStack] = []  // Published property properly initialized
 
-    func addToUndo(
-        pageIndex: Int, canvasStack: [CanvasObj]?
-    ) {
-     print(
-        "add to undo \(pageIndex) \((canvasStack ?? []).count)")
+    func addToUndo(pageIndex: Int, canvasStack: [CanvasObj]?) {
+        // Clone the canvasStack to create an independent copy
+        let clonedCanvasStack = canvasStack?.map { $0.clone() }
+
+        print("add to undo \(pageIndex) \(clonedCanvasStack?.count ?? 0)")
+
+        // Create a new ActionStack with the cloned canvasStack
         let action = ActionStack(
-            pageIndex: pageIndex, canvasStack: canvasStack)
+            pageIndex: pageIndex, canvasStack: clonedCanvasStack
+        )
+        
+        // Add the action to the undo stack
         undoStack.append(action)
     }
+
 
     func undo() {
         let initStackCount: Int = notePages.count
