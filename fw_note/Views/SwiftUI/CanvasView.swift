@@ -9,7 +9,7 @@ import SwiftUI
 
 struct CanvasView: View {
     let pageIndex: Int
-
+    var onGesture: ((CGFloat, CGSize) -> Void)?
     @ObservedObject var canvasState: CanvasState
     @ObservedObject var noteFile: NoteFile
     @ObservedObject var notePage: NotePage
@@ -181,11 +181,16 @@ struct CanvasView: View {
                         print("handleDragEnded")
                         handleDragEnded()
                     },
-                    onMultiFingerGesture: {
+                    onMultiFingerGesture: { value in
                         print("Multi-finger gesture detected")
-                        
+                        onGesture?(1.0, value.translation)
                     }
 
+                ).gesture(
+                    MagnificationGesture()
+                        .onChanged { scale in
+                            onGesture?(scale, .zero)  // Notify parent about zoom
+                        }
                 )
                 /*.gesture(
                     DragGesture(minimumDistance: 0)  // Handles both taps and drags

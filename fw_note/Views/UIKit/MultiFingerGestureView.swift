@@ -12,7 +12,7 @@ struct MultiFingerGestureView: UIViewRepresentable {
     var onTap: (CGPoint) -> Void
     var onSingleFingerDrag: (CustomDragValue) -> Void
     var onSingleFingerDragEnd: (CustomDragValue) -> Void
-    var onMultiFingerGesture: () -> Void
+    var onMultiFingerGesture: (CustomDragValue) -> Void
 
     func makeUIView(context: Context) -> UIView {
         let view = UIView()
@@ -47,7 +47,7 @@ struct MultiFingerGestureView: UIViewRepresentable {
     class Coordinator: NSObject {
         var onSingleFingerDrag: (CustomDragValue) -> Void
         var onSingleFingerDragEnd: (CustomDragValue) -> Void
-        var onMultiFingerGesture: () -> Void
+        var onMultiFingerGesture: (CustomDragValue) -> Void
         var onTap: (CGPoint) -> Void  // Add a new callback for the tap gesture
 
         private var startLocation: CGPoint = .zero
@@ -55,7 +55,7 @@ struct MultiFingerGestureView: UIViewRepresentable {
         init(
             onSingleFingerDrag: @escaping (CustomDragValue) -> Void,
             onSingleFingerDragEnd: @escaping (CustomDragValue) -> Void,
-            onMultiFingerGesture: @escaping () -> Void,
+            onMultiFingerGesture: @escaping (CustomDragValue) -> Void,
             onTap: @escaping (CGPoint) -> Void  // Initialize the new callback
         ) {
             self.onSingleFingerDrag = onSingleFingerDrag
@@ -103,7 +103,7 @@ struct MultiFingerGestureView: UIViewRepresentable {
                 }
             } else if numberOfTouches > 1 {
                 if gesture.state == .began || gesture.state == .changed {
-                    onMultiFingerGesture()
+                    onMultiFingerGesture(customDragValue)
                 }
             } else {
                 switch gesture.state {

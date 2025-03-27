@@ -17,6 +17,9 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
 
         let canvasView = CanvasView(
             pageIndex: pageIndex,
+            onGesture: { scale, translation in
+                self.handleGesture(scale: scale, translation: translation)
+            },
             canvasState: canvasState,
             noteFile: noteFile,
             notePage: notePage
@@ -32,6 +35,14 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
 
       
     }
+    
+    private func handleGesture(scale: CGFloat, translation: CGSize) {
+            // Post gesture updates to PDFCanvasView
+            NotificationCenter.default.post(
+                name: Notification.Name("CanvasGesture"),
+                object: ["scale": scale, "translation": translation]
+            )
+        }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
