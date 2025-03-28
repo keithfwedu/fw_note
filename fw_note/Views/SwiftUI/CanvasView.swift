@@ -164,15 +164,15 @@ struct CanvasView: View {
                     print("change2")
                 }
                 .drawingGroup()
-                .gesture(gestureState.areGesturesEnabled ?
-                    DragGesture()  // Handles both taps and drags
+                .simultaneousGesture(gestureState.areGesturesEnabled ?
+                                     DragGesture(minimumDistance: 0)  // Handles both taps and drags
                         .onChanged { value in
                             focusedID = nil
                             print("touch1");
                             if value.translation == .zero {
                                 print("touch1a");
                                 // Handle as a tap gesture
-                                //handleTap(at: value.startLocation)
+                                handleTap(at: value.startLocation)
                             } else {
                                 print("touch1b");
                                 let customValue: CustomDragValue = CustomDragValue(
@@ -306,7 +306,7 @@ struct CanvasView: View {
 
         }
         .onTapGesture {
-            focusedID = nil  // Reset focus if background is tapped
+            //focusedID = nil  // Reset focus if background is tapped
         }.onAppear {
             noteFile.addToUndo(
                 pageIndex: self.pageIndex,
