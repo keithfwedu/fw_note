@@ -7,12 +7,27 @@
 import UIKit
 import SwiftUI
 
+
+class GestureState: ObservableObject {
+    @Published var areGesturesEnabled: Bool = true  // Default to enabled
+}
+
+
 class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
     var pageIndex: Int
     private var hostingController: UIHostingController<CanvasView>?
+    var gestureState = GestureState()
+  
+    var pdfView: CustomPDFView
+    
+    func disableGestures(_ isDisabled: Bool) {
+            gestureState.areGesturesEnabled = !isDisabled  // Toggle gesture state dynamically
+        }
 
-    init(frame: CGRect, pageIndex: Int, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage) {
+    init(frame: CGRect, pageIndex: Int, pdfView: CustomPDFView, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage) {
         self.pageIndex = pageIndex
+       
+        self.pdfView = pdfView
         super.init(frame: frame)
 
         let canvasView = CanvasView(
@@ -20,6 +35,7 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
             onGesture: { scale, translation in
                 self.handleGesture(scale: scale, translation: translation)
             },
+            gestureState: gestureState,
             canvasState: canvasState,
             noteFile: noteFile,
             notePage: notePage

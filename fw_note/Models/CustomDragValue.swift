@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 struct CustomDragValue {
     let time: Date
@@ -14,4 +15,6 @@ struct CustomDragValue {
     let translation: CGSize
     let predictedEndTranslation: CGSize
     let predictedEndLocation: CGPoint
+    
+   
 }

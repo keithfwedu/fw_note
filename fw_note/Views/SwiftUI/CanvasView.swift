@@ -10,6 +10,7 @@ import SwiftUI
 struct CanvasView: View {
     let pageIndex: Int
     var onGesture: ((CGFloat, CGSize) -> Void)?
+    @ObservedObject var gestureState: GestureState
     @ObservedObject var canvasState: CanvasState
     @ObservedObject var noteFile: NoteFile
     @ObservedObject var notePage: NotePage
@@ -40,7 +41,7 @@ struct CanvasView: View {
     @State var lastDragPosition: CGPoint? = nil
 
     @State var imageStack: [ImageObj] = []
-
+    
     var body: some View {
         ZStack {
             //For force refresh UI
@@ -153,7 +154,7 @@ struct CanvasView: View {
                 .onAppear {
                     redrawTrigger.toggle()
                 }
-                .allowsHitTesting(true)  // Toggle interaction
+                .allowsHitTesting(gestureState.areGesturesEnabled)  // Toggle interaction
                 .onChange(of: canvasState.canvasMode) {
                     newMode in
                     handleModeChange(mode: newMode)
@@ -163,8 +164,37 @@ struct CanvasView: View {
                     print("change2")
                 }
                 .drawingGroup()
+                .gesture(gestureState.areGesturesEnabled ?
+                    DragGesture()  // Handles both taps and drags
+                        .onChanged { value in
+                            focusedID = nil
+                            print("touch1");
+                            if value.translation == .zero {
+                                print("touch1a");
+                                // Handle as a tap gesture
+                                //handleTap(at: value.startLocation)
+                            } else {
+                                print("touch1b");
+                                let customValue: CustomDragValue = CustomDragValue(
+                                    time: value.time,
+                                    location: value.location,
+                                    startLocation: value.startLocation,
+                                    translation: value.translation,
+                                    predictedEndTranslation: value.predictedEndTranslation,
+                                    predictedEndLocation: value.predictedEndLocation
+                                )
+                                // Handle as a drag gesture
+                                handleDragChange(dragValue: customValue)
+                            }
 
-                MultiFingerGestureView(
+                            //  handleDragChange(dragValue: value)
+                        }
+                        .onEnded { value in
+                            handleDragEnded()  // Finalize drag action
+                        }: nil
+                )
+
+             /*MultiFingerGestureView(
                     onTap: { value in
                         handleTap(at: value)
                     },
@@ -182,8 +212,8 @@ struct CanvasView: View {
                         handleDragEnded()
                     },
                     onMultiFingerGesture: { value in
-                        print("Multi-finger gesture detected")
-                       // onGesture?(1.0, value.translation)
+                        //print("Multi-finger gesture detected")
+                        //onGesture?(1.0, value.translation)
                     }
 
                 ).gesture(
@@ -191,7 +221,7 @@ struct CanvasView: View {
                         .onChanged { scale in
                             onGesture?(scale, .zero)  // Notify parent about zoom
                         }
-                )
+                )*/
                 /*.gesture(
                     DragGesture(minimumDistance: 0)  // Handles both taps and drags
                         .onChanged { value in

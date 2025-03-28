@@ -8,14 +8,106 @@
 import PDFKit
 import SwiftUI
 
+
+class MultiTouchGestureRecognizer: UIGestureRecognizer, UIGestureRecognizerDelegate {
+    var multiTouchHandler: ((Bool) -> Void)?  // Closure to handle multi-touch state updates
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesBegan(touches, with: event)
+        print("Touches began: \(event.allTouches?.count ?? 0)")
+
+        // Notify whether it's a multi-touch or single-touch gesture
+        if let allTouches = event.allTouches {
+            multiTouchHandler?(allTouches.count > 1)
+            self.state = allTouches.count > 1 ? .began : .possible
+        }
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesMoved(touches, with: event)
+
+        if let allTouches = event.allTouches {
+            multiTouchHandler?(allTouches.count > 1)
+            self.state = allTouches.count > 1 ? .changed : .possible
+        }
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesEnded(touches, with: event)
+
+        // Notify that the gesture has ended
+        multiTouchHandler?(false)
+        self.state = .ended
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        // Allow simultaneous gesture recognition to enable multiple gestures
+        return true
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        // Ensure this gesture can take priority when needed (optional)
+        return false
+    }
+}
+
+class CustomPDFView: PDFView {
+
+    func disableGestures(for view: UIView, isEnabled: Bool) {
+        // Disable gesture recognizers for the current view
+        view.gestureRecognizers?.forEach { gesture in
+            gesture.isEnabled = isEnabled
+        }
+
+        // Recursively call this function for all child subviews
+        view.subviews.forEach { subview in
+            disableGestures(for: subview, isEnabled: isEnabled)
+        }
+    }
+
+    func setupGestureHandling() {
+        let gestureRecognizer = MultiTouchGestureRecognizer(target: self, action: #selector(handleMultiTouch))
+        gestureRecognizer.delegate = gestureRecognizer
+
+        gestureRecognizer.multiTouchHandler = { [weak self] isMultiTouch in
+            guard let self = self else { return }
+
+            // Parent-specific action for multi-touch handling
+            print("Parent is handling multi-touch: \(isMultiTouch)")
+
+            // Manage subview gestures
+            self.documentView?.subviews.forEach { subview in
+                if let canvasWrapper = subview as? CanvasViewWrapper {
+                    canvasWrapper.disableGestures(isMultiTouch)
+                }
+            }
+            
+      
+        }
+
+        self.addGestureRecognizer(gestureRecognizer)
+    }
+
+    @objc private func handleMultiTouch(_ gesture: MultiTouchGestureRecognizer) {
+        if gesture.state == .began {
+            print("CustomPDFView multi-touch gesture began")
+        } else if gesture.state == .changed {
+            print("CustomPDFView multi-touch gesture changed")
+        } else if gesture.state == .ended {
+            print("CustomPDFView multi-touch gesture ended")
+        }
+    }
+}
+
+
 struct PDFCanvasView: UIViewRepresentable {
     let pdfDocument: PDFDocument
     var canvasState: CanvasState
     var noteFile: NoteFile
-    var pdfView: PDFView = PDFView()
+    var pdfView: CustomPDFView = CustomPDFView()
     @Binding var displayDirection: PDFDisplayDirection  // Bindable property to change display direction
 
-    func makeUIView(context: Context) -> PDFView {
+    func makeUIView(context: Context) -> CustomPDFView {
 
         pdfView.document = pdfDocument
         pdfView.autoScales = false
@@ -33,14 +125,6 @@ struct PDFCanvasView: UIViewRepresentable {
             scrollView.delaysContentTouches = false
             scrollView.minimumZoomScale = 1
             scrollView.bouncesZoom = false
-
-            NotificationCenter.default.addObserver(
-                context.coordinator,
-                selector: #selector(context.coordinator.handleGesture(_:)),
-                name: Notification.Name("CanvasGesture"),
-                object: nil
-            )
-
         }
 
         // Add observer for page changes
@@ -60,11 +144,11 @@ struct PDFCanvasView: UIViewRepresentable {
 
         // Add page information (Current Page / Total Pages)
         context.coordinator.addPageIndicator(to: pdfView)
-
+        pdfView.setupGestureHandling()
         return pdfView
     }
 
-    func updateUIView(_ uiView: PDFView, context: Context) {
+    func updateUIView(_ uiView: CustomPDFView, context: Context) {
         // Update the display direction dynamically
         if uiView.displayDirection != displayDirection {
             uiView.displayDirection = displayDirection
@@ -88,7 +172,7 @@ struct PDFCanvasView: UIViewRepresentable {
     }
 
     class Coordinator: NSObject, UIScrollViewDelegate {
-        weak var pdfView: PDFView?  // Weak reference to avoid retain cycles
+        weak var pdfView: CustomPDFView?  // Weak reference to avoid retain cycles
 
         let pdfDocument: PDFDocument
         private var canvasState: CanvasState
@@ -99,7 +183,7 @@ struct PDFCanvasView: UIViewRepresentable {
         var rawPageFrames: [CGRect] = []
 
         init(
-            pdfView: PDFView,
+            pdfView: CustomPDFView,
             pdfDocument: PDFDocument, noteFile: NoteFile,
             canvasState: CanvasState
         ) {
@@ -110,8 +194,9 @@ struct PDFCanvasView: UIViewRepresentable {
 
         }
 
-        func configure(pdfView: PDFView, displayDirection: PDFDisplayDirection)
-        {
+        func configure(
+            pdfView: CustomPDFView, displayDirection: PDFDisplayDirection
+        ) {
             self.pdfView = pdfView
             guard let document = pdfView.document
             else { return }
@@ -123,68 +208,29 @@ struct PDFCanvasView: UIViewRepresentable {
                 rawPageFrames.append(pageFrame)
             }
             self.displayDirection = displayDirection
-            NotificationCenter.default.addObserver(
+            /* NotificationCenter.default.addObserver(
                 self,
                 selector: #selector(scaleChanged(_:)),
                 name: Notification.Name.PDFViewScaleChanged,
                 object: pdfView
-            )
+            )*/
         }
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? {
             return scrollView.subviews.first  // Assume first subview is the content
         }
 
-        @objc func handleGesture(_ notification: Notification) {
-           
-            guard let pdfView = pdfView,
-                  let info = notification.object as? [String: Any],
-                let scale = info["scale"] as? CGFloat,
-                let translation = info["translation"] as? CGSize
-               // let scrollView = notification.object as? UIScrollView
-                 
-            else { return }
-            let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }) as! UIScrollView
-            print("scroll2 \( scale) \(translation) \(scrollView)")
-            if scale != 1.0 {
-                // Handle zoom
-                let zoomScale = scrollView.zoomScale * scale
-                scrollView.setZoomScale(
-                    min(
-                        max(zoomScale, scrollView.minimumZoomScale),
-                        scrollView.maximumZoomScale),
-                    animated: false
-                )
-            }
-
-            if translation != .zero {
-                // Calculate the new content offset
-                var newContentOffset = CGPoint(
-                    x: scrollView.contentOffset.x - translation.width,
-                    y: scrollView.contentOffset.y - translation.height
-                )
-                
-                // Clamp the new content offset to the valid range
-                newContentOffset.x = max(0, min(newContentOffset.x, scrollView.contentSize.width - scrollView.bounds.width))
-                newContentOffset.y = max(0, min(newContentOffset.y, scrollView.contentSize.height - scrollView.bounds.height))
-                
-                // Apply the clamped content offset
-                scrollView.contentOffset = newContentOffset
-            }
-
-        }
-
-        @objc func scaleChanged(_ notification: Notification) {
+        /*@objc func scaleChanged(_ notification: Notification) {
             if let pdfView = notification.object as? PDFView {
                 let scaleFactor = pdfView.scaleFactor
                 print("Scale factor changed: \(scaleFactor)")
                 self.scaleFactor = scaleFactor
                 //  addCanvasesToPages(pdfView: pdfView, displayDirection: .vertical, scaleFactor: scaleFactor)
             }
-        }
+        }*/
 
         func addCanvasesToPages(
-            pdfView: PDFView
+            pdfView: CustomPDFView
         ) {
             guard let document = pdfView.document,
                 let documentView = pdfView.documentView
@@ -223,9 +269,11 @@ struct PDFCanvasView: UIViewRepresentable {
                 let canvasViewWrapper = CanvasViewWrapper(
                     frame: normalizedPageFrame,
                     pageIndex: pageIndex,
+                    pdfView: pdfView,
                     canvasState: canvasState,
                     noteFile: noteFile,
                     notePage: noteFile.notePages[pageIndex]
+
                 )
 
                 canvasViewWrapper.backgroundColor = UIColor.clear
