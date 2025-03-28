@@ -183,7 +183,7 @@ struct CanvasView: View {
                     },
                     onMultiFingerGesture: { value in
                         print("Multi-finger gesture detected")
-                        onGesture?(1.0, value.translation)
+                       // onGesture?(1.0, value.translation)
                     }
 
                 ).gesture(

@@ -56,8 +56,8 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
     // Delegate to allow simultaneous two-finger gestures for zooming
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         if let panGesture = gestureRecognizer as? UIPanGestureRecognizer {
-            // Allow two-finger gestures for zooming
-            return panGesture.numberOfTouches == 2
+            // Allow only one-finger gestures
+            return panGesture.numberOfTouches == 1
         }
         return false
     }
