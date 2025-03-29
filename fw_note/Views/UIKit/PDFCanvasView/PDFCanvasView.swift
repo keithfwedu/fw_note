@@ -8,98 +8,6 @@
 import PDFKit
 import SwiftUI
 
-
-class MultiTouchGestureRecognizer: UIGestureRecognizer, UIGestureRecognizerDelegate {
-    var multiTouchHandler: ((Bool) -> Void)?  // Closure to handle multi-touch state updates
-
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
-        super.touchesBegan(touches, with: event)
-        print("Touches began: \(event.allTouches?.count ?? 0)")
-
-        // Notify whether it's a multi-touch or single-touch gesture
-        if let allTouches = event.allTouches {
-            multiTouchHandler?(allTouches.count > 1)
-            self.state = allTouches.count > 1 ? .began : .possible
-        }
-    }
-
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent) {
-        super.touchesMoved(touches, with: event)
-
-        if let allTouches = event.allTouches {
-            multiTouchHandler?(allTouches.count > 1)
-            self.state = allTouches.count > 1 ? .changed : .possible
-        }
-    }
-
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent) {
-        super.touchesEnded(touches, with: event)
-
-        // Notify that the gesture has ended
-        multiTouchHandler?(false)
-        self.state = .ended
-    }
-
-    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        // Allow simultaneous gesture recognition to enable multiple gestures
-        return true
-    }
-
-    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        // Ensure this gesture can take priority when needed (optional)
-        return false
-    }
-}
-
-class CustomPDFView: PDFView {
-
-    func disableGestures(for view: UIView, isEnabled: Bool) {
-        // Disable gesture recognizers for the current view
-        view.gestureRecognizers?.forEach { gesture in
-            gesture.isEnabled = isEnabled
-        }
-
-        // Recursively call this function for all child subviews
-        view.subviews.forEach { subview in
-            disableGestures(for: subview, isEnabled: isEnabled)
-        }
-    }
-
-    func setupGestureHandling() {
-        let gestureRecognizer = MultiTouchGestureRecognizer(target: self, action: #selector(handleMultiTouch))
-        gestureRecognizer.delegate = gestureRecognizer
-
-        gestureRecognizer.multiTouchHandler = { [weak self] isMultiTouch in
-            guard let self = self else { return }
-
-            // Parent-specific action for multi-touch handling
-            print("Parent is handling multi-touch: \(isMultiTouch)")
-
-            // Manage subview gestures
-            self.documentView?.subviews.forEach { subview in
-                if let canvasWrapper = subview as? CanvasViewWrapper {
-                    canvasWrapper.disableGestures(isMultiTouch)
-                }
-            }
-            
-      
-        }
-
-        self.addGestureRecognizer(gestureRecognizer)
-    }
-
-    @objc private func handleMultiTouch(_ gesture: MultiTouchGestureRecognizer) {
-        if gesture.state == .began {
-            print("CustomPDFView multi-touch gesture began")
-        } else if gesture.state == .changed {
-            print("CustomPDFView multi-touch gesture changed")
-        } else if gesture.state == .ended {
-            print("CustomPDFView multi-touch gesture ended")
-        }
-    }
-}
-
-
 struct PDFCanvasView: UIViewRepresentable {
     let pdfDocument: PDFDocument
     var canvasState: CanvasState
@@ -266,6 +174,7 @@ struct PDFCanvasView: UIViewRepresentable {
                     "pageFrame \(rawPageFrame.midX), \(rawPageFrame.midY) - \(rawPageFrame) - \(documentView.subviews[pageIndex].frame) - \(normalizedPageFrame) - \(document.pageCount) - \( documentView.subviews.count) - \(pageIndex) - \(documentView.subviews)"
                 )
 
+               
                 let canvasViewWrapper = CanvasViewWrapper(
                     frame: normalizedPageFrame,
                     pageIndex: pageIndex,
@@ -273,7 +182,6 @@ struct PDFCanvasView: UIViewRepresentable {
                     canvasState: canvasState,
                     noteFile: noteFile,
                     notePage: noteFile.notePages[pageIndex]
-
                 )
 
                 canvasViewWrapper.backgroundColor = UIColor.clear
@@ -320,6 +228,7 @@ struct PDFCanvasView: UIViewRepresentable {
                 let currentPage = pdfView.currentPage
             else { return }
             let currentPageIndex = document.index(for: currentPage) + 1  // Page indices are 0-based
+            canvasState.currentPageIndex = document.index(for: currentPage)
             let totalPageCount = document.pageCount
             pageIndicatorLabel?.text =
                 "Page \(currentPageIndex) / \(totalPageCount)"

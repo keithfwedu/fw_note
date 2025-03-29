@@ -153,6 +153,11 @@ struct CanvasView: View {
                 .border(.red, width: 1)
                 .onAppear {
                     redrawTrigger.toggle()
+                    notePage.pageCenterPoint = CGPoint(
+                        x: geometry.size.width/2,
+                        y: geometry.size.height/2)
+                    notePage.canvasWidth = geometry.size.width
+                    notePage.canvasHeight = geometry.size.height
                 }
                 .allowsHitTesting(gestureState.areGesturesEnabled)  // Toggle interaction
                 .onChange(of: canvasState.canvasMode) {
