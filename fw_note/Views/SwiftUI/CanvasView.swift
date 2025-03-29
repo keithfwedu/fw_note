@@ -200,8 +200,6 @@ struct CanvasView: View {
                         }: nil
                 )
 
-     
-
                 /*.onDrop(of: ["public.image"], isTargeted: nil) { providers in
                     handleDrop(providers: providers)
                 }*/

@@ -21,7 +21,7 @@ struct PDFCanvasView: UIViewRepresentable {
         pdfView.autoScales = false
         pdfView.displayMode = .singlePageContinuous
         pdfView.displayDirection = displayDirection
-
+        pdfView.backgroundColor = UIColor.systemGray4
         pdfView.usePageViewController(false)
 
         // Access the internal UIScrollView and configure two-finger scrolling
