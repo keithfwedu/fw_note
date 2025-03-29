@@ -8,28 +8,28 @@ import SwiftUI
 
 class PathHelper {
     
-    static func createStableCurvedPath(
-        points: [CGPoint], maxOffsetForAverage: Int, curveWeight: CGFloat = 0.2
-    ) -> Path {
-        var path = Path()
+    static func createStableCurvedPath(points: [CGPoint], maxOffsetForAverage: CGFloat, curveWeight: CGFloat = 0.2) -> Path {
+        var path = Path() // Initialize the Path object
         let nPoints = points.count
+        guard nPoints > 1 else { return path } // Return an empty path if fewer than 2 points
 
-        // Special case: Handle when there are only two points
-        if nPoints == 2, let firstPoint = points.first, let secondPoint = points.last {
-            path.move(to: firstPoint)
-            path.addLine(to: secondPoint)
-            return path // Return early since we don't need smoothing
-        }
+        // Convert maxOffsetForAverage to an effective integer range
+        let lowerOffset = Int(floor(maxOffsetForAverage))
+        let upperOffset = Int(ceil(maxOffsetForAverage))
+        let fractionalWeight = maxOffsetForAverage - CGFloat(lowerOffset)
 
-        let maxOffset = max(1, min(maxOffsetForAverage, nPoints / maxOffsetForAverage))
         var xSum = CGFloat.zero
         var ySum = CGFloat.zero
         var previousRangeBegin = 0
         var previousRangeEnd = 0
 
         for i in 0..<nPoints {
-            let rangeBegin = max(0, i - maxOffset)
-            let rangeEnd = min(nPoints - 1, i + maxOffset)
+            // Dynamically compute an interpolated offset
+            let interpolatedOffset = Int(
+                CGFloat(lowerOffset) * (1 - fractionalWeight) + CGFloat(upperOffset) * fractionalWeight
+            )
+            let rangeBegin = max(0, i - interpolatedOffset)
+            let rangeEnd = min(nPoints - 1, i + interpolatedOffset)
 
             if i == 0, let firstPoint = points.first {
                 path.move(to: firstPoint)
@@ -49,27 +49,11 @@ class PathHelper {
                     ySum += endPoint.y
                 }
 
-                // Calculate the midpoint for stability
                 let sampleSize = CGFloat(rangeEnd - rangeBegin + 1)
-                let smoothPoint = CGPoint(
-                    x: xSum / sampleSize, y: ySum / sampleSize
-                )
-
-                // Blend smoothPoint with previous point using a smaller weight
-                let controlPoint = CGPoint(
-                    x: (1 - curveWeight) * points[i - 1].x + curveWeight * smoothPoint.x,
-                    y: (1 - curveWeight) * points[i - 1].y + curveWeight * smoothPoint.y
-                )
-
-                // Use midpoint between previous and current for subtle curves
-                let midPoint = CGPoint(
-                    x: (points[i - 1].x + smoothPoint.x) / 2,
-                    y: (points[i - 1].y + smoothPoint.y) / 2
-                )
-
-                // Add a subtle curve to the next point
-                path.addQuadCurve(to: midPoint, control: controlPoint)
+                let smoothPoint = CGPoint(x: xSum / sampleSize, y: ySum / sampleSize)
+                path.addLine(to: smoothPoint)
             }
+
             previousRangeBegin = rangeBegin
             previousRangeEnd = rangeEnd
         }
@@ -80,5 +64,6 @@ class PathHelper {
 
         return path
     }
+
 
 }

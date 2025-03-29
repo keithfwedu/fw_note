@@ -41,18 +41,31 @@ class ShapeHelper {
         return "curve"
     }
 
-    static func lineToStraightLine(_ line: LineObj) -> [CGPoint] {
-        print("Line \(line.id) converted to a refined straight line.")
-        print(line.points);
+    static func lineToStraightLine(_ line: LineObj, segments: Int = 100) -> [CGPoint] {
         guard let firstPoint = line.points.first,
-            let lastPoint = line.points.last
+              let lastPoint = line.points.last
         else {
             return []
         }
         
-        print("Line \(line.id) converted to a refined straight line2. \(firstPoint), \(lastPoint)")
-        return [firstPoint, lastPoint]
+        print("Line \(line.id) converted to a refined straight line.")
+        print(line.points)
+
+        // Calculate evenly spaced points along the straight line
+        var refinedPoints: [CGPoint] = []
+        for i in 0...segments {
+            let t = CGFloat(i) / CGFloat(segments) // Linear interpolation factor
+            let interpolatedPoint = CGPoint(
+                x: firstPoint.x + t * (lastPoint.x - firstPoint.x),
+                y: firstPoint.y + t * (lastPoint.y - firstPoint.y)
+            )
+            refinedPoints.append(interpolatedPoint)
+        }
+
+        print("Line \(line.id) converted to refined straight line with \(refinedPoints.count) points.")
+        return refinedPoints
     }
+
 
     static func lineToCurve(_ line: LineObj) -> [CGPoint] {
         print("Line \(line.id) converted to a refined Bézier curve.")

@@ -98,7 +98,7 @@ struct CanvasView: View {
                         if let line = canvasObj.lineObj {
 
                             let path = PathHelper.createStableCurvedPath(
-                                points: line.points, maxOffsetForAverage: 4)
+                                points: line.points, maxOffsetForAverage: 4.5)
                             if selectedLineStack.contains(where: {
                                 $0.id == line.id
                             }) {
@@ -264,7 +264,7 @@ struct CanvasView: View {
                 for laser in laserStack {
                     // Create the path for the laser points
                     var path = PathHelper.createStableCurvedPath(
-                        points: laser.points, maxOffsetForAverage: 4)
+                        points: laser.points, maxOffsetForAverage: 4.5)
 
                     // Smooth the path (if needed)
                     path = path.strokedPath(
@@ -582,7 +582,7 @@ struct CanvasView: View {
                 contentsOf: shapePoints)
 
             self.lastDrawPosition = nil  // Reset the last draw position
-            //redrawTrigger.toggle()
+            redrawTrigger.toggle()
         }
     }
 
