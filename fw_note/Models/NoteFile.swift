@@ -123,6 +123,29 @@ class NoteFile: ObservableObject, Identifiable, Codable {
 
         print("notePages Count: \(self.notePages.count)")  // Debugging statement
     }
+    
+    func save() throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+
+        // Serialize the NoteFile instance to JSON data
+        let jsonData = try encoder.encode(self)
+
+        // Determine the file path where the JSON will be saved
+        guard let pdfFilePath = pdfFilePath else {
+            throw NSError(domain: "NoteFile", code: 0, userInfo: [NSLocalizedDescriptionKey: "PDF file path is not set."])
+        }
+        let absoluteDirectoryPath = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first!.appendingPathComponent(pdfFilePath).deletingLastPathComponent()
+        let jsonFileURL = absoluteDirectoryPath.appendingPathComponent("data.json")
+
+        // Write the JSON data to the file
+        try FileManager.default.createDirectory(at: absoluteDirectoryPath, withIntermediateDirectories: true, attributes: nil)
+        try jsonData.write(to: jsonFileURL)
+
+        print("NoteFile saved successfully at \(jsonFileURL.path)")
+    }
+
 
     // MARK: - Codable Compliance
     enum CodingKeys: String, CodingKey {

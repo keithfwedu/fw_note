@@ -132,7 +132,15 @@ struct CanvasToolBar: View {
     }
 
     // Mock functions
-    func savePDF() { print("Save PDF") }
+    func savePDF() {
+        print("Save PDF")
+        do {
+            try noteFile.save()
+        } catch {
+            print("save failed: \(error)")
+        }
+        
+    }
     func selectPenTool() {
         print("selectPenTool")
         canvasState.canvasMode = CanvasMode.draw
