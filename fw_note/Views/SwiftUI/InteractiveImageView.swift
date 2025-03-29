@@ -7,7 +7,7 @@
 import SwiftUI
 
 struct InteractiveImageView: View {
-    
+
     @Binding var imageObj: ImageObj
 
     @Binding var selectMode: Bool
@@ -28,7 +28,68 @@ struct InteractiveImageView: View {
             GeometryReader { geometry in
                 // Refresh background image
 
-               ZStack {
+                ZStack {
+
+                    // Top corner
+                    if selectMode && isFocused {
+                        VStack {
+                            Circle()
+                                .fill(Color.blue)
+                                .frame(width: 20, height: 20)
+                        }
+                        .frame(width: 40, height: 40)
+                        .background(.clear)
+                        .contentShape(Rectangle())
+                        .gesture(dragGesture(for: .top))
+                        .position(cornerPosition(for: .top, in: geometry))
+                    }
+
+                    // Bottom corner
+                    if selectMode && isFocused {
+                        VStack {
+                            Circle()
+                                .fill(Color.blue)
+                                .frame(width: 20, height: 20)
+                        }
+                        .frame(width: 40, height: 40)
+                        .background(.clear)
+                        .contentShape(Rectangle())
+                        .gesture(dragGesture(for: .bottom))
+                        .position(
+                            cornerPosition(for: .bottom, in: geometry))
+
+                    }
+
+                    // Left corner
+                    if selectMode && isFocused {
+                        VStack {
+                            Circle()
+                                .fill(Color.blue)
+                                .frame(width: 20, height: 20)
+                        }
+                        .frame(width: 40, height: 40)
+                        .background(.clear)
+                        .contentShape(Rectangle())
+                        .gesture(dragGesture(for: .left))
+                        .position(cornerPosition(for: .left, in: geometry))
+
+                    }
+
+                    // Right corner
+                    if selectMode && isFocused {
+                        VStack {
+                            Circle()
+                                .fill(Color.blue)
+                                .frame(width: 20, height: 20)
+                        }
+                        .frame(width: 40, height: 40)
+                        .background(.clear)
+                        .contentShape(Rectangle())
+                        .gesture(dragGesture(for: .right))
+                        .position(
+                            cornerPosition(for: .right, in: geometry))
+                    }
+
                     // Top-left corner
                     if selectMode && isFocused {
                         VStack {
@@ -88,6 +149,7 @@ struct InteractiveImageView: View {
                             cornerPosition(for: .bottomRight, in: geometry))
                     }
 
+                    // Close
                     if selectMode && isFocused {
                         Button(action: {
                             // Add your action here, such as removing the view or triggering some logic
@@ -103,17 +165,25 @@ struct InteractiveImageView: View {
                                     .font(.system(size: 16))  // Optional: Adjust size
                             }
                         }
-                        .position(x: self.imageObj.size.width / 2, y: -20)
+                        .position(x: self.imageObj.size.width / 2, y: -30)
                     }
 
-                  
                     //Bundle.main.path(forResource: "example", ofType: "png")
-                if imageObj.isAnimatedGIF, let imagePath =  self.imageObj.path {
-                       MetalImageView(imagePath: imagePath, targetSize: CGSize(width: self.imageObj.size.width, height: self.imageObj.size.height))
-                           .frame(width: self.imageObj.size.width, height: self.imageObj.size.height)
-                   }
+                    if imageObj.isAnimatedGIF,
+                        let imagePath = self.imageObj.path
+                    {
+                        MetalImageView(
+                            imagePath: imagePath,
+                            targetSize: CGSize(
+                                width: self.imageObj.size.width,
+                                height: self.imageObj.size.height)
+                        )
+                        .frame(
+                            width: self.imageObj.size.width,
+                            height: self.imageObj.size.height)
+                    }
                 }
-               .background(.blue.opacity(imageObj.isAnimatedGIF ? 0:0.1))
+                .background(.blue.opacity(imageObj.isAnimatedGIF ? 0 : 0.1))
                 .border(Color.blue, width: selectMode && isFocused ? 1 : 0)  // Border syncs with scaling
                 .frame(
                     width: self.imageObj.size.width,
@@ -164,13 +234,13 @@ struct InteractiveImageView: View {
         }
         .onChange(of: self.imageObj.size) { _ in
             length = min(self.imageObj.size.height, self.imageObj.size.width)
-            onChanged(imageObj.id ,imageObj)
+            onChanged(imageObj.id, imageObj)
         }
         .onChange(of: self.imageObj.position) { _ in
-            onChanged(imageObj.id ,imageObj)
+            onChanged(imageObj.id, imageObj)
         }
         .onChange(of: self.imageObj.angle) { _ in
-            onChanged(imageObj.id ,imageObj)
+            onChanged(imageObj.id, imageObj)
         }
         .onTapGesture {
             onTap(self.imageObj.id)
@@ -218,13 +288,12 @@ struct InteractiveImageView: View {
                 self.imageObj.position.x = min(max(newX, 0), screenSize.width)
                 self.imageObj.position.y = min(max(newY, 0), screenSize.height)
 
-                afterChanged(imageObj.id,imageObj)
+                afterChanged(imageObj.id, imageObj)
             }
     }
 
-   
-
     // Calculate corner positions
+    // Updated function to handle new cases
     private func cornerPosition(for corner: Corner, in geometry: GeometryProxy)
         -> CGPoint
     {
@@ -237,6 +306,14 @@ struct InteractiveImageView: View {
             return CGPoint(x: 0, y: geometry.size.height)
         case .bottomRight:
             return CGPoint(x: geometry.size.width, y: geometry.size.height)
+        case .top:
+            return CGPoint(x: geometry.size.width / 2, y: 0)
+        case .bottom:
+            return CGPoint(x: geometry.size.width / 2, y: geometry.size.height)
+        case .left:
+            return CGPoint(x: 0, y: geometry.size.height / 2)
+        case .right:
+            return CGPoint(x: geometry.size.width, y: geometry.size.height / 2)
         }
     }
 
@@ -261,7 +338,7 @@ struct InteractiveImageView: View {
 
                 self.lastAngle = self.imageObj.angle
 
-                afterChanged(imageObj.id,imageObj)
+                afterChanged(imageObj.id, imageObj)
 
             }
     }
@@ -284,37 +361,65 @@ struct InteractiveImageView: View {
                 var newWidth = imageObj.size.width
                 var newHeight = imageObj.size.height
 
+                let aspectRatio = newWidth / newHeight
+
                 // Use incremental changes instead of total translation
                 let deltaX = transformedTranslation.x
                 let deltaY = transformedTranslation.y
+
+                // Adjust width and height based on the corner or edge being dragged
                 switch corner {
                 case .topLeft:
-                    newWidth -= deltaX
-                    newHeight -= deltaY
+                    let delta = min(-deltaX, -deltaY)
+                    newWidth += delta
+                    newHeight = newWidth / aspectRatio
 
                 case .topRight:
-                    newWidth += deltaX
-                    newHeight -= deltaY
-
+                    let delta = min(deltaX, -deltaY)
+                    newWidth += delta
+                    newHeight = newWidth / aspectRatio
                 case .bottomLeft:
-                    newWidth -= deltaX
-                    newHeight += deltaY
-
+                    let delta = min(-deltaX, deltaY)
+                    newWidth += delta
+                    newHeight = newWidth / aspectRatio
                 case .bottomRight:
-                    newWidth += deltaX
+                    let delta = min(deltaX, deltaY)
+                    newWidth += delta
+                    newHeight = newWidth / aspectRatio
+                case .top:
+                    newHeight -= deltaY
+                case .bottom:
                     newHeight += deltaY
-
+                case .left:
+                    newWidth -= deltaX
+                case .right:
+                    newWidth += deltaX
                 }
 
-           
                 // Constrain new width and height to minimum size
-                newWidth = max(50, newWidth)
-                newHeight = max(50, newHeight)
+                switch corner {
+                case .topLeft, .topRight, .bottomLeft, .bottomRight:
+                    // Ensure both dimensions respect the minimum constraints AND the aspect ratio
+                    if newHeight < 50 {
+                        newHeight = 50
+                        newWidth = newHeight * aspectRatio
+                    }
+                    if newWidth < 50 {
+                        newWidth = 50
+                        newHeight = newWidth / aspectRatio
+                    }
+                case .top, .bottom, .left, .right:
+                    // Edges adjust independently
+                    newWidth = max(50, newWidth)
+                    newHeight = max(50, newHeight)
+                }
+
 
                 // Update state
                 self.imageObj.size = CGSize(width: newWidth, height: newHeight)
-            }.onEnded { v in
-                afterChanged(imageObj.id,imageObj)
+            }
+            .onEnded { value in
+                afterChanged(imageObj.id, imageObj)
             }
     }
 
@@ -323,11 +428,6 @@ struct InteractiveImageView: View {
         let x = point.x * cos(radians) - point.y * sin(radians)
         let y = point.x * sin(radians) + point.y * cos(radians)
         return CGPoint(x: x, y: y)
-    }
-
-    // Enum for identifying corners
-    private enum Corner {
-        case topLeft, topRight, bottomLeft, bottomRight
     }
 
     func calculateBoundingSize(width: CGFloat, height: CGFloat, angle: CGFloat)
