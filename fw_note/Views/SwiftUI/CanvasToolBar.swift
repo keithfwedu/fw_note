@@ -13,87 +13,91 @@ struct CanvasToolBar: View {
 
     var body: some View {
         HStack {
+            
             HStack(spacing: 10) {  // Fixed spacing between items
                 // Scroll Direction Button
-                Button(action: toggleDisplayDirection) {
-                    Image(
-                        systemName: canvasState.displayDirection == .vertical
-                        ? "arrow.up.and.down": "arrow.left.and.right" )
-                }
-                .frame(width: 40, height: 40)
-                .background(Color.gray.opacity(0.2))
-                .cornerRadius(8)
-                .accessibilityLabel("Change Scroll Direction")
-
-                // Tool Buttons
-                Button(action: selectPenTool) {
-                    Image(systemName: "pencil")
-                }
-                .frame(width: 40, height: 40)
-                .background(
-                    canvasState.canvasMode == CanvasMode.draw
-                        ? Color.blue.opacity(0.2) : Color.clear
-                )
-                .cornerRadius(8)
-
-                Button(action: toggleLaserMode) {
-                    Image(systemName: "rays")
-                }
-                .frame(width: 40, height: 40)
-                .background(
-                    canvasState.canvasMode == CanvasMode.laser
-                        ? Color.blue.opacity(0.2) : Color.clear
-                )
-                .cornerRadius(8)
-
-                Button(action: selectEraserTool) {
-                    Image(systemName: "trash")
-                }
-                .frame(width: 40, height: 40)
-                .background(
-                    canvasState.canvasMode == CanvasMode.eraser
-                        ? Color.blue.opacity(0.2) : Color.clear
-                )
-                .cornerRadius(8)
-
-                Button(action: selectLassorTool) {
-                    Image(systemName: "lasso")
-                }
-                .frame(width: 40, height: 40)
-                .background(
-                    canvasState.canvasMode == CanvasMode.lasso
-                        ? Color.blue.opacity(0.2) : Color.clear
-                )
-                .cornerRadius(8)
-
-                
-
-                if canvasState.canvasMode != CanvasMode.laser {
-                    Slider(value: $canvasState.penSize, in: 3...10, step: 0.1) {
-                        Text("Tool Size")
-                    }
-                    .frame(width: 100)
-                }
-
-                // Conditional Color Picker
-                if canvasState.canvasMode == CanvasMode.draw {
-                    ColorPickerView(
-                        initialColors: $canvasState.recentColors,  // Input five colors from another view
-                        onChanged: { selectedColor in
-                            canvasState.penColor = selectedColor
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        Button(action: toggleDisplayDirection) {
+                            Image(
+                                systemName: canvasState.displayDirection == .vertical
+                                ? "arrow.up.and.down": "arrow.left.and.right" )
                         }
-
-                    )
-                }
-                if canvasState.canvasMode == CanvasMode.eraser {
-                    Picker("Eraser Mode", selection: $canvasState.eraseMode) {
-                        Text("Rubber").tag(EraseMode.rubber)
-                        Text("Erase Whole Path").tag(EraseMode.whole)
+                        .frame(width: 40, height: 40)
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(8)
+                        .accessibilityLabel("Change Scroll Direction")
+                        
+                        // Tool Buttons
+                        Button(action: selectPenTool) {
+                            Image(systemName: "pencil")
+                        }
+                        .frame(width: 40, height: 40)
+                        .background(
+                            canvasState.canvasMode == CanvasMode.draw
+                            ? Color.blue.opacity(0.2) : Color.clear
+                        )
+                        .cornerRadius(8)
+                        
+                        Button(action: toggleLaserMode) {
+                            Image(systemName: "rays")
+                        }
+                        .frame(width: 40, height: 40)
+                        .background(
+                            canvasState.canvasMode == CanvasMode.laser
+                            ? Color.blue.opacity(0.2) : Color.clear
+                        )
+                        .cornerRadius(8)
+                        
+                        Button(action: selectEraserTool) {
+                            Image(systemName: "trash")
+                        }
+                        .frame(width: 40, height: 40)
+                        .background(
+                            canvasState.canvasMode == CanvasMode.eraser
+                            ? Color.blue.opacity(0.2) : Color.clear
+                        )
+                        .cornerRadius(8)
+                        
+                        Button(action: selectLassorTool) {
+                            Image(systemName: "lasso")
+                        }
+                        .frame(width: 40, height: 40)
+                        .background(
+                            canvasState.canvasMode == CanvasMode.lasso
+                            ? Color.blue.opacity(0.2) : Color.clear
+                        )
+                        .cornerRadius(8)
+                        
+                        
+                        
+                        if canvasState.canvasMode != CanvasMode.laser {
+                            Slider(value: $canvasState.penSize, in: 3...10, step: 0.1) {
+                                Text("Tool Size")
+                            }
+                            .frame(width: 100)
+                        }
+                        
+                        // Conditional Color Picker
+                        if canvasState.canvasMode == CanvasMode.draw {
+                            ColorPickerView(
+                                initialColors: $canvasState.recentColors,  // Input five colors from another view
+                                onChanged: { selectedColor in
+                                    canvasState.penColor = selectedColor
+                                }
+                                
+                            )
+                        }
+                        if canvasState.canvasMode == CanvasMode.eraser {
+                            Picker("Eraser Mode", selection: $canvasState.eraseMode) {
+                                Text("Rubber").tag(EraseMode.rubber)
+                                Text("Erase Whole Path").tag(EraseMode.whole)
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                            .padding()
+                        }
                     }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .padding()
                 }
-
                 // Flexible Spacer
                 Spacer()
 
@@ -122,7 +126,7 @@ struct CanvasToolBar: View {
                 .cornerRadius(8)
                 .disabled(canvasState.canvasMode == CanvasMode.laser)
             }
-            .padding()
+            .frame(height: 70)
             .background(Color(UIColor.systemGray6))  // Toolbar background
         }
     }

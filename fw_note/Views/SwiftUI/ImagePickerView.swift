@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ImagePickerView: View {
+
     @State private var images: [UIImage] = []
     @State private var imagePaths: [String] = []  // Paths for persistence
     @State private var isShowingImagePicker = false
@@ -21,97 +22,107 @@ struct ImagePickerView: View {
         for: .applicationSupportDirectory, in: .userDomainMask
     ).first!
 
+    let onClose: () -> Void
+
     var body: some View {
         VStack {
             // Top bar with Add and Close buttons
             HStack {
+                Button(action: {
+                    onClose()
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 24))
+                        .foregroundColor(.red)
+                }
+
+                Spacer()
                 Button(action: {
                     isShowingPopover = true  // Show popover
                 }) {
                     Image(systemName: "plus")
                         .font(.system(size: 24))
                         .foregroundColor(.blue)
-                }
-                Spacer()
-                Button(action: {
-                    canvasState.showImagePicker = false  // Close action
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 24))
-                        .foregroundColor(.red)
-                }
-            }
-            .padding()
-
-            // Image display area
-            ScrollView {
-                VStack {
-                    ForEach($imagePaths, id: \.self) { path in
-                        ZStack {
-                            if FileManager.default.fileExists(
-                                atPath: path.wrappedValue)
-                            {
-                                MetalImageView(
-                                    imagePath: path.wrappedValue,
-                                    targetSize: CGSize(width: 100, height: 100)
-                                )
-                                .frame(width: 100, height: 100)
-                                .cornerRadius(10)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.gray, lineWidth: 1)
-                                )
-                                .onTapGesture {
-                                    addImageToStack(path: path.wrappedValue)
-                                }
-                            } else {
-                                Text("File Missing")
-                                    .foregroundColor(.red)
-                                    .frame(width: 100, height: 100)
-                                    .background(Color.gray.opacity(0.3))
-                                    .cornerRadius(10)
-                            }
-
-                            Button(action: {
-                                removeImage(path.wrappedValue)
-                            }) {
-                                Image(systemName: "trash")
-                                    .foregroundColor(.red)
-                                    .padding(5)
-                                    .background(Color.white)
-                                    .clipShape(Circle())
-                            }
-                            .offset(x: 30, y: -30)
+                }.popover(isPresented: $isShowingPopover) {
+                    VStack {
+                        Button("Add from Gallery") {
+                            selectedSourceType = .photoLibrary
+                            isShowingPopover = false
+                            isShowingImagePicker = true
+                        }
+                        Divider()
+                        Button("Take Photo") {
+                            selectedSourceType = .camera
+                            isShowingPopover = false
+                            isShowingImagePicker = true
                         }
                     }
-                }
-                .padding(10)  // Add padding around the grid
-            }
-
-            if isLoading {
-                ProgressView("Loading...")
                     .padding()
-            }
-        }
-        .popover(isPresented: $isShowingPopover) {
-            VStack {
-                Button("Add from Gallery") {
-                    selectedSourceType = .photoLibrary
-                    isShowingPopover = false
-                    isShowingImagePicker = true
+
                 }
-                Divider()
-                Button("Take Photo") {
-                    selectedSourceType = .camera
-                    isShowingPopover = false
-                    isShowingImagePicker = true
-                }
+
             }
             .padding()
+            let columns = [GridItem(.flexible()), GridItem(.flexible())]
 
+            // Image display area
+            ZStack {
+                ScrollView {
+                    LazyVGrid(columns: columns
+                        
+                    ) {
+                        ForEach($imagePaths, id: \.self) { path in
+                            ZStack {
+                                if FileManager.default.fileExists(
+                                    atPath: path.wrappedValue)
+                                {
+                                    MetalImageView(
+                                        imagePath: path.wrappedValue,
+                                        targetSize: CGSize(
+                                            width: 100, height: 100)
+                                    )
+                                    .frame(width: 100, height: 100)
+                                    .cornerRadius(10)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color.gray, lineWidth: 1)
+                                    )
+                                    .onTapGesture {
+                                        addImageToStack(path: path.wrappedValue)
+                                    }
+                                } else {
+                                    Text("File Missing")
+                                        .foregroundColor(.red)
+                                        .frame(width: 100, height: 100)
+                                        .background(Color.gray.opacity(0.3))
+                                        .cornerRadius(10)
+                                }
+
+                                Button(action: {
+                                    removeImage(path.wrappedValue)
+                                }) {
+                                    Image(systemName: "trash")
+                                        .foregroundColor(.red)
+                                        .padding(5)
+                                        .background(Color.white)
+                                        .clipShape(Circle())
+                                }
+                                .offset(x: 30, y: -30)
+                            }
+                        }
+                    }
+                    .padding(10)  // Add padding around the grid
+                }
+
+                if isLoading {
+                    ProgressView("Loading...")
+                        .padding()
+                }
+            }
         }
+        .background(Color(UIColor.systemGray5))
+        
         .sheet(isPresented: $isShowingImagePicker) {
-
             ImagePicker(sourceType: selectedSourceType) { image, path in
                 if let image = image, let path = path {
                     saveImage(image, originalFilePath: path.absoluteString)
@@ -152,11 +163,9 @@ struct ImagePickerView: View {
         // Calculate base position
         let pageIndex = canvasState.currentPageIndex
         let page = noteFile.notePages[pageIndex]
-     
-      
+
         let basePosition = page.pageCenterPoint
         let newPosition = CGPoint(x: basePosition.x, y: basePosition.y)
-
 
         // Create the ImageObj with the filtered and adjusted position
         let newImageObj = ImageObj(
@@ -183,8 +192,10 @@ struct ImagePickerView: View {
 
     // Save image paths for persistence
     private func saveImage(_ image: UIImage, originalFilePath: String) {
+       
         DispatchQueue.global(qos: .background).async {
             do {
+                isLoading = true
                 let imagesDirectory =
                     appSupportDirectory.appendingPathComponent(
                         "fw_notes_images", isDirectory: true)
@@ -210,6 +221,7 @@ struct ImagePickerView: View {
                     DispatchQueue.main.async {
                         imagePaths.append(fileURL.path)  // Save the new path
                         saveImagePaths()  // Persist paths to a JSON file
+                        isLoading = false
                     }
                 } else {
                     // Handle other image types (e.g., resizing and saving as PNG)
@@ -253,9 +265,11 @@ struct ImagePickerView: View {
                     DispatchQueue.main.async {
                         imagePaths.append(fileURL.path)  // Save the new path
                         saveImagePaths()  // Persist paths to a JSON file
+                        isLoading = false
                     }
                 }
             } catch {
+                isLoading = false
                 print("Error handling file saveImage: \(error)")
             }
         }

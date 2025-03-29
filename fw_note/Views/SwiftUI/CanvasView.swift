@@ -166,6 +166,7 @@ struct CanvasView: View {
                 }
                 .onChange(of: notePage.canvasStack) { newStack in
                     imageStack = newStack.compactMap { $0.imageObj }
+                    focusedID = nil
                     print("change2")
                 }
                 .drawingGroup()
@@ -199,53 +200,7 @@ struct CanvasView: View {
                         }: nil
                 )
 
-             /*MultiFingerGestureView(
-                    onTap: { value in
-                        handleTap(at: value)
-                    },
-                    onSingleFingerDrag: { value in
-                        focusedID = nil
-                        print("touch1")
-
-                        // Handle as a drag gesture
-                        handleDragChange(dragValue: value)
-
-                        print("Single-finger drag at: \(value.location)")
-                    },
-                    onSingleFingerDragEnd: { value in
-                        print("handleDragEnded")
-                        handleDragEnded()
-                    },
-                    onMultiFingerGesture: { value in
-                        //print("Multi-finger gesture detected")
-                        //onGesture?(1.0, value.translation)
-                    }
-
-                ).gesture(
-                    MagnificationGesture()
-                        .onChanged { scale in
-                            onGesture?(scale, .zero)  // Notify parent about zoom
-                        }
-                )*/
-                /*.gesture(
-                    DragGesture(minimumDistance: 0)  // Handles both taps and drags
-                        .onChanged { value in
-                            focusedID = nil
-                            print("touch1");
-                            if value.translation == .zero {
-                                // Handle as a tap gesture
-                                handleTap(at: value.startLocation)
-                            } else {
-                                // Handle as a drag gesture
-                                handleDragChange(dragValue: value)
-                            }
-
-                            //  handleDragChange(dragValue: value)
-                        }
-                        .onEnded { value in
-                            handleDragEnded()  // Finalize drag action
-                        }
-                )*/
+     
 
                 /*.onDrop(of: ["public.image"], isTargeted: nil) { providers in
                     handleDrop(providers: providers)

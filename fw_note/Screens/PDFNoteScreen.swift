@@ -15,9 +15,8 @@ struct PdfNoteScreen: View {
     var body: some View {
 
         VStack {
-
             CanvasToolBar(noteFile: noteFile, canvasState: canvasState)
-            HStack {
+            ZStack {
                 if let pdfFilePath = noteFile.pdfFilePath {
                     let absolutePath = FileManager.default.urls(
                         for: .applicationSupportDirectory, in: .userDomainMask
@@ -28,20 +27,15 @@ struct PdfNoteScreen: View {
                         url: URL(fileURLWithPath: absolutePath))
                     {
                         // Embedding the PDFView
-
                         PDFCanvasView(
                             pdfDocument: pdfDocument,
                             canvasState: canvasState,
                             noteFile: noteFile,
                             displayDirection: $canvasState.displayDirection
                         )
-                      VStack {
-                            ImagePickerView(
-                                noteFile: noteFile, canvasState: canvasState
-                            )
-                        }
-                        .frame(width: 200)
-                       
+
+                        /* */
+
                     } else {
                         Text("Unable to load PDF")
                             .foregroundColor(.red)
@@ -53,11 +47,21 @@ struct PdfNoteScreen: View {
                         .font(.headline)
                 }
 
+                ImageSideMenu(
+                    width: 250, isOpen: canvasState.showImagePicker,
+                    menuClose: {
+                        canvasState.showImagePicker = false
+                    }, noteFile: noteFile)
+
             }
-        }.navigationTitle(noteFile.title)  // Set the navigation title
-            .navigationBarTitleDisplayMode(.inline)  // Optional: inline style for the title
-            .navigationBarBackButtonHidden(false)  // Ensure the default back button is visible
+
+        }
+        .background(Color(UIColor.systemGray6))
+        .navigationTitle(noteFile.title)  // Set the navigation title
+        .navigationBarTitleDisplayMode(.inline)  // Optional: inline style for the title
+        .navigationBarBackButtonHidden(false)  // Ensure the default back button is visible
+      
 
     }
-
 }
+
