@@ -263,6 +263,7 @@ struct CanvasView: View {
             .allowsHitTesting(false)
 
         }
+        
         .onTapGesture {
             //focusedID = nil  // Reset focus if background is tapped
         }.onAppear {

@@ -144,14 +144,43 @@ struct ImagePickerView: View {
 
     }
 
-    private func getImageSize(from path: String) -> CGSize? {
-        if let image = UIImage(contentsOfFile: path) {
-            return image.size  // Returns CGSize with width and height of the image
-        } else {
+    private func getAndScaleImageSize(from path: String, maxDimension: CGFloat = 200) -> CGSize? {
+        guard let image = UIImage(contentsOfFile: path) else {
             print("Failed to load image from path: \(path)")
             return nil
         }
+        
+        // Check if scaling is needed
+        if image.size.width > maxDimension || image.size.height > maxDimension {
+            let aspectRatio = image.size.width / image.size.height
+
+            // Calculate new size while maintaining the aspect ratio
+            let newSize: CGSize
+            if aspectRatio > 1 {
+                // Width > Height
+                newSize = CGSize(width: maxDimension, height: maxDimension / aspectRatio)
+            } else {
+                // Height >= Width
+                newSize = CGSize(width: maxDimension * aspectRatio, height: maxDimension)
+            }
+
+            // Resize the image
+            return newSize
+        } else {
+            // No scaling required
+            return CGSize(width: 100, height: 100)
+        }
     }
+
+    // Helper function to resize the image
+    private func resizeImage(_ image: UIImage, to newSize: CGSize) -> UIImage {
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: CGRect(origin: .zero, size: newSize))
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return resizedImage ?? image // Fallback to original image if resizing fails
+    }
+
 
     private func addImageToStack(path: String? = nil) {
         // Ensure the path is not nil and the file exists at the given path
@@ -162,7 +191,7 @@ struct ImagePickerView: View {
         }
 
         // Retrieve the image size from the file
-        guard let imageSize = getImageSize(from: path) else {
+        guard let imageSize = getAndScaleImageSize(from: path) else {
             print("Error: Unable to retrieve image size from path \(path)")
             return
         }
@@ -369,6 +398,8 @@ struct ImagePickerView: View {
         }
         return false  // No valid providers were processed
     }
+    
+    
 
     private func saveImageFromFile(_ image: UIImage, originalFilePath: String) {
         do {

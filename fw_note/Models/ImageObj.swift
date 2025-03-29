@@ -87,8 +87,8 @@ struct ImageObj: Identifiable, Codable, Equatable {
 
         if isAnimatedGIF, let data = try? Data(contentsOf: URL(fileURLWithPath: path)) {
             // Load animated GIF as UIImage
-            animatedImage = UIImage.animatedImage(withAnimatedGIFData: data)
-            cgImage = animatedImage?.cgImage
+          //  animatedImage = UIImage.animatedImage(withAnimatedGIFData: data)
+           // cgImage = animatedImage?.cgImage
         } else if let uiImage = UIImage(contentsOfFile: path) {
             // Load static image as CGImage
             animatedImage = nil
