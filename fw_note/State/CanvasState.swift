@@ -20,6 +20,8 @@ class CanvasState: ObservableObject {
     @Published var eraseMode: EraseMode = EraseMode.rubber
     @Published var showImagePicker: Bool = false
     
+    @Published var isDragging: Bool = false
+    
     //Configs
     @Published var penSize: CGFloat = 3.0
     @Published var penColor: Color = .black

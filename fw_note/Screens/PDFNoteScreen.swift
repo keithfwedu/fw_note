@@ -9,7 +9,9 @@ import PDFKit
 import SwiftUI
 
 struct PdfNoteScreen: View {
+   
     @StateObject private var canvasState = CanvasState()
+    @StateObject private var imageState = ImageState()
     @State var noteFile: NoteFile
 
     var body: some View {
@@ -48,20 +50,22 @@ struct PdfNoteScreen: View {
                 }
 
                 ImageSideMenu(
-                    width: 250, isOpen: canvasState.showImagePicker,
+                    width: 280,
+                    isOpen: canvasState.showImagePicker,
                     menuClose: {
                         canvasState.showImagePicker = false
-                    }, noteFile: noteFile)
+                    },
+                    imageState: imageState,
+                    noteFile: noteFile)
 
             }
 
         }
+
         .background(Color(UIColor.systemGray6))
         .navigationTitle(noteFile.title)  // Set the navigation title
         .navigationBarTitleDisplayMode(.inline)  // Optional: inline style for the title
         .navigationBarBackButtonHidden(false)  // Ensure the default back button is visible
-      
 
     }
 }
-

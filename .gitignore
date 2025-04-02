@@ -61,6 +61,25 @@ fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
 
-.DS_Store
-**/.DS_Store
+# Resources
 fw_note/Resources/*
+
+# CocoaPods dependencies
+Pods/
+Podfile.lock
+
+# Xcode-specific files
+xcuserdata/
+DerivedData/
+*.xcworkspace
+
+# macOS-specific files
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
+
+# Temporary or log files
+*.swp
+*.tmp
+*.log

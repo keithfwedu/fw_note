@@ -6,7 +6,6 @@ struct MetalImageView: UIViewRepresentable {
     let imagePath: String
     let targetSize: CGSize
 
-
     func makeUIView(context: Context) -> MTKView {
         guard let device = MTLCreateSystemDefaultDevice() else {
             fatalError("Metal is not supported on this device.")
@@ -15,9 +14,9 @@ struct MetalImageView: UIViewRepresentable {
         let metalView = MTKView(frame: .zero, device: device)
         metalView.delegate = context.coordinator
         metalView.enableSetNeedsDisplay = true
-        metalView.isPaused = false // Ensure the view is continuously redrawn
-        metalView.isOpaque = false // Allow transparency
-        metalView.clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0) // Fully transparent background
+        metalView.isPaused = false // Continuous redrawing for animations
+        metalView.isOpaque = true // Prevent transparency to reduce blending overhead
+        metalView.clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0) // Optimize clearing by removing alpha channel
         return metalView
     }
 
@@ -31,7 +30,7 @@ struct MetalImageView: UIViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        return Coordinator()
+        return Coordinator(targetSize: targetSize)
     }
 
     class Coordinator: NSObject, MTKViewDelegate {
@@ -44,22 +43,16 @@ struct MetalImageView: UIViewRepresentable {
         private var timer: CADisplayLink?
         private var currentFrameStartTime: CFTimeInterval = 0.0
         private var elapsedTime: CFTimeInterval = 0.0
+        private let targetSize: CGSize
 
-        override init() {
+        init(targetSize: CGSize) {
             self.device = MTLCreateSystemDefaultDevice()
             self.commandQueue = device?.makeCommandQueue()
+            self.targetSize = targetSize
 
             if let device = self.device {
                 let pipelineDescriptor = MTLRenderPipelineDescriptor()
                 pipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
-                pipelineDescriptor.colorAttachments[0].isBlendingEnabled = true
-                pipelineDescriptor.colorAttachments[0].rgbBlendOperation = .add
-                pipelineDescriptor.colorAttachments[0].alphaBlendOperation = .add
-                pipelineDescriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
-                pipelineDescriptor.colorAttachments[0].sourceAlphaBlendFactor = .sourceAlpha
-                pipelineDescriptor.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
-                pipelineDescriptor.colorAttachments[0].destinationAlphaBlendFactor = .oneMinusSourceAlpha
-
                 pipelineDescriptor.vertexFunction = device.makeDefaultLibrary()?.makeFunction(name: "vertex_main")
                 pipelineDescriptor.fragmentFunction = device.makeDefaultLibrary()?.makeFunction(name: "fragment_main")
 
@@ -80,7 +73,6 @@ struct MetalImageView: UIViewRepresentable {
 
             let loader = MTKTextureLoader(device: device)
             let options: [MTKTextureLoader.Option: Any] = [
-                .SRGB: false,
                 .textureUsage: MTLTextureUsage.shaderRead.rawValue,
                 .textureStorageMode: MTLStorageMode.private.rawValue
             ]
@@ -161,10 +153,16 @@ struct MetalImageView: UIViewRepresentable {
         func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
             // Handle view size changes
         }
+
+        func releaseResources() {
+            textures.removeAll() // Clear texture references
+            frameDurations.removeAll() // Remove frame duration data
+            timer?.invalidate() // Stop timer to prevent unnecessary updates
+            commandQueue = nil // Release Metal command queue
+            pipelineState = nil // Release render pipeline state
+        }
     }
-
 }
-
 
     
 

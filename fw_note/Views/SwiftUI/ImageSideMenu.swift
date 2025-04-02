@@ -10,6 +10,8 @@ struct ImageSideMenu: View {
     let width: CGFloat
     let isOpen: Bool
     let menuClose: () -> Void
+    
+    @StateObject var imageState: ImageState
     @StateObject private var canvasState = CanvasState()
     @State var noteFile: NoteFile
 
@@ -20,6 +22,7 @@ struct ImageSideMenu: View {
                 if isOpen {
                     ImagePickerView(
                         noteFile: noteFile,
+                        imageState: imageState,
                         canvasState: canvasState,
                         onClose: menuClose
                     )

@@ -13,7 +13,7 @@ struct InteractiveImageView: View {
     @Binding var selectMode: Bool
     @Binding var isFocused: Bool
 
-    var frameSize: CGSize
+    @State var frameSize: CGSize
     var onTap: (_ id: UUID) -> Void
     var onRemove: (_ id: UUID) -> Void
     var onChanged: (_ id: UUID, _ imageObj: ImageObj) -> Void
@@ -172,18 +172,17 @@ struct InteractiveImageView: View {
                     if imageObj.isAnimatedGIF,
                         let imagePath = self.imageObj.path
                     {
-                        MetalImageView(
+                        /*MetalImageView(
                             imagePath: imagePath,
                             targetSize: CGSize(
                                 width: self.imageObj.size.width,
                                 height: self.imageObj.size.height)
-                        )
-                        .frame(
-                            width: self.imageObj.size.width,
-                            height: self.imageObj.size.height)
+                        )*/
+
+                        createGIFView(imagePath: imagePath, imageObj: imageObj)
                     }
                 }
-                .background(.blue.opacity(imageObj.isAnimatedGIF ? 0 : 0.1))
+                .background(.blue.opacity(imageObj.isAnimatedGIF ? 0.1 : 0.1))
                 .border(Color.blue, width: selectMode && isFocused ? 1 : 0)  // Border syncs with scaling
                 .frame(
                     width: self.imageObj.size.width,
@@ -192,22 +191,23 @@ struct InteractiveImageView: View {
                 .rotationEffect(.degrees(Double(self.imageObj.angle)))
                 .gesture(updateMovement(screenSize: frameSize))  // Gesture for movement
                 .allowsHitTesting(selectMode)
+                
             }
 
             //Rotate circle
             if selectMode && isFocused {
                 VStack {
                     Circle()
-                        .fill(Color.gray)
+                        .fill(Color.blue)
                         .frame(width: 50, height: 50)
-                        .opacity(0.2)  // Semi-transparent background
+                        .opacity(0.8)  // Semi-transparent background
                         .overlay(
                             Image(
                                 systemName: "arrow.clockwise"
                                     //systemName: "arrow.up.and.down.and.arrow.left.and.right"
                             )
                             .frame(width: 30, height: 30)
-                            .foregroundColor(.blue)  // Icon color
+                            .foregroundColor(.white)  // Icon color
                             .opacity(0.8)  // Adjust icon opacity
                         )
                 }
@@ -234,6 +234,7 @@ struct InteractiveImageView: View {
         }
         .onChange(of: self.imageObj.size) { _ in
             length = min(self.imageObj.size.height, self.imageObj.size.width)
+           // frameSize = self.imageObj.size
             onChanged(imageObj.id, imageObj)
         }
         .onChange(of: self.imageObj.position) { _ in
@@ -247,6 +248,19 @@ struct InteractiveImageView: View {
         }
 
     }
+    
+    @ViewBuilder
+    private func createGIFView(imagePath: String, imageObj: ImageObj) -> some View {
+        GIFView(
+            path: imagePath,
+            targetSize: imageObj.size
+            
+        ).frame(
+            width: imageObj.size.width,
+            height: imageObj.size.height
+        )
+    }
+
 
     private func updateMovement(screenSize: CGSize) -> some Gesture {
         DragGesture()
@@ -285,9 +299,10 @@ struct InteractiveImageView: View {
                 let newY = self.imageObj.position.y + transformedTranslation.y
 
                 // Clamp the new position to stay within the screen or parent bounds
-                self.imageObj.position.x = min(max(newX, 0), screenSize.width)
-                self.imageObj.position.y = min(max(newY, 0), screenSize.height)
-
+                //self.imageObj.position.x = min(max(newX, 0), screenSize.width)
+               // self.imageObj.position.y = min(max(newY, 0), screenSize.height)
+                self.imageObj.position.x = newX
+                self.imageObj.position.y = newY
                 afterChanged(imageObj.id, imageObj)
             }
     }
@@ -413,7 +428,6 @@ struct InteractiveImageView: View {
                     newWidth = max(50, newWidth)
                     newHeight = max(50, newHeight)
                 }
-
 
                 // Update state
                 self.imageObj.size = CGSize(width: newWidth, height: newHeight)

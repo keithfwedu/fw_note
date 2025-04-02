@@ -135,30 +135,57 @@ struct NoteExplorerView: View {
     // MARK: - Handle File Selection
     private func handleFileSelection(result: Result<[URL], Error>) {
         do {
-            guard let selectedFileURL = try result.get().first else { return }
+            // Get the first file URL from the result
+            guard let selectedFileURL = try result.get().first else {
+                print("No file was selected.")
+                return
+            }
+
+            // Handle security-scoped resource if necessary
+            let fileAccessed = selectedFileURL.startAccessingSecurityScopedResource()
+            defer { if fileAccessed { selectedFileURL.stopAccessingSecurityScopedResource() } }
+
+            // Generate a unique directory path for the note
             let uniqueID = UUID().uuidString
             let relativeDirectoryPath = "fw_notes/\(uniqueID)"
             let uniqueDirectory = appSupportDirectory.appendingPathComponent(relativeDirectoryPath, isDirectory: true)
-            try FileManager.default.createDirectory(at: uniqueDirectory, withIntermediateDirectories: true, attributes: nil)
 
+            // Create the directory, ensuring intermediate directories are created
+            try FileManager.default.createDirectory(at: uniqueDirectory, withIntermediateDirectories: true, attributes: nil)
+            print("Directory created at: \(uniqueDirectory)")
+
+            // Copy the selected file to the new directory
             let pdfFileName = selectedFileURL.lastPathComponent
             let pdfFileURL = uniqueDirectory.appendingPathComponent(pdfFileName)
             try FileManager.default.copyItem(at: selectedFileURL, to: pdfFileURL)
+            print("File copied to: \(pdfFileURL)")
 
+            // Create the NoteFile object
             let newNoteFile = NoteFile(
-                title: "New Note \(Date().description)",
+                title: "New Note \(Date().description)", // Generate a unique title
                 pdfFilePath: "\(relativeDirectoryPath)/\(pdfFileName)"
             )
 
+            // Save metadata as a JSON file
             let jsonFileURL = uniqueDirectory.appendingPathComponent("data.json")
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             let jsonData = try encoder.encode(newNoteFile)
             try jsonData.write(to: jsonFileURL)
+            print("Metadata saved to: \(jsonFileURL)")
 
+            // Update the list of notes
             noteFiles = listAllFiles()
+
+        } catch let fileError as NSError {
+            // Specific error handling with descriptive logging
+            print("Error handling file selection: \(fileError.localizedDescription)")
+            print("Underlying error: \(fileError.userInfo)")
         } catch {
-            print("Error handling file selection: \(error)")
+            // Catch any other unexpected errors
+            print("An unexpected error occurred: \(error)")
         }
     }
+
+
 }

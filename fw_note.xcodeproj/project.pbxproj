@@ -6,65 +6,60 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		89A807DE9C3418C7525AC7C8 /* Pods_fw_note.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7BD733864E3232923985473B /* Pods_fw_note.framework */; };
+		B25C92842D9A888800CE776C /* FLAnimatedImage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B25C92832D9A888800CE776C /* FLAnimatedImage.framework */; };
+		D46915D5B3FDEB14B6638177 /* Pods_fw_note_fw_noteUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B0FF2072D95A52D7E3A782ED /* Pods_fw_note_fw_noteUITests.framework */; };
+		DE849011DB899157024152CF /* Pods_fw_noteTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2AB9C3FD005992271D59344 /* Pods_fw_noteTests.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
-		B27CDC132D8276AA0039E783 /* PBXContainerItemProxy */ = {
+		B27884FA2D9A869800004B89 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = B27CDBF82D8276A80039E783 /* Project object */;
+			containerPortal = B27884DF2D9A869500004B89 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = B27CDBFF2D8276A80039E783;
+			remoteGlobalIDString = B27884E62D9A869500004B89;
 			remoteInfo = fw_note;
 		};
-		B27CDC1D2D8276AA0039E783 /* PBXContainerItemProxy */ = {
+		B27885042D9A869800004B89 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = B27CDBF82D8276A80039E783 /* Project object */;
+			containerPortal = B27884DF2D9A869500004B89 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = B27CDBFF2D8276A80039E783;
+			remoteGlobalIDString = B27884E62D9A869500004B89;
 			remoteInfo = fw_note;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		B27CDC002D8276A80039E783 /* fw_note.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = fw_note.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B27CDC122D8276AA0039E783 /* fw_noteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = fw_noteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B27CDC1C2D8276AA0039E783 /* fw_noteUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = fw_noteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		535F6AC5262A8E6911973833 /* Pods-fw_noteTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-fw_noteTests.debug.xcconfig"; path = "Target Support Files/Pods-fw_noteTests/Pods-fw_noteTests.debug.xcconfig"; sourceTree = "<group>"; };
+		60A0F1B166B788BE985B6B19 /* Pods-fw_note-fw_noteUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-fw_note-fw_noteUITests.debug.xcconfig"; path = "Target Support Files/Pods-fw_note-fw_noteUITests/Pods-fw_note-fw_noteUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		747A1F5E4FA2171986EB4F39 /* Pods-fw_note.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-fw_note.debug.xcconfig"; path = "Target Support Files/Pods-fw_note/Pods-fw_note.debug.xcconfig"; sourceTree = "<group>"; };
+		7BD733864E3232923985473B /* Pods_fw_note.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_fw_note.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		7F974326DD39748B05DE380D /* Pods-fw_note.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-fw_note.release.xcconfig"; path = "Target Support Files/Pods-fw_note/Pods-fw_note.release.xcconfig"; sourceTree = "<group>"; };
+		B0FF2072D95A52D7E3A782ED /* Pods_fw_note_fw_noteUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_fw_note_fw_noteUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B25C92832D9A888800CE776C /* FLAnimatedImage.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FLAnimatedImage.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B25C93022D9AA18B00CE776C /* YYImage.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = YYImage.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B25C93812D9AA27400CE776C /* YYImage.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = YYImage.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B27884E72D9A869500004B89 /* fw_note.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = fw_note.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B27884F92D9A869800004B89 /* fw_noteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = fw_noteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B27885032D9A869800004B89 /* fw_noteUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = fw_noteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BFB93D5C1E696C97EF5BA06E /* Pods-fw_note-fw_noteUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-fw_note-fw_noteUITests.release.xcconfig"; path = "Target Support Files/Pods-fw_note-fw_noteUITests/Pods-fw_note-fw_noteUITests.release.xcconfig"; sourceTree = "<group>"; };
+		C916A3F4A72381EE4E4A5E68 /* Pods-fw_noteTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-fw_noteTests.release.xcconfig"; path = "Target Support Files/Pods-fw_noteTests/Pods-fw_noteTests.release.xcconfig"; sourceTree = "<group>"; };
+		F2AB9C3FD005992271D59344 /* Pods_fw_noteTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_fw_noteTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		B25CAA082D9163BC0024D14D /* Exceptions for "fw_note" folder in "fw_note" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Views/UIKit/MetalImageView/MetalImageView.metal,
-			);
-			target = B27CDBFF2D8276A80039E783 /* fw_note */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		B25CAA0B2D91654A0024D14D /* Exceptions for "fw_note" folder in "Copy Bundle Resources" phase from "fw_note" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = B27CDBFE2D8276A80039E783 /* Resources */;
-			membershipExceptions = (
-				Views/UIKit/MetalImageView/MetalImageView.metal,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		B27CDC022D8276A80039E783 /* fw_note */ = {
+		B27884E92D9A869500004B89 /* fw_note */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				B25CAA082D9163BC0024D14D /* Exceptions for "fw_note" folder in "fw_note" target */,
-				B25CAA0B2D91654A0024D14D /* Exceptions for "fw_note" folder in "Copy Bundle Resources" phase from "fw_note" target */,
-			);
 			path = fw_note;
 			sourceTree = "<group>";
 		};
-		B27CDC152D8276AA0039E783 /* fw_noteTests */ = {
+		B27884FC2D9A869800004B89 /* fw_noteTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = fw_noteTests;
 			sourceTree = "<group>";
 		};
-		B27CDC1F2D8276AA0039E783 /* fw_noteUITests */ = {
+		B27885062D9A869800004B89 /* fw_noteUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = fw_noteUITests;
 			sourceTree = "<group>";
@@ -72,46 +67,78 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		B27CDBFD2D8276A80039E783 /* Frameworks */ = {
+		B27884E42D9A869500004B89 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B25C92842D9A888800CE776C /* FLAnimatedImage.framework in Frameworks */,
+				89A807DE9C3418C7525AC7C8 /* Pods_fw_note.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B27CDC0F2D8276AA0039E783 /* Frameworks */ = {
+		B27884F62D9A869800004B89 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DE849011DB899157024152CF /* Pods_fw_noteTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B27CDC192D8276AA0039E783 /* Frameworks */ = {
+		B27885002D9A869800004B89 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D46915D5B3FDEB14B6638177 /* Pods_fw_note_fw_noteUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		B27CDBF72D8276A80039E783 = {
+		0057BE58CB0F79F512E9938C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				B27CDC022D8276A80039E783 /* fw_note */,
-				B27CDC152D8276AA0039E783 /* fw_noteTests */,
-				B27CDC1F2D8276AA0039E783 /* fw_noteUITests */,
-				B27CDC012D8276A80039E783 /* Products */,
+				B25C93812D9AA27400CE776C /* YYImage.framework */,
+				B25C93022D9AA18B00CE776C /* YYImage.framework */,
+				B25C92832D9A888800CE776C /* FLAnimatedImage.framework */,
+				7BD733864E3232923985473B /* Pods_fw_note.framework */,
+				B0FF2072D95A52D7E3A782ED /* Pods_fw_note_fw_noteUITests.framework */,
+				F2AB9C3FD005992271D59344 /* Pods_fw_noteTests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		44D8586AF1158889D87AE6FE /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				747A1F5E4FA2171986EB4F39 /* Pods-fw_note.debug.xcconfig */,
+				7F974326DD39748B05DE380D /* Pods-fw_note.release.xcconfig */,
+				60A0F1B166B788BE985B6B19 /* Pods-fw_note-fw_noteUITests.debug.xcconfig */,
+				BFB93D5C1E696C97EF5BA06E /* Pods-fw_note-fw_noteUITests.release.xcconfig */,
+				535F6AC5262A8E6911973833 /* Pods-fw_noteTests.debug.xcconfig */,
+				C916A3F4A72381EE4E4A5E68 /* Pods-fw_noteTests.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		B27884DE2D9A869500004B89 = {
+			isa = PBXGroup;
+			children = (
+				B27884E92D9A869500004B89 /* fw_note */,
+				B27884FC2D9A869800004B89 /* fw_noteTests */,
+				B27885062D9A869800004B89 /* fw_noteUITests */,
+				B27884E82D9A869500004B89 /* Products */,
+				44D8586AF1158889D87AE6FE /* Pods */,
+				0057BE58CB0F79F512E9938C /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
-		B27CDC012D8276A80039E783 /* Products */ = {
+		B27884E82D9A869500004B89 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B27CDC002D8276A80039E783 /* fw_note.app */,
-				B27CDC122D8276AA0039E783 /* fw_noteTests.xctest */,
-				B27CDC1C2D8276AA0039E783 /* fw_noteUITests.xctest */,
+				B27884E72D9A869500004B89 /* fw_note.app */,
+				B27884F92D9A869800004B89 /* fw_noteTests.xctest */,
+				B27885032D9A869800004B89 /* fw_noteUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -119,134 +146,133 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		B27CDBFF2D8276A80039E783 /* fw_note */ = {
+		B27884E62D9A869500004B89 /* fw_note */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B27CDC262D8276AA0039E783 /* Build configuration list for PBXNativeTarget "fw_note" */;
+			buildConfigurationList = B278850D2D9A869800004B89 /* Build configuration list for PBXNativeTarget "fw_note" */;
 			buildPhases = (
-				B27CDBFC2D8276A80039E783 /* Sources */,
-				B27CDBFD2D8276A80039E783 /* Frameworks */,
-				B27CDBFE2D8276A80039E783 /* Resources */,
+				C771EF7B350DF94A1E430F8D /* [CP] Check Pods Manifest.lock */,
+				B27884E32D9A869500004B89 /* Sources */,
+				B27884E42D9A869500004B89 /* Frameworks */,
+				B27884E52D9A869500004B89 /* Resources */,
+				391DD3B7E8F3747E161C75C0 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				B27CDC022D8276A80039E783 /* fw_note */,
+				B27884E92D9A869500004B89 /* fw_note */,
 			);
 			name = fw_note;
-			packageProductDependencies = (
-			);
 			productName = fw_note;
-			productReference = B27CDC002D8276A80039E783 /* fw_note.app */;
+			productReference = B27884E72D9A869500004B89 /* fw_note.app */;
 			productType = "com.apple.product-type.application";
 		};
-		B27CDC112D8276AA0039E783 /* fw_noteTests */ = {
+		B27884F82D9A869800004B89 /* fw_noteTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B27CDC292D8276AA0039E783 /* Build configuration list for PBXNativeTarget "fw_noteTests" */;
+			buildConfigurationList = B27885102D9A869800004B89 /* Build configuration list for PBXNativeTarget "fw_noteTests" */;
 			buildPhases = (
-				B27CDC0E2D8276AA0039E783 /* Sources */,
-				B27CDC0F2D8276AA0039E783 /* Frameworks */,
-				B27CDC102D8276AA0039E783 /* Resources */,
+				26DA43316FBE24B4E669B3BA /* [CP] Check Pods Manifest.lock */,
+				B27884F52D9A869800004B89 /* Sources */,
+				B27884F62D9A869800004B89 /* Frameworks */,
+				B27884F72D9A869800004B89 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				B27CDC142D8276AA0039E783 /* PBXTargetDependency */,
+				B27884FB2D9A869800004B89 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				B27CDC152D8276AA0039E783 /* fw_noteTests */,
+				B27884FC2D9A869800004B89 /* fw_noteTests */,
 			);
 			name = fw_noteTests;
-			packageProductDependencies = (
-			);
 			productName = fw_noteTests;
-			productReference = B27CDC122D8276AA0039E783 /* fw_noteTests.xctest */;
+			productReference = B27884F92D9A869800004B89 /* fw_noteTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		B27CDC1B2D8276AA0039E783 /* fw_noteUITests */ = {
+		B27885022D9A869800004B89 /* fw_noteUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B27CDC2C2D8276AA0039E783 /* Build configuration list for PBXNativeTarget "fw_noteUITests" */;
+			buildConfigurationList = B27885132D9A869800004B89 /* Build configuration list for PBXNativeTarget "fw_noteUITests" */;
 			buildPhases = (
-				B27CDC182D8276AA0039E783 /* Sources */,
-				B27CDC192D8276AA0039E783 /* Frameworks */,
-				B27CDC1A2D8276AA0039E783 /* Resources */,
+				674C74F4752975AEB1FCE713 /* [CP] Check Pods Manifest.lock */,
+				B27884FF2D9A869800004B89 /* Sources */,
+				B27885002D9A869800004B89 /* Frameworks */,
+				B27885012D9A869800004B89 /* Resources */,
+				3255509B93AA9EB128A1EDCE /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				B27CDC1E2D8276AA0039E783 /* PBXTargetDependency */,
+				B27885052D9A869800004B89 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				B27CDC1F2D8276AA0039E783 /* fw_noteUITests */,
+				B27885062D9A869800004B89 /* fw_noteUITests */,
 			);
 			name = fw_noteUITests;
-			packageProductDependencies = (
-			);
 			productName = fw_noteUITests;
-			productReference = B27CDC1C2D8276AA0039E783 /* fw_noteUITests.xctest */;
+			productReference = B27885032D9A869800004B89 /* fw_noteUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		B27CDBF82D8276A80039E783 /* Project object */ = {
+		B27884DF2D9A869500004B89 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
-					B27CDBFF2D8276A80039E783 = {
+					B27884E62D9A869500004B89 = {
 						CreatedOnToolsVersion = 16.2;
 					};
-					B27CDC112D8276AA0039E783 = {
+					B27884F82D9A869800004B89 = {
 						CreatedOnToolsVersion = 16.2;
-						TestTargetID = B27CDBFF2D8276A80039E783;
+						TestTargetID = B27884E62D9A869500004B89;
 					};
-					B27CDC1B2D8276AA0039E783 = {
+					B27885022D9A869800004B89 = {
 						CreatedOnToolsVersion = 16.2;
-						TestTargetID = B27CDBFF2D8276A80039E783;
+						TestTargetID = B27884E62D9A869500004B89;
 					};
 				};
 			};
-			buildConfigurationList = B27CDBFB2D8276A80039E783 /* Build configuration list for PBXProject "fw_note" */;
+			buildConfigurationList = B27884E22D9A869500004B89 /* Build configuration list for PBXProject "fw_note" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = B27CDBF72D8276A80039E783;
+			mainGroup = B27884DE2D9A869500004B89;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = B27CDC012D8276A80039E783 /* Products */;
+			productRefGroup = B27884E82D9A869500004B89 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				B27CDBFF2D8276A80039E783 /* fw_note */,
-				B27CDC112D8276AA0039E783 /* fw_noteTests */,
-				B27CDC1B2D8276AA0039E783 /* fw_noteUITests */,
+				B27884E62D9A869500004B89 /* fw_note */,
+				B27884F82D9A869800004B89 /* fw_noteTests */,
+				B27885022D9A869800004B89 /* fw_noteUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		B27CDBFE2D8276A80039E783 /* Resources */ = {
+		B27884E52D9A869500004B89 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B27CDC102D8276AA0039E783 /* Resources */ = {
+		B27884F72D9A869800004B89 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B27CDC1A2D8276AA0039E783 /* Resources */ = {
+		B27885012D9A869800004B89 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -255,22 +281,125 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		26DA43316FBE24B4E669B3BA /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-fw_noteTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		3255509B93AA9EB128A1EDCE /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-fw_note-fw_noteUITests/Pods-fw_note-fw_noteUITests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-fw_note-fw_noteUITests/Pods-fw_note-fw_noteUITests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-fw_note-fw_noteUITests/Pods-fw_note-fw_noteUITests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		391DD3B7E8F3747E161C75C0 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-fw_note/Pods-fw_note-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-fw_note/Pods-fw_note-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-fw_note/Pods-fw_note-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		674C74F4752975AEB1FCE713 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-fw_note-fw_noteUITests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		C771EF7B350DF94A1E430F8D /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-fw_note-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
-		B27CDBFC2D8276A80039E783 /* Sources */ = {
+		B27884E32D9A869500004B89 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B27CDC0E2D8276AA0039E783 /* Sources */ = {
+		B27884F52D9A869800004B89 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B27CDC182D8276AA0039E783 /* Sources */ = {
+		B27884FF2D9A869800004B89 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -280,20 +409,20 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		B27CDC142D8276AA0039E783 /* PBXTargetDependency */ = {
+		B27884FB2D9A869800004B89 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B27CDBFF2D8276A80039E783 /* fw_note */;
-			targetProxy = B27CDC132D8276AA0039E783 /* PBXContainerItemProxy */;
+			target = B27884E62D9A869500004B89 /* fw_note */;
+			targetProxy = B27884FA2D9A869800004B89 /* PBXContainerItemProxy */;
 		};
-		B27CDC1E2D8276AA0039E783 /* PBXTargetDependency */ = {
+		B27885052D9A869800004B89 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B27CDBFF2D8276A80039E783 /* fw_note */;
-			targetProxy = B27CDC1D2D8276AA0039E783 /* PBXContainerItemProxy */;
+			target = B27884E62D9A869500004B89 /* fw_note */;
+			targetProxy = B27885042D9A869800004B89 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		B27CDC242D8276AA0039E783 /* Debug */ = {
+		B278850B2D9A869800004B89 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -345,7 +474,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -357,7 +485,7 @@
 			};
 			name = Debug;
 		};
-		B27CDC252D8276AA0039E783 /* Release */ = {
+		B278850C2D9A869800004B89 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -403,7 +531,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -414,8 +541,9 @@
 			};
 			name = Release;
 		};
-		B27CDC272D8276AA0039E783 /* Debug */ = {
+		B278850E2D9A869800004B89 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 747A1F5E4FA2171986EB4F39 /* Pods-fw_note.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -424,17 +552,16 @@
 				DEVELOPMENT_ASSET_PATHS = "\"fw_note/Preview Content\"";
 				DEVELOPMENT_TEAM = Y55QTKM2Q6;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "fw-note-Info.plist";
-				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to your Camera to allow you to select and save images within your notes.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app requires access to your Photo Library to allow you to select and save images within your notes.";
+				INFOPLIST_KEY_NSFileProviderDomainUsageDescription = "This app needs access to the File Provider for add images on the pdf";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to the Photo Library for add images on the pdf";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				IPHONEOS_DEPLOYMENT_TARGET = 15;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -449,8 +576,9 @@
 			};
 			name = Debug;
 		};
-		B27CDC282D8276AA0039E783 /* Release */ = {
+		B278850F2D9A869800004B89 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7F974326DD39748B05DE380D /* Pods-fw_note.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -459,17 +587,16 @@
 				DEVELOPMENT_ASSET_PATHS = "\"fw_note/Preview Content\"";
 				DEVELOPMENT_TEAM = Y55QTKM2Q6;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "fw-note-Info.plist";
-				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to your Camera to allow you to select and save images within your notes.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app requires access to your Photo Library to allow you to select and save images within your notes.";
+				INFOPLIST_KEY_NSFileProviderDomainUsageDescription = "This app needs access to the File Provider for add images on the pdf";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to the Photo Library for add images on the pdf";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				IPHONEOS_DEPLOYMENT_TARGET = 15;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -484,12 +611,14 @@
 			};
 			name = Release;
 		};
-		B27CDC2A2D8276AA0039E783 /* Debug */ = {
+		B27885112D9A869800004B89 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 535F6AC5262A8E6911973833 /* Pods-fw_noteTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y55QTKM2Q6;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
@@ -502,12 +631,14 @@
 			};
 			name = Debug;
 		};
-		B27CDC2B2D8276AA0039E783 /* Release */ = {
+		B27885122D9A869800004B89 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C916A3F4A72381EE4E4A5E68 /* Pods-fw_noteTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y55QTKM2Q6;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
@@ -520,11 +651,13 @@
 			};
 			name = Release;
 		};
-		B27CDC2D2D8276AA0039E783 /* Debug */ = {
+		B27885142D9A869800004B89 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 60A0F1B166B788BE985B6B19 /* Pods-fw_note-fw_noteUITests.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y55QTKM2Q6;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.fw.plus.fw-noteUITests";
@@ -536,11 +669,13 @@
 			};
 			name = Debug;
 		};
-		B27CDC2E2D8276AA0039E783 /* Release */ = {
+		B27885152D9A869800004B89 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = BFB93D5C1E696C97EF5BA06E /* Pods-fw_note-fw_noteUITests.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y55QTKM2Q6;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.fw.plus.fw-noteUITests";
@@ -555,43 +690,43 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B27CDBFB2D8276A80039E783 /* Build configuration list for PBXProject "fw_note" */ = {
+		B27884E22D9A869500004B89 /* Build configuration list for PBXProject "fw_note" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B27CDC242D8276AA0039E783 /* Debug */,
-				B27CDC252D8276AA0039E783 /* Release */,
+				B278850B2D9A869800004B89 /* Debug */,
+				B278850C2D9A869800004B89 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B27CDC262D8276AA0039E783 /* Build configuration list for PBXNativeTarget "fw_note" */ = {
+		B278850D2D9A869800004B89 /* Build configuration list for PBXNativeTarget "fw_note" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B27CDC272D8276AA0039E783 /* Debug */,
-				B27CDC282D8276AA0039E783 /* Release */,
+				B278850E2D9A869800004B89 /* Debug */,
+				B278850F2D9A869800004B89 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B27CDC292D8276AA0039E783 /* Build configuration list for PBXNativeTarget "fw_noteTests" */ = {
+		B27885102D9A869800004B89 /* Build configuration list for PBXNativeTarget "fw_noteTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B27CDC2A2D8276AA0039E783 /* Debug */,
-				B27CDC2B2D8276AA0039E783 /* Release */,
+				B27885112D9A869800004B89 /* Debug */,
+				B27885122D9A869800004B89 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B27CDC2C2D8276AA0039E783 /* Build configuration list for PBXNativeTarget "fw_noteUITests" */ = {
+		B27885132D9A869800004B89 /* Build configuration list for PBXNativeTarget "fw_noteUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B27CDC2D2D8276AA0039E783 /* Debug */,
-				B27CDC2E2D8276AA0039E783 /* Release */,
+				B27885142D9A869800004B89 /* Debug */,
+				B27885152D9A869800004B89 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = B27CDBF82D8276A80039E783 /* Project object */;
+	rootObject = B27884DF2D9A869500004B89 /* Project object */;
 }

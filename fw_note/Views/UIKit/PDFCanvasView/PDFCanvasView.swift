@@ -228,7 +228,9 @@ struct PDFCanvasView: UIViewRepresentable {
                 let currentPage = pdfView.currentPage
             else { return }
             let currentPageIndex = document.index(for: currentPage) + 1  // Page indices are 0-based
-            canvasState.currentPageIndex = document.index(for: currentPage)
+            DispatchQueue.main.async {
+                self.canvasState.currentPageIndex = document.index(for: currentPage)
+                }
             let totalPageCount = document.pageCount
             pageIndicatorLabel?.text =
                 "Page \(currentPageIndex) / \(totalPageCount)"
