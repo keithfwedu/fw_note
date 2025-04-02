@@ -31,6 +31,7 @@ struct PdfNoteScreen: View {
                         // Embedding the PDFView
                         PDFCanvasView(
                             pdfDocument: pdfDocument,
+                            imageState: imageState,
                             canvasState: canvasState,
                             noteFile: noteFile,
                             displayDirection: $canvasState.displayDirection

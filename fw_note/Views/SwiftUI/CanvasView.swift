@@ -10,6 +10,7 @@ import SwiftUI
 struct CanvasView: View {
     let pageIndex: Int
     var onGesture: ((CGFloat, CGSize) -> Void)?
+    @ObservedObject var imageState: ImageState
     @ObservedObject var gestureState: GestureState
     @ObservedObject var canvasState: CanvasState
     @ObservedObject var noteFile: NoteFile
@@ -41,7 +42,7 @@ struct CanvasView: View {
     @State var lastDragPosition: CGPoint? = nil
 
     @State var imageStack: [ImageObj] = []
-    
+
     var body: some View {
         ZStack {
             //For force refresh UI
@@ -154,8 +155,8 @@ struct CanvasView: View {
                 .onAppear {
                     redrawTrigger.toggle()
                     notePage.pageCenterPoint = CGPoint(
-                        x: geometry.size.width/2,
-                        y: geometry.size.height/2)
+                        x: geometry.size.width / 2,
+                        y: geometry.size.height / 2)
                     notePage.canvasWidth = geometry.size.width
                     notePage.canvasHeight = geometry.size.height
                 }
@@ -170,39 +171,40 @@ struct CanvasView: View {
                     print("change2")
                 }
                 .drawingGroup()
-                .simultaneousGesture(gestureState.areGesturesEnabled ?
-                                     DragGesture(minimumDistance: 0)  // Handles both taps and drags
-                        .onChanged { value in
-                            focusedID = nil
-                            print("touch1");
-                            if value.translation == .zero {
-                                print("touch1a");
-                                // Handle as a tap gesture
-                                handleTap(at: value.startLocation)
-                            } else {
-                                print("touch1b");
-                                let customValue: CustomDragValue = CustomDragValue(
-                                    time: value.time,
-                                    location: value.location,
-                                    startLocation: value.startLocation,
-                                    translation: value.translation,
-                                    predictedEndTranslation: value.predictedEndTranslation,
-                                    predictedEndLocation: value.predictedEndLocation
-                                )
-                                // Handle as a drag gesture
-                                handleDragChange(dragValue: customValue)
+                .simultaneousGesture(
+                    gestureState.areGesturesEnabled
+                        ? DragGesture(minimumDistance: 0)  // Handles both taps and drags
+                            .onChanged { value in
+                                focusedID = nil
+                                print("touch1")
+                                if value.translation == .zero {
+                                    print("touch1a")
+                                    // Handle as a tap gesture
+                                    handleTap(at: value.startLocation)
+                                } else {
+                                    print("touch1b")
+                                    let customValue: CustomDragValue =
+                                        CustomDragValue(
+                                            time: value.time,
+                                            location: value.location,
+                                            startLocation: value.startLocation,
+                                            translation: value.translation,
+                                            predictedEndTranslation: value
+                                                .predictedEndTranslation,
+                                            predictedEndLocation: value
+                                                .predictedEndLocation
+                                        )
+                                    // Handle as a drag gesture
+                                    handleDragChange(dragValue: customValue)
+                                }
+
+                                //  handleDragChange(dragValue: value)
                             }
-
-                            //  handleDragChange(dragValue: value)
-                        }
-                        .onEnded { value in
-                            handleDragEnded()  // Finalize drag action
-                        }: nil
+                            .onEnded { value in
+                                handleDragEnded()  // Finalize drag action
+                            } : nil
                 )
-
-                /*.onDrop(of: ["public.image"], isTargeted: nil) { providers in
-                    handleDrop(providers: providers)
-                }*/
+               
 
                 ForEach($imageStack) { imageObj in
                     InteractiveImageView(
@@ -263,7 +265,10 @@ struct CanvasView: View {
             .allowsHitTesting(false)
 
         }
-        
+       
+        .onDrop(of: ["public.image", "com.compuserve.gif"], isTargeted: nil) { providers in
+            handleDrop(providers: providers)
+        }
         .onTapGesture {
             //focusedID = nil  // Reset focus if background is tapped
         }.onAppear {
@@ -681,89 +686,113 @@ struct CanvasView: View {
         isLassoCreated = false
     }
 
-    /* private func handleDrop(providers: [NSItemProvider]) -> Bool {
+    private func handleDrop(providers: [NSItemProvider]) -> Bool {
         for provider in providers {
-            // Check for a valid "public.image" type
+            print("Checking provider...")
+
+            // Check if the provider has an item conforming to "public.image"
             if provider.hasItemConformingToTypeIdentifier("public.image") {
-                // Load the UIImage object directly
-                provider.loadObject(ofClass: UIImage.self) { item, error in
-                    guard error == nil, let uiImage = item as? UIImage else {
-                        print(
-                            "Failed to load image: \(String(describing: error))"
-                        )
-                        return
-                    }
+                canvasState.isDragging = true
 
-                    // Perform UI updates on the main thread
-                    DispatchQueue.main.async {
-                        // Save the image and create an ImageObj
-                        if let imagePath = saveImageToDocuments(
-                            image: uiImage,
-                            targetSize: CGSize(width: 500, height: 500))
-                        {
-                            let newImageObj = ImageObj(
-                                id: UUID(),
-                                path: imagePath,
-                                position: CGPoint(x: 100, y: 100),  // Example position
-                                size: CGSize(width: 100, height: 100)  // Example size
+                if provider.registeredTypeIdentifiers.contains(
+                    "com.compuserve.gif")
+                {
+                    print("Detected GIF")
+
+                    // Load the GIF using its type identifier
+                    provider.loadItem(
+                        forTypeIdentifier: "com.compuserve.gif", options: nil
+                    ) { item, error in
+                        if let data = item as? Data {
+                            // Successfully loaded the GIF data
+                            print(
+                                "Successfully loaded GIF data: \(data.count) bytes"
                             )
-
-                            let newCanvasObj = CanvasObj(imageObj: newImageObj);
-                            notePage.canvasStack.append(newCanvasObj)
-                            noteFile.addToUndo(
-                                pageIndex: pageIndex, lineStack: nil,
-                                imageStack: notePage.imageStack
+                            
+                            if let originalImageObj = imageState.saveImageFromData(data, isGif: true) {
+                                addImageToStack(image: originalImageObj);
+                            }
+                        } else if let url = item as? URL {
+                            print("GIF URL received: \(url)")
+                            ImageHelper.handleGIFWithUUID(
+                                input: url.path,
+                                completion: { savedPath in
+                                    if let path = savedPath {
+                                        if let originalImageObj = imageState.saveImage(filePath: path) {
+                                            addImageToStack(image: originalImageObj);
+                                        }
+                                    } else {
+                                        print("Failed to save GIF.")
+                                    }
+                                })
+                        } else {
+                            print(
+                                "Failed to load GIF: \(String(describing: error))"
                             )
                         }
                     }
+
+                } else {
+                    // Handle non-GIF image formats
+                    provider.loadObject(ofClass: UIImage.self) { item, error in
+                        guard error == nil, let uiImage = item as? UIImage
+                        else {
+                            print(
+                                "Failed to load image: \(String(describing: error))"
+                            )
+                            return
+                        }
+
+
+                            if let imageData = uiImage.pngData() {
+                                // Use the `imageData` as needed (e.g., save to file or upload)
+                                print(
+                                    "Image successfully converted to PNG data. Size: \(imageData.count) bytes."
+                                )
+                                if let originalImageObj = imageState.saveImageFromData(imageData, isGif: false) {
+                                    addImageToStack(image: originalImageObj);
+                                }
+                              
+                            } else {
+                                print("Failed to convert UIImage to PNG data.")
+
+                            }
+
+                       
+                    }
                 }
-                return true  // Successfully handled the provider
             }
+            return true  // Successfully handled provider
         }
+
         return false  // No valid providers were processed
     }
+    
+    private func addImageToStack(image: OriginalImageObj) {
+        // Calculate base position
 
-    private func saveImageToDocuments(image: UIImage, targetSize: CGSize? = nil)
-        -> String?
-    {
-        // Resize the image if a target size is provided
-        let resizedImage =
-            targetSize != nil
-            ? resizeImage(image: image, targetSize: targetSize!) : image
+        let basePosition = notePage.pageCenterPoint
+        let newPosition = CGPoint(x: basePosition.x, y: basePosition.y)
 
-        // Convert the image to PNG data (to preserve transparency)
-        guard let data = resizedImage.pngData() else { return nil }
+        // Create the ImageObj with the filtered and adjusted position
+        let newImageObj = ImageObj(
+            path: image.absolutePath,
+            position: newPosition,
+            size: image.size
+        )
+        
+        // Create a new CanvasObj containing the ImageObj
+        let newCanvasObj = CanvasObj(lineObj: nil, imageObj: newImageObj)
 
-        let filename = UUID().uuidString + ".png"  // Use PNG file format
-        let fileURL = FileManager.default.urls(
-            for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent(filename)
+        // Add the new CanvasObj to the canvas stack
+        notePage.canvasStack.append(
+            newCanvasObj)
 
-        do {
-            try data.write(to: fileURL)
-            return fileURL.path
-        } catch {
-            print("Failed to save image: \(error)")
-            return nil
-        }
+        // Add the operation to the undo stack
+        noteFile.addToUndo(
+            pageIndex: pageIndex,
+            canvasStack: notePage.canvasStack
+        )
     }
 
-    private func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
-        let size = image.size
-
-        let widthRatio = targetSize.width / size.width
-        let heightRatio = targetSize.height / size.height
-        let ratio = min(widthRatio, heightRatio)
-
-        let newSize = CGSize(
-            width: size.width * ratio, height: size.height * ratio)
-        let rect = CGRect(origin: .zero, size: newSize)
-
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-        image.draw(in: rect)
-        let newImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-
-        return newImage ?? image
-    }*/
 }

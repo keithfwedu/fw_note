@@ -10,6 +10,7 @@ import SwiftUI
 
 struct PDFCanvasView: UIViewRepresentable {
     let pdfDocument: PDFDocument
+    var imageState: ImageState
     var canvasState: CanvasState
     var noteFile: NoteFile
     var pdfView: CustomPDFView = CustomPDFView()
@@ -74,7 +75,9 @@ struct PDFCanvasView: UIViewRepresentable {
     func makeCoordinator() -> Coordinator {
         Coordinator(
             pdfView: pdfView,
-            pdfDocument: pdfDocument, noteFile: noteFile,
+            pdfDocument: pdfDocument,
+            noteFile: noteFile,
+            imageState: imageState,
             canvasState: canvasState
         )
     }
@@ -83,6 +86,7 @@ struct PDFCanvasView: UIViewRepresentable {
         weak var pdfView: CustomPDFView?  // Weak reference to avoid retain cycles
 
         let pdfDocument: PDFDocument
+        private var imageState: ImageState
         private var canvasState: CanvasState
         var noteFile: NoteFile
         var pageIndicatorLabel: UILabel?  // Page indicator label to show current/total pages
@@ -93,10 +97,12 @@ struct PDFCanvasView: UIViewRepresentable {
         init(
             pdfView: CustomPDFView,
             pdfDocument: PDFDocument, noteFile: NoteFile,
+            imageState: ImageState,
             canvasState: CanvasState
         ) {
             self.pdfDocument = pdfDocument
             self.noteFile = noteFile
+            self.imageState = imageState
             self.canvasState = canvasState
             self.pdfView = pdfView
 
@@ -179,6 +185,7 @@ struct PDFCanvasView: UIViewRepresentable {
                     frame: normalizedPageFrame,
                     pageIndex: pageIndex,
                     pdfView: pdfView,
+                    imageState: imageState,
                     canvasState: canvasState,
                     noteFile: noteFile,
                     notePage: noteFile.notePages[pageIndex]

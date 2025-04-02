@@ -5,11 +5,11 @@
 //  Created by Fung Wing on 2/4/2025.
 //
 
-import ImageIO
-import MobileCoreServices
-import Photos
 import SwiftUI
 import UIKit
+import Photos
+import ImageIO
+import MobileCoreServices
 import UniformTypeIdentifiers
 
 class ImageHelper {
@@ -156,6 +156,79 @@ class ImageHelper {
         print("Resized GIF with loop count set to infinite (0).")
         return newGIFData as Data
     }
+    
+    
+    static func handleGIFWithUUID(input: String, completion: @escaping (String?) -> Void) {
+        guard let uuid = parseUUID(from: input) else {
+            print("Failed to parse UUID from input: \(input)")
+            completion(nil)
+            return
+        }
+
+        fetchGIFByUUID(uuid: uuid) { gifData in
+            guard let gifData = gifData else {
+                print("Failed to fetch GIF for UUID: \(uuid)")
+                completion(nil)
+                return
+            }
+
+            if let path = saveGIFImage(imageData: gifData) {
+                print("GIF successfully saved at: \(path)")
+                completion(path)
+            } else {
+                completion(nil)
+            }
+        }
+    }
+
+    
+    static func parseUUID(from input: String) -> String? {
+        // Extract only the filename portion from the path, if necessary
+        let fileName = input.components(separatedBy: "/").last ?? input
+
+        // Split the filename by "&" and find the component that starts with "uuid="
+        let components = fileName.split(separator: "&")
+        for component in components {
+            if component.starts(with: "uuid=") {
+                return String(component.dropFirst(5)) // Remove the "uuid=" prefix
+            }
+        }
+        return nil
+    }
+
+
+    static func fetchGIFByUUID(uuid: String, completion: @escaping (Data?) -> Void) {
+        // Request access to the Photos library
+        PHPhotoLibrary.requestAuthorization { status in
+            guard status == .authorized else {
+                print("Photos access denied.")
+                completion(nil)
+                return
+            }
+            
+            // Fetch assets by UUID
+            let fetchOptions = PHFetchOptions()
+            fetchOptions.predicate = NSPredicate(format: "localIdentifier CONTAINS %@", uuid)
+            
+            let assets = PHAsset.fetchAssets(with: fetchOptions)
+            guard let asset = assets.firstObject else {
+                print("No asset found for UUID: \(uuid)")
+                completion(nil)
+                return
+            }
+            
+            // Request the GIF data
+            let manager = PHImageManager.default()
+            let requestOptions = PHImageRequestOptions()
+            requestOptions.isSynchronous = true
+            requestOptions.deliveryMode = .highQualityFormat
+            
+            manager.requestImageData(for: asset, options: requestOptions) { data, _, _, _ in
+                completion(data)
+            }
+        }
+    }
+
 
     static func saveGIFImage(imageData: Data) -> String? {
         do {
@@ -167,10 +240,6 @@ class ImageHelper {
                 return nil
             }
 
-            // Resize the gif
-            //let resizedGifData = resizeGIF(imageData, to: 200)
-            // Save GIF directly
-            // try resizedGifData?.write(to: fileURL)
             try imageData.write(to: fileURL)
             print("GIF saved successfully at \(fileURL)")
             let relativePath: String = URL(fileURLWithPath: fileURL.path)

@@ -24,7 +24,7 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
             gestureState.areGesturesEnabled = !isDisabled  // Toggle gesture state dynamically
         }
 
-    init(frame: CGRect, pageIndex: Int, pdfView: CustomPDFView, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage) {
+    init(frame: CGRect, pageIndex: Int, pdfView: CustomPDFView, imageState: ImageState, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage) {
         self.pageIndex = pageIndex
        
         self.pdfView = pdfView
@@ -35,6 +35,7 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
             onGesture: { scale, translation in
                 self.handleGesture(scale: scale, translation: translation)
             },
+            imageState: imageState,
             gestureState: gestureState,
             canvasState: canvasState,
             noteFile: noteFile,

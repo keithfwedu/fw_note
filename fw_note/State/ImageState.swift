@@ -12,22 +12,26 @@ import SwiftUI
 class ImageState: ObservableObject {
     @Published var images: [OriginalImageObj] = []
     
-    func saveImageFromData(_ imageData: Data, isGif: Bool) {
+    func saveImageFromData(_ imageData: Data, isGif: Bool) -> OriginalImageObj? {
         var filePath:String? = nil
+        var originalImageObj:OriginalImageObj? = nil
         if isGif {  // Custom helper function to check if the data is a GIF
             filePath = ImageHelper.saveGIFImage(imageData: imageData)
-            saveImage(filePath: filePath)
+            originalImageObj = saveImage(filePath: filePath)
+            
         } else {
             filePath = ImageHelper.saveStaticImage(imageData: imageData)
-            saveImage(filePath: filePath)
+            originalImageObj = saveImage(filePath: filePath)
         }
+        
+        return originalImageObj
     }
 
     // Save image paths for persistence
-    func saveImage(filePath: String?) {
+    func saveImage(filePath: String?) -> OriginalImageObj? {
         guard let filePath = filePath else {
             print("Invalid file path for image")
-            return
+            return nil
         }
         
         // Create the ImageObj with the filtered and adjusted position
@@ -35,16 +39,22 @@ class ImageState: ObservableObject {
             path: filePath
         )
         
-        print(newImageObj);
-
-        images.append(newImageObj)  // Save the new path
-        persistImages()  // Persist paths to a JSON file
+       
+        DispatchQueue.main.async {
+            self.images.append(newImageObj)  // Save the new path
+            self.persistImages()  // Persist paths to a JSON file
+        }
+        
+        return newImageObj;
     }
 
     // Remove image
     func removeImage(_ originalImageObj: OriginalImageObj) {
-        images.removeAll { $0.id == originalImageObj.id }
-        persistImages()
+        DispatchQueue.main.async {
+            self.images.removeAll { $0.id == originalImageObj.id }
+            self.persistImages()
+
+        }
     }
 
     // Load saved image paths
