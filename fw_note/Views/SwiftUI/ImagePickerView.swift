@@ -12,15 +12,15 @@ struct ImagePickerView: View {
     @ObservedObject var noteFile: NoteFile
     @ObservedObject var imageState: ImageState
     @ObservedObject var canvasState: CanvasState
-    
+
     @State private var images: [UIImage] = []
     @State private var isShowingImagePicker = false
+    @State private var isShowFilePicker = false
     @State private var isShowingPopover = false
     @State private var selectedSourceType: UIImagePickerController.SourceType =
         .photoLibrary
     @State private var isLoading = false
-    
-   
+
     let appSupportDirectory = FileManager.default.urls(
         for: .applicationSupportDirectory, in: .userDomainMask
     ).first!
@@ -52,13 +52,22 @@ struct ImagePickerView: View {
                             selectedSourceType = .photoLibrary
                             isShowingPopover = false
                             isShowingImagePicker = true
+                            isShowFilePicker = false
                         }
                         Divider()
                         Button("Take Photo") {
                             selectedSourceType = .camera
                             isShowingPopover = false
                             isShowingImagePicker = true
+                            isShowFilePicker = false
                         }
+                        Divider()
+                        Button("Add from File") {
+                            isShowingPopover = false
+                            isShowingImagePicker = false
+                            isShowFilePicker = true
+                        }
+                        
                     }
                     .padding()
 
@@ -80,7 +89,7 @@ struct ImagePickerView: View {
                                 if FileManager.default.fileExists(
                                     atPath: image.absolutePath)
                                 {
-                                    if(image.isGIF) {
+                                    if image.isGIF {
                                         GIFView(
                                             path: image.absolutePath,
                                             targetSize: CGSize(
@@ -90,31 +99,38 @@ struct ImagePickerView: View {
                                         .cornerRadius(10)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 10)
-                                                .stroke(Color.gray, lineWidth: 1)
+                                                .stroke(
+                                                    Color.gray, lineWidth: 1)
                                         )
                                         .onTapGesture {
                                             addImageToStack(image: image)
                                         }
-                                    }else {
-                                        if let uiImage = UIImage(contentsOfFile: image.absolutePath) {
-                                             Image(uiImage: uiImage)
+                                    } else {
+                                        if let uiImage = UIImage(
+                                            contentsOfFile: image.absolutePath)
+                                        {
+                                            Image(uiImage: uiImage)
                                                 .resizable()
                                                 .frame(width: 100, height: 100)
                                                 .scaledToFit()
                                                 .cornerRadius(10)
                                                 .overlay(
-                                                    RoundedRectangle(cornerRadius: 10)
-                                                        .stroke(Color.gray, lineWidth: 1)
+                                                    RoundedRectangle(
+                                                        cornerRadius: 10
+                                                    )
+                                                    .stroke(
+                                                        Color.gray, lineWidth: 1
+                                                    )
                                                 )
                                                 .onTapGesture {
-                                                    addImageToStack(image: image)
+                                                    addImageToStack(
+                                                        image: image)
                                                 }
-                                                } else {
-                                                    Text("Image could not be loaded.")
-                                                        .foregroundColor(.red)
-                                                }
-                                      
-                                           
+                                        } else {
+                                            Text("Image could not be loaded.")
+                                                .foregroundColor(.red)
+                                        }
+
                                     }
                                 } else {
                                     Text("File Missing")
@@ -170,7 +186,13 @@ struct ImagePickerView: View {
                     self.isShowingImagePicker = false
                 }
             )
-
+        }
+        .fileImporter(
+            isPresented: $isShowFilePicker,
+            allowedContentTypes: [.image, .gif],
+            allowsMultipleSelection: false
+        ) { result in
+            print(result);
         }
         .onAppear {
             imageState.loadImages()
@@ -192,8 +214,8 @@ struct ImagePickerView: View {
             position: newPosition,
             size: image.size
         )
-        
-        print(newImageObj);
+
+        print(newImageObj)
 
         // Create a new CanvasObj containing the ImageObj
         let newCanvasObj = CanvasObj(lineObj: nil, imageObj: newImageObj)
@@ -208,7 +230,5 @@ struct ImagePickerView: View {
             canvasStack: page.canvasStack
         )
     }
-    
-       
-    
+
 }

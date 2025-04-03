@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PDFKit
 
 class FileHelper {
     static func getBaseDirectory() -> URL {
@@ -170,6 +171,16 @@ class FileHelper {
             print("Error copying PDF file to \(noteFileUrl): \(error)")
             return nil
         }
+    }
+    
+    static func getPDFThumbnail(from pdfURL: URL, pageIndex: Int) {
+        guard let pdfDocument = PDFDocument(url: pdfURL),
+              let page = pdfDocument.page(at: pageIndex) else {
+            return
+        }
+
+        let thumbnailSize = CGSize(width: 300, height: 400)
+        page.thumbnail(of: thumbnailSize, for: .mediaBox)
     }
 
     
