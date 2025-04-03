@@ -24,7 +24,7 @@ struct OriginalImageObj: Identifiable, Codable, Equatable {
 
     // Static method to compute absolute path
     static func setAbsolutePath(path: String) -> String {
-        let imageDirectory = AppState.getImageDirectory()
+        let imageDirectory = FileHelper.getImageDirectory()
 
         guard let fileURL = imageDirectory?.appendingPathComponent(path) else {
             print("Error get fileURL")

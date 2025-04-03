@@ -59,7 +59,7 @@ class ImageState: ObservableObject {
 
     // Load saved image paths
     func loadImages() {
-        guard let imageDirectory: URL = AppState.getImageDirectory() else {
+        guard let imageDirectory: URL = FileHelper.getImageDirectory() else {
             print("Failed to get image directory")
             return
         }
@@ -84,7 +84,7 @@ class ImageState: ObservableObject {
     }
 
     func persistImages() {
-        guard let imageDirectory: URL = AppState.getImageDirectory() else {
+        guard let imageDirectory: URL = FileHelper.getImageDirectory() else {
             print("Failed to get image directory")
             return
         }

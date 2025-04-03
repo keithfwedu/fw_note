@@ -2,6 +2,7 @@ import SwiftUI
 import PDFKit
 
 struct NoteExplorerView: View {
+    @State private var userId: String = "guest"
     @State private var noteFiles: [NoteFile] = []
     @State private var isFilePickerPresented: Bool = false
     @State private var freeSpaceRatio: Double = 0.0
@@ -35,7 +36,9 @@ struct NoteExplorerView: View {
                                     )
                                 }
                                 .withDeleteContextMenu(
-                                    noteFile: noteFile, deleteAction: deleteFile
+                                    noteFile: noteFile, deleteAction: { noteFile in
+                                        deleteNoteProject(userId: userId, noteFile: noteFile)
+                                    }
                                 )
                             }
                         }
@@ -60,11 +63,11 @@ struct NoteExplorerView: View {
                 allowedContentTypes: [.pdf],
                 allowsMultipleSelection: false
             ) { result in
-                handleFileSelection(result: result)
+                addFileToProject(userId: userId,result: result)
             }
             .onAppear {
                 updateFreeSpace()
-                noteFiles = listAllFiles() // Load files lazily
+                noteFiles = FileHelper.listProjects(userId: userId)
             }
         }
         .navigationViewStyle(StackNavigationViewStyle()) // Ensure it works even on iPad
@@ -81,59 +84,14 @@ struct NoteExplorerView: View {
         }
     }
 
-    // MARK: - List All Files
-    private func listAllFiles() -> [NoteFile] {
-        let notesDirectory = appSupportDirectory.appendingPathComponent(
-            "fw_notes", isDirectory: true)
-        var noteFiles: [NoteFile] = []
-        let decoder = JSONDecoder()
-
-        do {
-            let subdirectories = try FileManager.default.contentsOfDirectory(
-                at: notesDirectory, includingPropertiesForKeys: nil,
-                options: .skipsHiddenFiles)
-            noteFiles = subdirectories.compactMap { directory in
-                let jsonFileURL = directory.appendingPathComponent("data.json")
-                guard FileManager.default.fileExists(atPath: jsonFileURL.path)
-                else { return nil }
-
-                do {
-                    let data = try Data(contentsOf: jsonFileURL)
-                    return try decoder.decode(NoteFile.self, from: data)
-                } catch {
-                    print("Error decoding JSON at \(jsonFileURL): \(error)")
-                    return nil
-                }
-            }
-        } catch {
-            print("Error reading fw_notes directory: \(error)")
-        }
-
-        return noteFiles
-    }
-
-    // MARK: - Delete a NoteFile
-    private func deleteFile(noteFile: NoteFile) {
-        if let relativePdfPath = noteFile.pdfFilePath {
-            let absolutePdfPath = appSupportDirectory.appendingPathComponent(relativePdfPath).deletingLastPathComponent()
-
-            guard FileManager.default.fileExists(atPath: absolutePdfPath.path) else {
-                print("Directory not found: \(absolutePdfPath.path)")
-                return
-            }
-
-            do {
-                try FileManager.default.removeItem(at: absolutePdfPath)
-            } catch {
-                print("Error deleting note at \(absolutePdfPath.path): \(error)")
-            }
-        }
-
-        noteFiles = listAllFiles()
+   
+    private func deleteNoteProject(userId: String, noteFile: NoteFile) {
+        FileHelper.deleteNote(userId: userId, noteFile: noteFile)
+        noteFiles = FileHelper.listProjects(userId: userId)
     }
 
     // MARK: - Handle File Selection
-    private func handleFileSelection(result: Result<[URL], Error>) {
+    private func addFileToProject(userId:String, result: Result<[URL], Error>) {
         do {
             // Get the first file URL from the result
             guard let selectedFileURL = try result.get().first else {
@@ -144,38 +102,10 @@ struct NoteExplorerView: View {
             // Handle security-scoped resource if necessary
             let fileAccessed = selectedFileURL.startAccessingSecurityScopedResource()
             defer { if fileAccessed { selectedFileURL.stopAccessingSecurityScopedResource() } }
-
-            // Generate a unique directory path for the note
-            let uniqueID = UUID().uuidString
-            let relativeDirectoryPath = "fw_notes/\(uniqueID)"
-            let uniqueDirectory = appSupportDirectory.appendingPathComponent(relativeDirectoryPath, isDirectory: true)
-
-            // Create the directory, ensuring intermediate directories are created
-            try FileManager.default.createDirectory(at: uniqueDirectory, withIntermediateDirectories: true, attributes: nil)
-            print("Directory created at: \(uniqueDirectory)")
-
-            // Copy the selected file to the new directory
-            let pdfFileName = selectedFileURL.lastPathComponent
-            let pdfFileURL = uniqueDirectory.appendingPathComponent(pdfFileName)
-            try FileManager.default.copyItem(at: selectedFileURL, to: pdfFileURL)
-            print("File copied to: \(pdfFileURL)")
-
-            // Create the NoteFile object
-            let newNoteFile = NoteFile(
-                title: "New Note \(Date().description)", // Generate a unique title
-                pdfFilePath: "\(relativeDirectoryPath)/\(pdfFileName)"
-            )
-
-            // Save metadata as a JSON file
-            let jsonFileURL = uniqueDirectory.appendingPathComponent("data.json")
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
-            let jsonData = try encoder.encode(newNoteFile)
-            try jsonData.write(to: jsonFileURL)
-            print("Metadata saved to: \(jsonFileURL)")
-
+            
+            FileHelper.newNote(userId: userId, pdfPathUrl: selectedFileURL)
             // Update the list of notes
-            noteFiles = listAllFiles()
+            noteFiles = FileHelper.listProjects(userId: userId)
 
         } catch let fileError as NSError {
             // Specific error handling with descriptive logging

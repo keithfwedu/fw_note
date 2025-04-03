@@ -232,7 +232,7 @@ class ImageHelper {
 
     static func saveGIFImage(imageData: Data) -> String? {
         do {
-            let imageDirectory = AppState.getImageDirectory()
+            let imageDirectory = FileHelper.getImageDirectory()
             let fileName = UUID().uuidString + ".gif"
             guard let fileURL = imageDirectory?.appendingPathComponent(fileName)
             else {
@@ -253,7 +253,7 @@ class ImageHelper {
 
     static func saveStaticImage(imageData: Data) -> String? {
         do {
-            let imageDirectory = AppState.getImageDirectory()
+            let imageDirectory = FileHelper.getImageDirectory()
             let fileName = UUID().uuidString + ".png"
             guard let fileURL = imageDirectory?.appendingPathComponent(fileName)
             else {

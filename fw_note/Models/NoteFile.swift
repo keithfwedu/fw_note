@@ -3,7 +3,7 @@ import PDFKit
 import UIKit
 
 class NoteFile: ObservableObject, Identifiable, Codable {
-    var id = UUID()
+    var id: UUID
     var title: String
     var pdfFilePath: String?
     var thumbnailPath: String?
@@ -86,7 +86,8 @@ class NoteFile: ObservableObject, Identifiable, Codable {
     }
 
     // Initializer for NoteFile with default title
-    init(title: String? = nil, pdfFilePath: String? = nil) {
+    init(id: UUID, title: String? = nil, pdfFilePath: String? = nil) {
+        self.id = id
         // Initialize title
         if let providedTitle = title {
             self.title = providedTitle
