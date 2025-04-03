@@ -24,7 +24,7 @@ struct StorageUsageView: View {
                     .fill(Color.blue)
                     .frame(
                         width: CGFloat(300 * (1.0 - freeSpaceRatio)), height: 25
-                    )
+                    ).cornerRadius(5)
             }
             .cornerRadius(5)
             .overlay(
@@ -35,6 +35,6 @@ struct StorageUsageView: View {
             )
             .padding(.horizontal)
         }
-        .padding(.top)
+    
     }
 }

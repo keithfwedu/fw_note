@@ -102,8 +102,8 @@ class FileHelper {
     }
 
     static func deleteNote(userId: String, noteFile: NoteFile) {
-      
-      
+    
+        print(noteFile.pdfFilePath);
         if let relativeNotePath = noteFile.pdfFilePath {
             guard let absoluteNotePath = getAbsoluteProjectPath(userId: userId, relativePath: relativeNotePath) else {
                 return
@@ -192,11 +192,8 @@ class FileHelper {
 
     
     static func getAbsoluteProjectPath(userId: String, relativePath: String) -> URL? {
-        guard let projectsDirectory = getProjectDirectory(userId: userId) else {
-            print("Error: Failed to get notes directory for user ID \(userId).")
-            return nil
-        }
-       return projectsDirectory.appendingPathComponent(relativePath).deletingLastPathComponent()
+        let baseDirectory = getBaseDirectory()
+       return baseDirectory.appendingPathComponent(relativePath).deletingLastPathComponent()
     }
 
     static func subDirectory(baseDirectory: URL, subDirectoryPath: String) -> URL? {

@@ -13,16 +13,31 @@ struct NoteExplorerView: View {
 
     var body: some View {
         NavigationView {
-            VStack {
+            VStack(alignment: .leading, spacing: 10) {
                 // Storage Usage Section
-                StorageUsageView(freeSpaceRatio: freeSpaceRatio)
+                HStack(alignment: .bottom) {
+                    StorageUsageView(freeSpaceRatio: freeSpaceRatio)
+                    Spacer()
+                    // "Add" Button
+                    Button(action: {
+                        isFilePickerPresented = true
+                    }) {
+                        Image(systemName: "plus")
+                            .resizable()
+                            .frame(width: 24, height: 24)
+                    }
+                }
+                .frame(height: 50)
+                .padding(.all, 8)
 
                 // Notes Grid Section
                 if noteFiles.isEmpty {
-                    Text("No Notes Found")
-                        .font(.headline)
-                        .foregroundColor(.gray)
-                        .padding()
+                    VStack {
+                        Text("No Notes Found")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .padding()
+                    }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
                         LazyVGrid(columns: gridColumns, spacing: 20) {
@@ -45,14 +60,7 @@ struct NoteExplorerView: View {
                     }
                 }
 
-                // "Add" Button
-                Button(action: {
-                    isFilePickerPresented = true
-                }) {
-                    Image(systemName: "plus")
-                        .resizable()
-                        .frame(width: 24, height: 24)
-                }
+               
             }
             .padding()
             .navigationTitle("Note Explorer") // Ensure the title is visible
