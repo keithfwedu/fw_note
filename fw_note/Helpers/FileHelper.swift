@@ -5,25 +5,32 @@
 //  Created by Fung Wing on 3/4/2025.
 //
 
-import SwiftUI
 import PDFKit
+import SwiftUI
 
 class FileHelper {
     static func getBaseDirectory() -> URL {
         return FileManager.default.urls(
-            for: .applicationSupportDirectory, in: .userDomainMask
+            for: .applicationSupportDirectory,
+            in: .userDomainMask
         ).first!
     }
-    
+
     static func getImageDirectory() -> URL? {
         let baseDirectory = FileHelper.getBaseDirectory()
-        let imageDirectory = subDirectory(baseDirectory: baseDirectory, subDirectoryPath: "images")
+        let imageDirectory = subDirectory(
+            baseDirectory: baseDirectory,
+            subDirectoryPath: "images"
+        )
         return imageDirectory
     }
 
     static func getProjectDirectory() -> URL? {
         let baseDirectory = FileHelper.getBaseDirectory()
-        let projectDirectory = subDirectory(baseDirectory: baseDirectory, subDirectoryPath: "projects")
+        let projectDirectory = subDirectory(
+            baseDirectory: baseDirectory,
+            subDirectoryPath: "projects"
+        )
         return projectDirectory
     }
 
@@ -31,22 +38,67 @@ class FileHelper {
         guard let projectDirectory = getProjectDirectory() else {
             return nil
         }
-        
-        guard let userProjectDirectory = subDirectory(baseDirectory: projectDirectory, subDirectoryPath: userId) else {
+
+        guard
+            let userProjectDirectory = subDirectory(
+                baseDirectory: projectDirectory,
+                subDirectoryPath: userId
+            )
+        else {
             return nil
         }
-        
+
         return userProjectDirectory
     }
 
-    static func getNoteDirectory(userId: String = "guest", noteId: String) -> URL? {
+    static func getNoteDirectory(userId: String = "guest", noteId: String)
+        -> URL?
+    {
         guard let projectDirectory = getProjectDirectory(userId: userId),
-              let pdfDirectory = subDirectory(baseDirectory: projectDirectory, subDirectoryPath: noteId) else {
+            let pdfDirectory = subDirectory(
+                baseDirectory: projectDirectory,
+                subDirectoryPath: noteId
+            )
+        else {
             return nil
         }
         return pdfDirectory
     }
-    
+
+    static func getPdfThumbnailDirectory(
+        userId: String = "guest",
+        noteId: String
+    ) -> URL? {
+        guard
+            let noteDirectory = getNoteDirectory(userId: userId, noteId: noteId)
+        else {
+            return nil
+        }
+
+        let thumbnailDirectory = subDirectory(
+            baseDirectory: noteDirectory,
+            subDirectoryPath: "thumbnails/pdf"
+        )
+        return thumbnailDirectory
+    }
+
+    static func getNoteThumbnailDirectory(
+        userId: String = "guest",
+        noteId: String
+    ) -> URL? {
+        guard
+            let noteDirectory = getNoteDirectory(userId: userId, noteId: noteId)
+        else {
+            return nil
+        }
+
+        let thumbnailDirectory = subDirectory(
+            baseDirectory: noteDirectory,
+            subDirectoryPath: "thumbnails"
+        )
+        return thumbnailDirectory
+    }
+
     static func listProjects(userId: String) -> [NoteFile] {
         guard let notesDirectory = getProjectDirectory(userId: userId) else {
             print("Error: Failed to get notes directory for user ID \(userId).")
@@ -65,7 +117,8 @@ class FileHelper {
 
             noteFiles = subdirectories.compactMap { directory in
                 let jsonFileURL = directory.appendingPathComponent("data.json")
-                guard FileManager.default.fileExists(atPath: jsonFileURL.path) else {
+                guard FileManager.default.fileExists(atPath: jsonFileURL.path)
+                else {
                     print("Skipping: No data.json found in \(directory).")
                     return nil
                 }
@@ -74,43 +127,61 @@ class FileHelper {
                     let data = try Data(contentsOf: jsonFileURL)
                     return try decoder.decode(NoteFile.self, from: data)
                 } catch {
-                    print("Error decoding JSON file at \(jsonFileURL): \(error)")
+                    print(
+                        "Error decoding JSON file at \(jsonFileURL): \(error)"
+                    )
                     return nil
                 }
             }
         } catch {
-            print("Error reading contents of notes directory \(notesDirectory): \(error)")
+            print(
+                "Error reading contents of notes directory \(notesDirectory): \(error)"
+            )
         }
 
         return noteFiles
     }
-    
+
     static func newNote(userId: String, pdfPathUrl: URL) {
         // Generate a unique directory path for the note
         let noteId = UUID()
         let pdfFileName = pdfPathUrl.lastPathComponent
-        let pdfFilePath = FileHelper.savePDFtoProject(userId: userId, noteId: noteId.uuidString, pdfFileUrl: pdfPathUrl)
+        let pdfFilePath = FileHelper.savePDFtoProject(
+            userId: userId,
+            noteId: noteId.uuidString,
+            pdfFileUrl: pdfPathUrl
+        )
 
         // Create the NoteFile object
         let noteFile = NoteFile(
             id: noteId,
-            title: "New Note \(Date().description)", // Generate a unique title
+            title: "New Note \(Date().description)",  // Generate a unique title
             pdfFilePath: pdfFilePath
         )
 
-        newMetaDataFile(userId: userId, noteId: noteId.uuidString, noteFile: noteFile)
+        newMetaDataFile(
+            userId: userId,
+            noteId: noteId.uuidString,
+            noteFile: noteFile
+        )
 
     }
 
     static func deleteNote(userId: String, noteFile: NoteFile) {
-    
-        print(noteFile.pdfFilePath);
+
+        print(noteFile.pdfFilePath)
         if let relativeNotePath = noteFile.pdfFilePath {
-            guard let absoluteNotePath = getAbsoluteProjectPath(userId: userId, relativePath: relativeNotePath) else {
+            guard
+                let absoluteNotePath = getAbsoluteProjectPath(
+                    userId: userId,
+                    relativePath: relativeNotePath
+                )
+            else {
                 return
             }
 
-            guard FileManager.default.fileExists(atPath: absoluteNotePath.path) else {
+            guard FileManager.default.fileExists(atPath: absoluteNotePath.path)
+            else {
                 print("Project not found: \(absoluteNotePath.path)")
                 return
             }
@@ -118,15 +189,25 @@ class FileHelper {
             do {
                 try FileManager.default.removeItem(at: absoluteNotePath)
             } catch {
-                print("Error deleting note at \(absoluteNotePath.path): \(error)")
+                print(
+                    "Error deleting note at \(absoluteNotePath.path): \(error)"
+                )
             }
         }
 
     }
-    
-    static func newMetaDataFile(userId: String, noteId: String, noteFile: NoteFile) -> URL? {
-        guard let noteDirectory = getNoteDirectory(userId: userId, noteId: noteId) else {
-            print("Error: Failed to get note directory for user ID \(userId) and note ID \(noteId).")
+
+    static func newMetaDataFile(
+        userId: String,
+        noteId: String,
+        noteFile: NoteFile
+    ) -> URL? {
+        guard
+            let noteDirectory = getNoteDirectory(userId: userId, noteId: noteId)
+        else {
+            print(
+                "Error: Failed to get note directory for user ID \(userId) and note ID \(noteId)."
+            )
             return nil
         }
 
@@ -138,7 +219,7 @@ class FileHelper {
         do {
             // Encode the NoteFile object to JSON data
             let jsonData = try encoder.encode(noteFile)
-            
+
             // Write JSON data to the file
             try jsonData.write(to: jsonFileURL)
             print("Metadata saved to: \(jsonFileURL)")
@@ -150,13 +231,19 @@ class FileHelper {
         }
     }
 
-    
-    static func savePDFtoProject(userId: String, noteId: String, pdfFileUrl: URL) -> String? {
+    static func savePDFtoProject(
+        userId: String,
+        noteId: String,
+        pdfFileUrl: URL
+    ) -> String? {
         let pdfFileName = pdfFileUrl.lastPathComponent
 
         // Safely unwrap the optional noteUrl returned by getNoteDirectory
-        guard let noteUrl = getNoteDirectory(userId: userId, noteId: noteId) else {
-            print("Error: Failed to get note directory for user ID \(userId) and note ID \(noteId).")
+        guard let noteUrl = getNoteDirectory(userId: userId, noteId: noteId)
+        else {
+            print(
+                "Error: Failed to get note directory for user ID \(userId) and note ID \(noteId)."
+            )
             return nil
         }
 
@@ -165,25 +252,88 @@ class FileHelper {
         do {
             // Use try to handle errors thrown by copyItem
             try FileManager.default.copyItem(at: pdfFileUrl, to: noteFileUrl)
-            let relativePath = getRelativePath(from: noteFileUrl);
-            return relativePath;
+            let relativePath = getRelativePath(from: noteFileUrl)
+            return relativePath
         } catch {
             print("Error copying PDF file to \(noteFileUrl): \(error)")
             return nil
         }
     }
-    
-    static func getPDFThumbnail(from pdfURL: URL, pageIndex: Int) {
-        guard let pdfDocument = PDFDocument(url: pdfURL),
-              let page = pdfDocument.page(at: pageIndex) else {
+
+    static func savePDFThumbnails(
+        userId: String,
+        noteId: String,
+        pdfFileUrl: URL
+    ) {
+        // Load the PDF document
+        guard let pdfDocument = PDFDocument(url: pdfFileUrl) else {
+            print("Error opening PDF file")
             return
         }
 
-        let thumbnailSize = CGSize(width: 300, height: 400)
-        page.thumbnail(of: thumbnailSize, for: .mediaBox)
+        // Iterate through all the pages in the PDF
+        for pageIndex in 0..<pdfDocument.pageCount {
+            getPDFThumbnail(
+                userId: userId,
+                noteId: noteId,
+                pdfFileUrl: pdfFileUrl,
+                pageIndex: pageIndex
+            )
+        }
+
     }
 
-    
+    static func getPDFThumbnail(
+        userId: String,
+        noteId: String,
+        pdfFileUrl: URL,
+        pageIndex: Int
+    ) {
+        guard
+            let noteThumbnailDirectory = getNoteThumbnailDirectory(
+                userId: userId,
+                noteId: noteId
+            )
+        else {
+            print("Error get note thumbnail directory")
+            return
+        }
+
+        // Load the PDF document
+        guard let pdfDocument = PDFDocument(url: pdfFileUrl) else {
+            print("Error opening PDF file")
+            return
+        }
+
+        guard let page = pdfDocument.page(at: pageIndex) else {
+            print("Error accessing page \(pageIndex)")
+            return
+        }
+
+        // Generate a thumbnail for the page
+        let originalSize = page.bounds(for: .mediaBox).size
+        let thumbnail = page.thumbnail(of: originalSize, for: .mediaBox)
+
+        // Add the thumbnail to the images array
+        // Create a file name using the index
+        let imageName = "pdf_\(pageIndex + 1).png"  // Start index from 1 for readability
+        let imageURL = noteThumbnailDirectory.appendingPathComponent(imageName)
+
+        // Attempt to save the image as PNG
+        if let imageData = thumbnail.pngData() {
+            do {
+                try imageData.write(to: imageURL)
+                print("Saved image: \(imageName) at \(imageURL.path)")
+            } catch {
+                print(
+                    "Failed to save image \(imageName): \(error.localizedDescription)"
+                )
+            }
+        } else {
+            print("Failed to generate PNG data for image \(pageIndex + 1).")
+        }
+    }
+
     static func getRelativePath(from url: URL) -> String? {
         let basePathString = getBaseDirectory().path
         let fullPathString = url.path
@@ -195,20 +345,30 @@ class FileHelper {
         }
 
         // Drop the base path part to get the relative path
-        let relativePath = String(fullPathString.dropFirst(basePathString.count))
-        
+        let relativePath = String(
+            fullPathString.dropFirst(basePathString.count)
+        )
+
         // Remove leading "/" if present
-        return relativePath.hasPrefix("/") ? String(relativePath.dropFirst()) : relativePath
+        return relativePath.hasPrefix("/")
+            ? String(relativePath.dropFirst()) : relativePath
     }
 
-    
-    static func getAbsoluteProjectPath(userId: String, relativePath: String) -> URL? {
+    static func getAbsoluteProjectPath(userId: String, relativePath: String)
+        -> URL?
+    {
         let baseDirectory = getBaseDirectory()
-       return baseDirectory.appendingPathComponent(relativePath).deletingLastPathComponent()
+        return baseDirectory.appendingPathComponent(relativePath)
+            .deletingLastPathComponent()
     }
 
-    static func subDirectory(baseDirectory: URL, subDirectoryPath: String) -> URL? {
-        let subDirectory = baseDirectory.appendingPathComponent(subDirectoryPath, isDirectory: true)
+    static func subDirectory(baseDirectory: URL, subDirectoryPath: String)
+        -> URL?
+    {
+        let subDirectory = baseDirectory.appendingPathComponent(
+            subDirectoryPath,
+            isDirectory: true
+        )
 
         // Ensure the subdirectory exists
         do {
@@ -221,14 +381,13 @@ class FileHelper {
         return subDirectory
     }
 
-
     // Ensure directory creation for any path
     static func createDirectoryIfNotExist(_ directory: URL) throws {
         if !FileManager.default.fileExists(atPath: directory.path) {
             do {
                 try FileManager.default.createDirectory(
                     at: directory,
-                    withIntermediateDirectories: true, // This ensures all intermediate paths are created
+                    withIntermediateDirectories: true,  // This ensures all intermediate paths are created
                     attributes: nil
                 )
             } catch {
