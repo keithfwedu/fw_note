@@ -21,6 +21,8 @@ struct PDFCanvasView: UIViewRepresentable {
         pdfView.document = pdfDocument
         pdfView.autoScales = false
         pdfView.displayMode = .singlePageContinuous
+        pdfView.displaysPageBreaks = true
+        // pdfView.pageBreakMargins = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         pdfView.displayDirection = displayDirection
         pdfView.backgroundColor = UIColor.systemGray4
         pdfView.usePageViewController(false)
@@ -45,11 +47,14 @@ struct PDFCanvasView: UIViewRepresentable {
         )
 
         context.coordinator.configure(
-            pdfView: pdfView, displayDirection: displayDirection)  // Pass PDFView to the Coordinator
+            pdfView: pdfView,
+            displayDirection: displayDirection
+        )  // Pass PDFView to the Coordinator
 
         // Add canvases as annotations to each page
         context.coordinator.addCanvasesToPages(
-            pdfView: pdfView)
+            pdfView: pdfView
+        )
 
         // Add page information (Current Page / Total Pages)
         context.coordinator.addPageIndicator(to: pdfView)
@@ -63,8 +68,13 @@ struct PDFCanvasView: UIViewRepresentable {
             uiView.displayDirection = displayDirection
             uiView.scaleFactor = 1.0
 
+            /*  uiView.pageBreakMargins = displayDirection == .vertical
+                  ? UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
+                  : UIEdgeInsets(top: 0, left: 50, bottom: 0, right: 0)*/
+
             context.coordinator.addCanvasesToPages(
-                pdfView: uiView)
+                pdfView: uiView
+            )
 
             uiView.layoutDocumentView()
 
@@ -96,7 +106,8 @@ struct PDFCanvasView: UIViewRepresentable {
 
         init(
             pdfView: CustomPDFView,
-            pdfDocument: PDFDocument, noteFile: NoteFile,
+            pdfDocument: PDFDocument,
+            noteFile: NoteFile,
             imageState: ImageState,
             canvasState: CanvasState
         ) {
@@ -109,7 +120,8 @@ struct PDFCanvasView: UIViewRepresentable {
         }
 
         func configure(
-            pdfView: CustomPDFView, displayDirection: PDFDisplayDirection
+            pdfView: CustomPDFView,
+            displayDirection: PDFDisplayDirection
         ) {
             self.pdfView = pdfView
             guard let document = pdfView.document
@@ -159,7 +171,8 @@ struct PDFCanvasView: UIViewRepresentable {
             if let firstPage = document.page(at: 0) {
                 let firstPageBounds = firstPage.bounds(for: .mediaBox)
                 originOffset = pdfView.convert(
-                    firstPageBounds.origin, to: documentView
+                    firstPageBounds.origin,
+                    to: documentView
                 )
             }
 
@@ -180,7 +193,6 @@ struct PDFCanvasView: UIViewRepresentable {
                     "pageFrame \(rawPageFrame.midX), \(rawPageFrame.midY) - \(rawPageFrame) - \(documentView.subviews[pageIndex].frame) - \(normalizedPageFrame) - \(document.pageCount) - \( documentView.subviews.count) - \(pageIndex) - \(documentView.subviews)"
                 )
 
-               
                 let canvasViewWrapper = CanvasViewWrapper(
                     frame: normalizedPageFrame,
                     pageIndex: pageIndex,
@@ -219,9 +231,13 @@ struct PDFCanvasView: UIViewRepresentable {
             // Position label at the bottom-left corner
             NSLayoutConstraint.activate([
                 label.leadingAnchor.constraint(
-                    equalTo: pdfView.leadingAnchor, constant: 16),
+                    equalTo: pdfView.leadingAnchor,
+                    constant: 16
+                ),
                 label.bottomAnchor.constraint(
-                    equalTo: pdfView.bottomAnchor, constant: -16),
+                    equalTo: pdfView.bottomAnchor,
+                    constant: -16
+                ),
                 label.widthAnchor.constraint(equalToConstant: 120),
                 label.heightAnchor.constraint(equalToConstant: 30),
             ])
@@ -236,8 +252,10 @@ struct PDFCanvasView: UIViewRepresentable {
             else { return }
             let currentPageIndex = document.index(for: currentPage) + 1  // Page indices are 0-based
             DispatchQueue.main.async {
-                self.canvasState.currentPageIndex = document.index(for: currentPage)
-                }
+                self.canvasState.currentPageIndex = document.index(
+                    for: currentPage
+                )
+            }
             let totalPageCount = document.pageCount
             pageIndicatorLabel?.text =
                 "Page \(currentPageIndex) / \(totalPageCount)"
