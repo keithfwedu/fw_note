@@ -5,7 +5,28 @@
 //  Created by Fung Wing on 13/3/2025.
 //
 
+import PDFKit
 import SwiftUI
+
+extension View {
+    func snapshot() -> UIImage {
+        let controller = UIHostingController(rootView: self)
+        let view = controller.view
+
+        let targetSize = controller.view.intrinsicContentSize
+        view?.bounds = CGRect(origin: .zero, size: targetSize)
+        view?.backgroundColor = .clear
+
+        let renderer = UIGraphicsImageRenderer(size: targetSize)
+
+        return renderer.image { _ in
+            view?.drawHierarchy(
+                in: controller.view.bounds,
+                afterScreenUpdates: true
+            )
+        }
+    }
+}
 
 struct CanvasView: View {
     let pageIndex: Int
@@ -42,242 +63,480 @@ struct CanvasView: View {
     @State var lastDragPosition: CGPoint? = nil
 
     @State var imageStack: [ImageObj] = []
+    @State private var pageSize: CGSize = .zero
+    var canvas: some View {
 
-    var body: some View {
-        ZStack {
-            //For force refresh UI
-            if redrawTrigger {
-                VStack {}
-            }
-
-            // Add a dynamic circle that syncs with the touch position
-            if self.touchPoint != nil && isTouching {
-                Circle()
-                    .stroke(Color.gray, lineWidth: 1)  // Thin border with red color
-                    .background(Circle().fill(Color.clear))  // Optional: Make the circle transparent insid
-                    .frame(
-                        width: canvasState.penSize + 2,
-                        height: canvasState.penSize + 2
-                    )  // Circle size
-                    .position(self.touchPoint!)  // Dynamically update circle position
-            }
-
-            GeometryReader { geometry in
-                Canvas { context, size in
-                    for canvasObj in notePage.canvasStack {
-                        if let imageObj = canvasObj.imageObj {
-                            if !imageObj.isAnimatedGIF,
-                                let cgImage = imageObj.cgImage
-                            {
-                                // Existing logic for static images
-                                context.withCGContext { cgContext in
-                                    cgContext.saveGState()
-
-                                    cgContext.translateBy(
-                                        x: imageObj.position.x,
-                                        y: imageObj.position.y)
-                                    let radians =
-                                        CGFloat(imageObj.angle) * .pi / 180
-                                    cgContext.rotate(by: radians)
-                                    cgContext.scaleBy(x: 1.0, y: -1.0)
-
-                                    cgContext.draw(
-                                        cgImage,
-                                        in: CGRect(
-                                            origin: CGPoint(
-                                                x: -imageObj.size.width / 2,
-                                                y: -imageObj.size.height / 2),
-                                            size: imageObj.size
-                                        ))
-
-                                    cgContext.restoreGState()
-                                }
-                            }
-                        }
-
-                        // Handle LineObj
-                        if let line = canvasObj.lineObj {
-
-                            let path = PathHelper.createStableCurvedPath(
-                                points: line.points, maxOffsetForAverage: 4.5)
-                            if selectedLineStack.contains(where: {
-                                $0.id == line.id
-                            }) {
-                                context.stroke(
-                                    path, with: .color(.blue),
-                                    style: StrokeStyle(
-                                        lineWidth: line.lineWidth)
-                                )
-                            } else {
-                                if line.mode == .draw {
-                                    context.blendMode = .normal
-                                    context.stroke(
-                                        path, with: .color(line.color),
-                                        style: StrokeStyle(
-                                            lineWidth: line.lineWidth,
-                                            lineCap: .round,
-                                            lineJoin: .round)
-                                    )
-                                    context.blendMode = .normal
-
-                                } else if line.mode == .eraser {
-                                    context.blendMode = .clear
-                                    context.stroke(
-                                        path, with: .color(line.color),
-                                        style: StrokeStyle(
-                                            lineWidth: line.lineWidth,
-                                            lineCap: .round,
-                                            lineJoin: .round)
-                                    )
-
-                                }
-                            }
-                        }
-                    }
-
-                    // Draw selection path if in select mode
-                    if canvasState.canvasMode
-                        == .lasso
-                        && !selectionPaths.isEmpty
+        Canvas { context, size in
+            for canvasObj in notePage.canvasStack {
+                if let imageObj = canvasObj.imageObj {
+                    if !imageObj.isAnimatedGIF,
+                        let cgImage = imageObj.cgImage
                     {
-                        var selectionDrawing = Path()
-                        selectionDrawing.addLines(
-                            selectionPaths)
-                        selectionDrawing.closeSubpath()
-                        context.stroke(
-                            selectionDrawing, with: .color(.green),
-                            style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
+                        // Existing logic for static images
+                        context.withCGContext { cgContext in
+                            cgContext.saveGState()
+
+                            cgContext.translateBy(
+                                x: imageObj.position.x,
+                                y: imageObj.position.y
+                            )
+                            let radians =
+                                CGFloat(imageObj.angle) * .pi / 180
+                            cgContext.rotate(by: radians)
+                            cgContext.scaleBy(x: 1.0, y: -1.0)
+
+                            cgContext.draw(
+                                cgImage,
+                                in: CGRect(
+                                    origin: CGPoint(
+                                        x: -imageObj.size.width / 2,
+                                        y: -imageObj.size.height / 2
+                                    ),
+                                    size: imageObj.size
+                                )
+                            )
+
+                            cgContext.restoreGState()
+                        }
                     }
+                }
 
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .border(.red, width: 1)
-                .onAppear {
-                    redrawTrigger.toggle()
-                    notePage.pageCenterPoint = CGPoint(
-                        x: geometry.size.width / 2,
-                        y: geometry.size.height / 2)
-                    notePage.canvasWidth = geometry.size.width
-                    notePage.canvasHeight = geometry.size.height
-                }
-                .allowsHitTesting(gestureState.areGesturesEnabled)  // Toggle interaction
-                .onChange(of: canvasState.canvasMode) {
-                    newMode in
-                    handleModeChange(mode: newMode)
-                }
-                .onChange(of: notePage.canvasStack) { newStack in
-                    imageStack = newStack.compactMap { $0.imageObj }
-                    focusedID = nil
-                    print("change2")
-                }
-                .drawingGroup()
-                .simultaneousGesture(
-                    gestureState.areGesturesEnabled
-                        ? DragGesture(minimumDistance: 0)  // Handles both taps and drags
-                            .onChanged { value in
-                                focusedID = nil
-                                print("touch1")
-                                if value.translation == .zero {
-                                    print("touch1a")
-                                    // Handle as a tap gesture
-                                    handleTap(at: value.startLocation)
-                                } else {
-                                    print("touch1b")
-                                    let customValue: CustomDragValue =
-                                        CustomDragValue(
-                                            time: value.time,
-                                            location: value.location,
-                                            startLocation: value.startLocation,
-                                            translation: value.translation,
-                                            predictedEndTranslation: value
-                                                .predictedEndTranslation,
-                                            predictedEndLocation: value
-                                                .predictedEndLocation
-                                        )
-                                    // Handle as a drag gesture
-                                    handleDragChange(dragValue: customValue)
-                                }
+                // Handle LineObj
+                if let line = canvasObj.lineObj {
 
-                                //  handleDragChange(dragValue: value)
-                            }
-                            .onEnded { value in
-                                handleDragEnded()  // Finalize drag action
-                            } : nil
-                )
-               
-
-                ForEach($imageStack) { imageObj in
-                    InteractiveImageView(
-                        imageObj: imageObj,
-                        selectMode: .constant(
-                            canvasState.canvasMode != CanvasMode.lasso),  // Avoid binding if it's derived
-                        isFocused: .constant(focusedID == imageObj.id),
-                        frameSize: geometry.size,
-                        onTap: onTapImage,
-                        onRemove: onRemoveImage,
-                        onChanged: onChangeImage,
-                        afterChanged: afterChangeImage
+                    let path = PathHelper.createStableCurvedPath(
+                        points: line.points,
+                        maxOffsetForAverage: 4.5
                     )
-                }.clipped()
-            }
-            Canvas { context, size in
-                for laser in laserStack {
-                    // Create the path for the laser points
-                    var path = PathHelper.createStableCurvedPath(
-                        points: laser.points, maxOffsetForAverage: 4.5)
-
-                    // Smooth the path (if needed)
-                    path = path.strokedPath(
-                        StrokeStyle(
-                            lineWidth: 1, lineCap: .round, lineJoin: .round))
-
-                    // Simulate the blur effect by layering strokes with varying opacities and line widths
-                    let blurLevels = [
-                        (opacity: 0.1, lineWidth: 15),
-                        (opacity: 0.2, lineWidth: 12),
-                        (opacity: 0.4, lineWidth: 9),
-                        (opacity: 0.6, lineWidth: 6),
-                    ]
-
-                    for blur in blurLevels {
+                    if selectedLineStack.contains(where: {
+                        $0.id == line.id
+                    }) {
                         context.stroke(
                             path,
-                            with: .color(
-                                Color.red.opacity(
-                                    laserOpacity > blur.opacity
-                                        ? blur.opacity : laserOpacity)),  // Fading outwards
+                            with: .color(.blue),
                             style: StrokeStyle(
-                                lineWidth: CGFloat(blur.lineWidth),
-                                lineCap: .round, lineJoin: .round)
+                                lineWidth: line.lineWidth
+                            )
                         )
-                    }
+                    } else {
+                        if line.mode == .draw {
+                            context.blendMode = .normal
+                            context.stroke(
+                                path,
+                                with: .color(line.color),
+                                style: StrokeStyle(
+                                    lineWidth: line.lineWidth,
+                                    lineCap: .round,
+                                    lineJoin: .round
+                                )
+                            )
+                            context.blendMode = .normal
 
-                    // Render the core white laser beam
-                    context.stroke(
-                        path,
-                        with: .color(.white.opacity(laserOpacity)),
-                        style: StrokeStyle(
-                            lineWidth: 3, lineCap: .round, lineJoin: .round)
-                    )
+                        } else if line.mode == .eraser {
+                            context.blendMode = .clear
+                            context.stroke(
+                                path,
+                                with: .color(line.color),
+                                style: StrokeStyle(
+                                    lineWidth: line.lineWidth,
+                                    lineCap: .round,
+                                    lineJoin: .round
+                                )
+                            )
+
+                        }
+                    }
                 }
             }
-            .drawingGroup()
-            .allowsHitTesting(false)
+
+            // Draw selection path if in select mode
+            if canvasState.canvasMode
+                == .lasso
+                && !selectionPaths.isEmpty
+            {
+                var selectionDrawing = Path()
+                selectionDrawing.addLines(
+                    selectionPaths
+                )
+                selectionDrawing.closeSubpath()
+                context.stroke(
+                    selectionDrawing,
+                    with: .color(.green),
+                    style: StrokeStyle(lineWidth: 2, dash: [5, 5])
+                )
+            }
 
         }
-       
-        .onDrop(of: ["public.image", "com.compuserve.gif"], isTargeted: nil) { providers in
-            handleDrop(providers: providers)
-        }
-        .onTapGesture {
-            //focusedID = nil  // Reset focus if background is tapped
-        }.onAppear {
-            noteFile.addToUndo(
-                pageIndex: self.pageIndex,
-                canvasStack: self.notePage.canvasStack
-            )
-        }
+    }
 
+    var body: some View {
+        VStack {
+            Button("Save") {
+                guard let relativePath = noteFile.pdfFilePath else {
+                    print("Error: PDF file path is nil")
+                    return
+                }
+
+                let pdfFileUrl = FileHelper.getAbsoluteProjectPath(
+                    userId: "guest",
+                    relativePath: relativePath
+                )
+                guard let pdfFileUrl = pdfFileUrl else {
+                    print("Error: Could not get absolute project path")
+                    return
+                }
+
+                print("Press \(pdfFileUrl)")
+                guard let pdfDocument = PDFDocument(url: pdfFileUrl) else {
+                    print("Error opening PDF file")
+                    return
+                }
+
+                guard
+                    let page = pdfDocument.page(
+                        at: canvasState.currentPageIndex
+                    )
+                else {
+                    print(
+                        "Error: Could not get page at index \(canvasState.currentPageIndex)"
+                    )
+                    return
+                }
+
+                let canvasSnapshot = canvas.frame(
+                    width: pageSize.width,
+                    height: pageSize.height
+                ).snapshot()
+                let pdfImage = page.thumbnail(of: pageSize, for: .mediaBox)
+
+                guard
+                    let combinedImage = combineImages(
+                        baseImage: pdfImage,
+                        overlayImage: canvasSnapshot
+                    )
+                else {
+                    print("Error combining images")
+                    return
+                }
+
+                UIImageWriteToSavedPhotosAlbum(combinedImage, nil, nil, nil)
+            }
+
+            Button("Export PDF") {
+                guard let relativePath = noteFile.pdfFilePath else {
+                    print("Error: PDF file path is nil")
+                    return
+                }
+
+                let pdfFileUrl = FileHelper.getAbsoluteProjectPath(
+                    userId: "guest",
+                    relativePath: relativePath
+                )
+                guard let pdfFileUrl = pdfFileUrl else {
+                    print("Error: Could not get absolute project path")
+                    return
+                }
+
+                print("Press \(pdfFileUrl)")
+                guard let originalDocument = PDFDocument(url: pdfFileUrl) else {
+                    print("Error opening PDF file")
+                    return
+                }
+
+                // Create a new editable PDFDocument
+                let pdfDocument = PDFDocument()
+
+                // Copy pages from the original document into the cloned document
+                for index in 0..<originalDocument.pageCount {
+                    if let page = originalDocument.page(at: index) {
+                        pdfDocument.insert(page, at: index)
+                    }
+                }
+
+                guard
+                    let page = pdfDocument.page(
+                        at: canvasState.currentPageIndex
+                    )
+                else {
+                    print(
+                        "Error: Could not get page at index \(canvasState.currentPageIndex)"
+                    )
+                    return
+                }
+
+                // Capture the Canvas snapshot
+                let pageRect = page.bounds(for: .mediaBox)
+                let canvasSnapshot = canvas.frame(
+                    width: pageRect.width,
+                    height: pageRect.height
+                ).snapshot()
+                // Create a new PDF page by combining the original page content and Canvas snapshot
+                let mutableData = NSMutableData()
+                UIGraphicsBeginPDFContextToData(mutableData, pageRect, nil)
+                UIGraphicsBeginPDFPageWithInfo(pageRect, nil)
+
+                guard let context = UIGraphicsGetCurrentContext() else {
+                    print("Error: Could not get graphics context")
+                    return
+                }
+
+                // Apply rotation handling explicitly
+                let rotationAngle = page.rotation
+                context.saveGState()  // Save the current graphics state
+                context.translateBy(x: 0, y: pageRect.height)  // Move origin to the bottom-left corner
+                context.scaleBy(x: 1.0, y: -1.0)  // Flip the y-axis vertically
+
+                page.draw(with: .mediaBox, to: context)
+                context.restoreGState()
+
+                // Draw the Canvas snapshot on top of the page
+                canvasSnapshot.draw(in: pageRect)
+
+                UIGraphicsEndPDFContext()
+
+                // Use the updated PDF data to create a new PDFPage
+                guard
+                    let updatedPage = PDFDocument(data: mutableData as Data)?
+                        .page(at: 0)
+                else {
+                    print("Error: Could not create updated PDF page")
+                    return
+                }
+
+                // Replace the original page with the updated one
+                pdfDocument.removePage(at: canvasState.currentPageIndex)
+                pdfDocument.insert(
+                    updatedPage,
+                    at: canvasState.currentPageIndex
+                )
+
+                // Export the updated PDF
+                let tempDirectory = FileManager.default.temporaryDirectory
+                let exportUrl = tempDirectory.appendingPathComponent(
+                    "UpdatedDocument.pdf"
+                )
+
+                if pdfDocument.write(to: exportUrl) {
+                    print("PDF exported successfully to \(exportUrl)")
+
+                    // Present the Document Picker to let the user save/export the file
+                    let picker = UIDocumentPickerViewController(forExporting: [
+                        exportUrl
+                    ])
+                    picker.delegate =
+                        UIApplication.shared.windows.first?.rootViewController
+                        as? UIDocumentPickerDelegate
+                    UIApplication.shared.windows.first?.rootViewController?
+                        .present(picker, animated: true, completion: nil)
+                } else {
+                    print("Error: Could not save updated PDF")
+                }
+            }
+
+            ZStack {
+                //For force refresh UI
+                if redrawTrigger {
+                    VStack {}
+                }
+
+                // Add a dynamic circle that syncs with the touch position
+                if self.touchPoint != nil && isTouching {
+                    Circle()
+                        .stroke(Color.gray, lineWidth: 1)  // Thin border with red color
+                        .background(Circle().fill(Color.clear))  // Optional: Make the circle transparent insid
+                        .frame(
+                            width: canvasState.penSize + 2,
+                            height: canvasState.penSize + 2
+                        )  // Circle size
+                        .position(self.touchPoint!)  // Dynamically update circle position
+                }
+                GeometryReader { geometry in
+
+                    canvas
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .border(.red, width: 1)
+                        .onAppear {
+                            pageSize = geometry.size
+                            redrawTrigger.toggle()
+                            notePage.pageCenterPoint = CGPoint(
+                                x: geometry.size.width / 2,
+                                y: geometry.size.height / 2
+                            )
+                            notePage.canvasWidth = geometry.size.width
+                            notePage.canvasHeight = geometry.size.height
+                        }
+                        .allowsHitTesting(gestureState.areGesturesEnabled)  // Toggle interaction
+                        .onChange(of: canvasState.canvasMode) {
+                            newMode in
+                            handleModeChange(mode: newMode)
+                        }
+                        .onChange(of: notePage.canvasStack) { newStack in
+                            imageStack = newStack.compactMap { $0.imageObj }
+                            focusedID = nil
+
+                        }
+                        .drawingGroup()
+                        .simultaneousGesture(
+                            gestureState.areGesturesEnabled
+                                ? DragGesture(minimumDistance: 0)  // Handles both taps and drags
+                                    .onChanged { value in
+                                        focusedID = nil
+                                        print("touch1")
+                                        if value.translation == .zero {
+                                            print("touch1a")
+                                            // Handle as a tap gesture
+                                            handleTap(at: value.startLocation)
+                                        } else {
+                                            print("touch1b")
+                                            let customValue: CustomDragValue =
+                                                CustomDragValue(
+                                                    time: value.time,
+                                                    location: value.location,
+                                                    startLocation: value
+                                                        .startLocation,
+                                                    translation: value
+                                                        .translation,
+                                                    predictedEndTranslation:
+                                                        value
+                                                        .predictedEndTranslation,
+                                                    predictedEndLocation: value
+                                                        .predictedEndLocation
+                                                )
+                                            // Handle as a drag gesture
+                                            handleDragChange(
+                                                dragValue: customValue
+                                            )
+                                        }
+
+                                        //  handleDragChange(dragValue: value)
+                                    }
+                                    .onEnded { value in
+                                        handleDragEnded()  // Finalize drag action
+                                    } : nil
+                        )
+
+                    ForEach($imageStack) { imageObj in
+                        InteractiveImageView(
+                            imageObj: imageObj,
+                            selectMode: .constant(
+                                canvasState.canvasMode != CanvasMode.lasso
+                            ),  // Avoid binding if it's derived
+                            isFocused: .constant(focusedID == imageObj.id),
+                            frameSize: geometry.size,
+                            onTap: onTapImage,
+                            onRemove: onRemoveImage,
+                            onChanged: onChangeImage,
+                            afterChanged: afterChangeImage
+                        )
+                    }.clipped()
+                }
+                Canvas { context, size in
+                    for laser in laserStack {
+                        // Create the path for the laser points
+                        var path = PathHelper.createStableCurvedPath(
+                            points: laser.points,
+                            maxOffsetForAverage: 4.5
+                        )
+
+                        // Smooth the path (if needed)
+                        path = path.strokedPath(
+                            StrokeStyle(
+                                lineWidth: 1,
+                                lineCap: .round,
+                                lineJoin: .round
+                            )
+                        )
+
+                        // Simulate the blur effect by layering strokes with varying opacities and line widths
+                        let blurLevels = [
+                            (opacity: 0.1, lineWidth: 15),
+                            (opacity: 0.2, lineWidth: 12),
+                            (opacity: 0.4, lineWidth: 9),
+                            (opacity: 0.6, lineWidth: 6),
+                        ]
+
+                        for blur in blurLevels {
+                            context.stroke(
+                                path,
+                                with: .color(
+                                    Color.red.opacity(
+                                        laserOpacity > blur.opacity
+                                            ? blur.opacity : laserOpacity
+                                    )
+                                ),  // Fading outwards
+                                style: StrokeStyle(
+                                    lineWidth: CGFloat(blur.lineWidth),
+                                    lineCap: .round,
+                                    lineJoin: .round
+                                )
+                            )
+                        }
+
+                        // Render the core white laser beam
+                        context.stroke(
+                            path,
+                            with: .color(.white.opacity(laserOpacity)),
+                            style: StrokeStyle(
+                                lineWidth: 3,
+                                lineCap: .round,
+                                lineJoin: .round
+                            )
+                        )
+                    }
+                }
+                .drawingGroup()
+                .allowsHitTesting(false)
+
+            }
+
+            .onDrop(
+                of: ["public.image", "com.compuserve.gif"],
+                isTargeted: nil
+            ) { providers in
+                handleDrop(providers: providers)
+            }
+            .onTapGesture {
+                //focusedID = nil  // Reset focus if background is tapped
+            }.onAppear {
+                noteFile.addToUndo(
+                    pageIndex: self.pageIndex,
+                    canvasStack: self.notePage.canvasStack
+                )
+            }
+        }
+    }
+
+    func createPDFPage(with image: UIImage, size: CGSize) -> PDFPage? {
+        let pdfPageRect = CGRect(origin: .zero, size: size)
+        let mutableData = NSMutableData()  // Create NSMutableData for the PDF context
+        UIGraphicsBeginPDFContextToData(mutableData, pdfPageRect, nil)
+        UIGraphicsBeginPDFPageWithInfo(pdfPageRect, nil)
+
+        // Draw the combined image in the PDF context
+        image.draw(in: pdfPageRect)
+
+        UIGraphicsEndPDFContext()  // End the PDF context
+
+        // Use the data to create a PDFDocument and extract the page
+        guard let pdfData = mutableData as Data? else { return nil }
+        return PDFDocument(data: pdfData)?.page(at: 0)
+    }
+
+    func combineImages(baseImage: UIImage, overlayImage: UIImage) -> UIImage? {
+        let size = baseImage.size  // Use the size of the base image
+        UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+
+        // Draw the base image
+        baseImage.draw(in: CGRect(origin: .zero, size: size))
+
+        // Draw the overlay image on top
+        overlayImage.draw(in: CGRect(origin: .zero, size: size))
+
+        // Generate the combined image
+        let combinedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return combinedImage
     }
 
     func onTapImage(id: UUID) {
@@ -290,7 +549,9 @@ struct CanvasView: View {
         }) {
             notePage.canvasStack.remove(at: index)
             noteFile.addToUndo(
-                pageIndex: pageIndex, canvasStack: notePage.canvasStack)
+                pageIndex: pageIndex,
+                canvasStack: notePage.canvasStack
+            )
         }
     }
 
@@ -312,7 +573,8 @@ struct CanvasView: View {
 
             noteFile.addToUndo(
                 pageIndex: self.pageIndex,
-                canvasStack: notePage.canvasStack)
+                canvasStack: notePage.canvasStack
+            )
 
         }
 
@@ -386,7 +648,8 @@ struct CanvasView: View {
             canvasState.timerManager.cancelHoldTimer()
             if self.isTapImage == false {
                 noteFile.addToUndo(
-                    pageIndex: pageIndex, canvasStack: self.notePage.canvasStack
+                    pageIndex: pageIndex,
+                    canvasStack: self.notePage.canvasStack
                 )
 
             } else {
@@ -395,7 +658,9 @@ struct CanvasView: View {
         case .eraser:  // Erase Mode
             lastDragPosition = nil
             noteFile.addToUndo(
-                pageIndex: pageIndex, canvasStack: self.notePage.canvasStack)
+                pageIndex: pageIndex,
+                canvasStack: self.notePage.canvasStack
+            )
         case .lasso:  // Select Mode
             if !selectionPaths.isEmpty
                 && isLassoCreated == false
@@ -410,16 +675,19 @@ struct CanvasView: View {
                 selectedLineStack =
                     LassoToolHelper.getSelectedLines(
                         selectionPath: selectionPaths,
-                        lines: lineStack)
+                        lines: lineStack
+                    )
                 selectedImageObjIds =
                     LassoToolHelper.getSelectedImages(
                         selectionPath: selectionPaths,
-                        images: imageStack)
+                        images: imageStack
+                    )
                 selectionPaths =
                     LassoToolHelper.createSelectionBounds(
                         imageStack: imageStack,
                         selectedLines: selectedLineStack,
-                        selectedImages: selectedImageObjIds)
+                        selectedImages: selectedImageObjIds
+                    )
             }
         case .laser:  // Laser Mode
 
@@ -489,7 +757,8 @@ struct CanvasView: View {
                     $0.id == lastCanvasWithLine.id
                 }) {
                     notePage.canvasStack[lastIndex].lineObj?.points.append(
-                        contentsOf: interpolatedPoints)
+                        contentsOf: interpolatedPoints
+                    )
                 }
             }
         }
@@ -497,8 +766,9 @@ struct CanvasView: View {
         // Update hold detection logic for the latest position
         if lastDrawPosition != nil {
             if PointHelper.distance(
-                lastDrawPosition!, dragValue.location) > 5.0
-            {
+                lastDrawPosition!,
+                dragValue.location
+            ) > 5.0 {
                 print("set hold timer")
                 lastDrawPosition = dragValue.location
                 canvasState.timerManager.setHoldTimer(
@@ -531,7 +801,8 @@ struct CanvasView: View {
 
         guard let currentLineObj = notePage.canvasStack[index].lineObj else {
             print(
-                "LineObj at index \(index) is nil. No transformation applied.")
+                "LineObj at index \(index) is nil. No transformation applied."
+            )
             return
         }
 
@@ -543,7 +814,8 @@ struct CanvasView: View {
 
             notePage.canvasStack[index].lineObj?.points.removeAll()
             notePage.canvasStack[index].lineObj?.points.append(
-                contentsOf: shapePoints)
+                contentsOf: shapePoints
+            )
 
             self.lastDrawPosition = nil  // Reset the last draw position
             redrawTrigger.toggle()
@@ -573,7 +845,8 @@ struct CanvasView: View {
                 )
                 let lastIndex: Int = laserStack.count - 1
                 laserStack[lastIndex].points.append(
-                    contentsOf: interpolatedPoints)
+                    contentsOf: interpolatedPoints
+                )
             }
         }
         lastDrawLaserPosition = dragValue.location
@@ -612,7 +885,8 @@ struct CanvasView: View {
 
         let isCurrentlyInsideSelection = LassoToolHelper.isPointInsideSelection(
             selectionPaths,
-            point: dragValue.location)
+            point: dragValue.location
+        )
 
         if isCurrentlyInsideSelection {
             print("Dragging inside selection")
@@ -622,7 +896,8 @@ struct CanvasView: View {
                     dragValue: dragValue,
                     imageStack: imageStack,
                     selectedLines: selectedLineStack,
-                    selectedImages: selectedImageObjIds)
+                    selectedImages: selectedImageObjIds
+                )
 
                 // Move selected lines
                 for i in 0..<selectedLineStack.count {
@@ -695,22 +970,25 @@ struct CanvasView: View {
                 canvasState.isDragging = true
 
                 if provider.registeredTypeIdentifiers.contains(
-                    "com.compuserve.gif")
-                {
+                    "com.compuserve.gif"
+                ) {
                     print("Detected GIF")
 
                     // Load the GIF using its type identifier
                     provider.loadItem(
-                        forTypeIdentifier: "com.compuserve.gif", options: nil
+                        forTypeIdentifier: "com.compuserve.gif",
+                        options: nil
                     ) { item, error in
                         if let data = item as? Data {
                             // Successfully loaded the GIF data
                             print(
                                 "Successfully loaded GIF data: \(data.count) bytes"
                             )
-                            
-                            if let originalImageObj = imageState.saveImageFromData(data, isGif: true) {
-                                addImageToStack(image: originalImageObj);
+
+                            if let originalImageObj =
+                                imageState.saveImageFromData(data, isGif: true)
+                            {
+                                addImageToStack(image: originalImageObj)
                             }
                         } else if let url = item as? URL {
                             print("GIF URL received: \(url)")
@@ -718,13 +996,18 @@ struct CanvasView: View {
                                 input: url.path,
                                 completion: { savedPath in
                                     if let path = savedPath {
-                                        if let originalImageObj = imageState.saveImage(filePath: path) {
-                                            addImageToStack(image: originalImageObj);
+                                        if let originalImageObj =
+                                            imageState.saveImage(filePath: path)
+                                        {
+                                            addImageToStack(
+                                                image: originalImageObj
+                                            )
                                         }
                                     } else {
                                         print("Failed to save GIF.")
                                     }
-                                })
+                                }
+                            )
                         } else {
                             print(
                                 "Failed to load GIF: \(String(describing: error))"
@@ -743,22 +1026,25 @@ struct CanvasView: View {
                             return
                         }
 
-
-                            if let imageData = uiImage.pngData() {
-                                // Use the `imageData` as needed (e.g., save to file or upload)
-                                print(
-                                    "Image successfully converted to PNG data. Size: \(imageData.count) bytes."
+                        if let imageData = uiImage.pngData() {
+                            // Use the `imageData` as needed (e.g., save to file or upload)
+                            print(
+                                "Image successfully converted to PNG data. Size: \(imageData.count) bytes."
+                            )
+                            if let originalImageObj =
+                                imageState.saveImageFromData(
+                                    imageData,
+                                    isGif: false
                                 )
-                                if let originalImageObj = imageState.saveImageFromData(imageData, isGif: false) {
-                                    addImageToStack(image: originalImageObj);
-                                }
-                              
-                            } else {
-                                print("Failed to convert UIImage to PNG data.")
-
+                            {
+                                addImageToStack(image: originalImageObj)
                             }
 
-                       
+                        } else {
+                            print("Failed to convert UIImage to PNG data.")
+
+                        }
+
                     }
                 }
             }
@@ -767,7 +1053,7 @@ struct CanvasView: View {
 
         return false  // No valid providers were processed
     }
-    
+
     private func addImageToStack(image: OriginalImageObj) {
         // Calculate base position
 
@@ -780,13 +1066,14 @@ struct CanvasView: View {
             position: newPosition,
             size: image.size
         )
-        
+
         // Create a new CanvasObj containing the ImageObj
         let newCanvasObj = CanvasObj(lineObj: nil, imageObj: newImageObj)
 
         // Add the new CanvasObj to the canvas stack
         notePage.canvasStack.append(
-            newCanvasObj)
+            newCanvasObj
+        )
 
         // Add the operation to the undo stack
         noteFile.addToUndo(

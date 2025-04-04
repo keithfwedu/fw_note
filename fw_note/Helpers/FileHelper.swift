@@ -359,7 +359,7 @@ class FileHelper {
     {
         let baseDirectory = getBaseDirectory()
         return baseDirectory.appendingPathComponent(relativePath)
-            .deletingLastPathComponent()
+            //.deletingLastPathComponent()
     }
 
     static func subDirectory(baseDirectory: URL, subDirectoryPath: String)
