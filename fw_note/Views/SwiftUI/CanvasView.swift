@@ -103,9 +103,16 @@ struct CanvasView: View {
 
     @State var imageStack: [ImageObj] = []
     @State private var pageSize: CGSize = .zero
+    
+    //@Binding var shouldScroll: Bool
+    private var axes: Axis.Set {
+            //return shouldScroll ? .horizontal : []
+        return []
+        }
+    
     var canvas: some View {
         GeometryReader { geometry in
-            ScrollView {
+            ScrollView(axes, showsIndicators: false) {
                 VStack {
                     Canvas { context, size in
                         
