@@ -8,6 +8,43 @@
 import PDFKit
 import SwiftUI
 
+
+struct NonScrollableScrollView<Content: View>: UIViewRepresentable {
+    var content: Content
+    
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    
+    func makeUIView(context: Context) -> UIScrollView {
+        let scrollView = UIScrollView()
+        scrollView.isScrollEnabled = false // Disable scrolling
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.showsHorizontalScrollIndicator = false
+        
+        let hostingController = UIHostingController(rootView: content)
+        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(hostingController.view)
+        
+        NSLayoutConstraint.activate([
+            hostingController.view.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            hostingController.view.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            
+            hostingController.view.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+            hostingController.view.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor)
+        ])
+        
+        return scrollView
+    }
+    
+    func updateUIView(_ uiView: UIScrollView, context: Context) {
+        // Update logic if needed
+    }
+}
+
+
 extension View {
     func snapshot() -> UIImage {
         let controller = UIHostingController(rootView: self)
@@ -27,6 +64,8 @@ extension View {
         }
     }
 }
+
+
 
 struct CanvasView: View {
     let pageIndex: Int
@@ -65,107 +104,157 @@ struct CanvasView: View {
     @State var imageStack: [ImageObj] = []
     @State private var pageSize: CGSize = .zero
     var canvas: some View {
-
-        Canvas { context, size in
-            for canvasObj in notePage.canvasStack {
-                if let imageObj = canvasObj.imageObj {
-                    if !imageObj.isAnimatedGIF,
-                        let cgImage = imageObj.cgImage
-                    {
-                        // Existing logic for static images
-                        context.withCGContext { cgContext in
-                            cgContext.saveGState()
-
-                            cgContext.translateBy(
-                                x: imageObj.position.x,
-                                y: imageObj.position.y
-                            )
-                            let radians =
-                                CGFloat(imageObj.angle) * .pi / 180
-                            cgContext.rotate(by: radians)
-                            cgContext.scaleBy(x: 1.0, y: -1.0)
-
-                            cgContext.draw(
-                                cgImage,
-                                in: CGRect(
-                                    origin: CGPoint(
-                                        x: -imageObj.size.width / 2,
-                                        y: -imageObj.size.height / 2
-                                    ),
-                                    size: imageObj.size
+        GeometryReader { geometry in
+            ScrollView {
+                VStack {
+                    Canvas { context, size in
+                        
+                        
+                        for canvasObj in notePage.canvasStack {
+                            if let imageObj = canvasObj.imageObj {
+                                if !imageObj.isAnimatedGIF,
+                                   let cgImage = imageObj.cgImage
+                                {
+                                    
+                                    // Existing logic for static images
+                                    context.withCGContext { cgContext in
+                                        
+                                        cgContext.saveGState()
+                                        
+                                        cgContext.translateBy(
+                                            x: imageObj.position.x,
+                                            y: imageObj.position.y
+                                        )
+                                        let radians =
+                                        CGFloat(imageObj.angle) * .pi / 180
+                                        cgContext.rotate(by: radians)
+                                        cgContext.scaleBy(x: 1.0, y: -1.0)
+                                        
+                                        cgContext.draw(
+                                            cgImage,
+                                            in: CGRect(
+                                                origin: CGPoint(
+                                                    x: -imageObj.size.width / 2,
+                                                    y: -imageObj.size.height / 2
+                                                ),
+                                                size: imageObj.size
+                                            )
+                                        )
+                                        
+                                        cgContext.restoreGState()
+                                    }
+                                }
+                            }
+                            
+                            // Handle LineObj
+                            if let line = canvasObj.lineObj {
+                                
+                                let path = PathHelper.createStableCurvedPath(
+                                    points: line.points,
+                                    maxOffsetForAverage: 4.5
                                 )
-                            )
-
-                            cgContext.restoreGState()
+                                if selectedLineStack.contains(where: {
+                                    $0.id == line.id
+                                }) {
+                                    context.stroke(
+                                        path,
+                                        with: .color(.blue),
+                                        style: StrokeStyle(
+                                            lineWidth: line.lineWidth
+                                        )
+                                    )
+                                } else {
+                                    if line.mode == .draw {
+                                        context.blendMode = .normal
+                                        context.stroke(
+                                            path,
+                                            with: .color(line.color),
+                                            style: StrokeStyle(
+                                                lineWidth: line.lineWidth,
+                                                lineCap: .round,
+                                                lineJoin: .round
+                                            )
+                                        )
+                                        context.blendMode = .normal
+                                        
+                                    } else if line.mode == .eraser {
+                                        context.blendMode = .clear
+                                        context.stroke(
+                                            path,
+                                            with: .color(line.color),
+                                            style: StrokeStyle(
+                                                lineWidth: line.lineWidth,
+                                                lineCap: .round,
+                                                lineJoin: .round
+                                            )
+                                        )
+                                        
+                                    }
+                                }
+                            }
                         }
+                        
+                        // Draw selection path if in select mode
+                        if canvasState.canvasMode
+                            == .lasso
+                            && !selectionPaths.isEmpty
+                        {
+                            var selectionDrawing = Path()
+                            selectionDrawing.addLines(
+                                selectionPaths
+                            )
+                            selectionDrawing.closeSubpath()
+                            context.stroke(
+                                selectionDrawing,
+                                with: .color(.green),
+                                style: StrokeStyle(lineWidth: 2, dash: [5, 5])
+                            )
+                        }
+                        
                     }
-                }
-
-                // Handle LineObj
-                if let line = canvasObj.lineObj {
-
-                    let path = PathHelper.createStableCurvedPath(
-                        points: line.points,
-                        maxOffsetForAverage: 4.5
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                   
+                    .drawingGroup()
+                    .simultaneousGesture(
+                        gestureState.areGesturesEnabled
+                        ? DragGesture(minimumDistance: 0)  // Handles both taps and drags
+                            .onChanged { value in
+                                focusedID = nil
+                                print("touch1")
+                                if value.translation == .zero {
+                                    print("touch1a")
+                                    // Handle as a tap gesture
+                                    handleTap(at: value.startLocation)
+                                } else {
+                                    print("touch1b")
+                                    let customValue: CustomDragValue =
+                                    CustomDragValue(
+                                        time: value.time,
+                                        location: value.location,
+                                        startLocation: value
+                                            .startLocation,
+                                        translation: value
+                                            .translation,
+                                        predictedEndTranslation:
+                                            value
+                                            .predictedEndTranslation,
+                                        predictedEndLocation: value
+                                            .predictedEndLocation
+                                    )
+                                    // Handle as a drag gesture
+                                    handleDragChange(
+                                        dragValue: customValue
+                                    )
+                                }
+                                
+                                //  handleDragChange(dragValue: value)
+                            }
+                            .onEnded { value in
+                                handleDragEnded()  // Finalize drag action
+                            } : nil
                     )
-                    if selectedLineStack.contains(where: {
-                        $0.id == line.id
-                    }) {
-                        context.stroke(
-                            path,
-                            with: .color(.blue),
-                            style: StrokeStyle(
-                                lineWidth: line.lineWidth
-                            )
-                        )
-                    } else {
-                        if line.mode == .draw {
-                            context.blendMode = .normal
-                            context.stroke(
-                                path,
-                                with: .color(line.color),
-                                style: StrokeStyle(
-                                    lineWidth: line.lineWidth,
-                                    lineCap: .round,
-                                    lineJoin: .round
-                                )
-                            )
-                            context.blendMode = .normal
-
-                        } else if line.mode == .eraser {
-                            context.blendMode = .clear
-                            context.stroke(
-                                path,
-                                with: .color(line.color),
-                                style: StrokeStyle(
-                                    lineWidth: line.lineWidth,
-                                    lineCap: .round,
-                                    lineJoin: .round
-                                )
-                            )
-
-                        }
-                    }
-                }
-            }
-
-            // Draw selection path if in select mode
-            if canvasState.canvasMode
-                == .lasso
-                && !selectionPaths.isEmpty
-            {
-                var selectionDrawing = Path()
-                selectionDrawing.addLines(
-                    selectionPaths
-                )
-                selectionDrawing.closeSubpath()
-                context.stroke(
-                    selectionDrawing,
-                    with: .color(.green),
-                    style: StrokeStyle(lineWidth: 2, dash: [5, 5])
-                )
-            }
-
+                }.frame(width: geometry.size.width, height: geometry.size.height)
+            }.frame(width: geometry.size.width, height: geometry.size.height)
         }
     }
 
@@ -353,7 +442,7 @@ struct CanvasView: View {
                 GeometryReader { geometry in
 
                     canvas
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .frame(width: geometry.size.width, height: geometry.size.height)
                         .border(.red, width: 1)
                         .onAppear {
                             pageSize = geometry.size
@@ -375,45 +464,7 @@ struct CanvasView: View {
                             focusedID = nil
 
                         }
-                        .drawingGroup()
-                        .simultaneousGesture(
-                            gestureState.areGesturesEnabled
-                                ? DragGesture(minimumDistance: 0)  // Handles both taps and drags
-                                    .onChanged { value in
-                                        focusedID = nil
-                                        print("touch1")
-                                        if value.translation == .zero {
-                                            print("touch1a")
-                                            // Handle as a tap gesture
-                                            handleTap(at: value.startLocation)
-                                        } else {
-                                            print("touch1b")
-                                            let customValue: CustomDragValue =
-                                                CustomDragValue(
-                                                    time: value.time,
-                                                    location: value.location,
-                                                    startLocation: value
-                                                        .startLocation,
-                                                    translation: value
-                                                        .translation,
-                                                    predictedEndTranslation:
-                                                        value
-                                                        .predictedEndTranslation,
-                                                    predictedEndLocation: value
-                                                        .predictedEndLocation
-                                                )
-                                            // Handle as a drag gesture
-                                            handleDragChange(
-                                                dragValue: customValue
-                                            )
-                                        }
-
-                                        //  handleDragChange(dragValue: value)
-                                    }
-                                    .onEnded { value in
-                                        handleDragEnded()  // Finalize drag action
-                                    } : nil
-                        )
+                       
 
                     ForEach($imageStack) { imageObj in
                         InteractiveImageView(

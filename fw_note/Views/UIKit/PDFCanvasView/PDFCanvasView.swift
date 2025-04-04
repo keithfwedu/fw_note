@@ -32,8 +32,8 @@ struct PDFCanvasView: UIViewRepresentable {
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
 
             scrollView.delaysContentTouches = false
-            scrollView.minimumZoomScale = 1
-            scrollView.bouncesZoom = false
+            //scrollView.minimumZoomScale = 1
+            //scrollView.bouncesZoom = false
         }
 
         // Add observer for page changes
