@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PDFKit
 
 struct CanvasToolBar: View {
     @StateObject var noteFile: NoteFile
@@ -182,5 +183,125 @@ struct CanvasToolBar: View {
         print(
             "Scroll direction changed to \(canvasState.displayDirection == .horizontal ? "Horizontal" : "Vertical")"
         )
+    }
+    
+    func exportFile() {
+      /*  guard let relativePath = noteFile.pdfFilePath else {
+            print("Error: PDF file path is nil")
+            return
+        }
+
+        let pdfFileUrl = FileHelper.getAbsoluteProjectPath(
+            userId: "guest",
+            relativePath: relativePath
+        )
+        guard let pdfFileUrl = pdfFileUrl else {
+            print("Error: Could not get absolute project path")
+            return
+        }
+
+        print("Press \(pdfFileUrl)")
+        guard let originalDocument = PDFDocument(url: pdfFileUrl) else {
+            print("Error opening PDF file")
+            return
+        }
+
+        // Create a new editable PDFDocument
+        let pdfDocument = PDFDocument()
+
+        // Copy pages from the original document into the cloned document
+        for index in 0..<originalDocument.pageCount {
+            if let page = originalDocument.page(at: index) {
+                pdfDocument.insert(page, at: index)
+            }
+        }
+
+        guard
+            let page = pdfDocument.page(
+                at: canvasState.currentPageIndex
+            )
+        else {
+            print(
+                "Error: Could not get page at index \(canvasState.currentPageIndex)"
+            )
+            return
+        }
+
+        // Capture the Canvas snapshot
+        let pageRect = page.bounds(for: .mediaBox)
+        let canvasSnapshot = canvas.frame(
+            width: pageRect.width,
+            height: pageRect.height
+        ).snapshot()
+        // Create a new PDF page by combining the original page content and Canvas snapshot
+        let mutableData = NSMutableData()
+        UIGraphicsBeginPDFContextToData(mutableData, pageRect, nil)
+        UIGraphicsBeginPDFPageWithInfo(pageRect, nil)
+
+        guard let context = UIGraphicsGetCurrentContext() else {
+            print("Error: Could not get graphics context")
+            return
+        }
+
+        // Apply rotation handling explicitly
+        context.saveGState()  // Save the current graphics state
+        context.translateBy(x: 0, y: pageRect.height)  // Move origin to the bottom-left corner
+        context.scaleBy(x: 1.0, y: -1.0)  // Flip the y-axis vertically
+
+        page.draw(with: .mediaBox, to: context)
+        context.restoreGState()
+
+        // Draw the Canvas snapshot on top of the page
+        canvasSnapshot.draw(in: pageRect)
+
+        UIGraphicsEndPDFContext()
+
+        // Use the updated PDF data to create a new PDFPage
+        guard
+            let updatedPage = PDFDocument(data: mutableData as Data)?
+                .page(at: 0)
+        else {
+            print("Error: Could not create updated PDF page")
+            return
+        }
+
+        // Replace the original page with the updated one
+        pdfDocument.removePage(at: canvasState.currentPageIndex)
+        pdfDocument.insert(
+            updatedPage,
+            at: canvasState.currentPageIndex
+        )
+
+        // Export the updated PDF
+        let tempDirectory = FileManager.default.temporaryDirectory
+        let exportUrl = tempDirectory.appendingPathComponent(
+            "UpdatedDocument.pdf"
+        )
+
+        if pdfDocument.write(to: exportUrl) {
+            print("PDF exported successfully to \(exportUrl)")
+
+            // Present the Document Picker to let the user save/export the file
+            let picker = UIDocumentPickerViewController(forExporting: [
+                exportUrl
+            ])
+            if let windowScene = UIApplication.shared.connectedScenes
+                .first as? UIWindowScene
+            {
+                if let window = windowScene.windows.first {
+                    picker.delegate =
+                        window.rootViewController
+                        as? UIDocumentPickerDelegate
+                    window.rootViewController?.present(
+                        picker,
+                        animated: true,
+                        completion: nil
+                    )
+                }
+            }
+
+        } else {
+            print("Error: Could not save updated PDF")
+        }*/
     }
 }
