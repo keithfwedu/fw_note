@@ -14,6 +14,7 @@ struct PDFCanvasView: UIViewRepresentable {
     var canvasState: CanvasState
     var noteFile: NoteFile
     var pdfView: CustomPDFView = CustomPDFView()
+
     @Binding var displayDirection: PDFDisplayDirection  // Bindable property to change display direction
 
     func makeUIView(context: Context) -> CustomPDFView {
@@ -22,20 +23,24 @@ struct PDFCanvasView: UIViewRepresentable {
         pdfView.autoScales = false
         pdfView.displayMode = .singlePageContinuous
         pdfView.displaysPageBreaks = true
-        // pdfView.pageBreakMargins = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         pdfView.displayDirection = displayDirection
         pdfView.backgroundColor = UIColor.systemGray4
         pdfView.usePageViewController(false)
+        pdfView.pageBreakMargins = UIEdgeInsets(
+            top: 50,
+            left: 0,
+            bottom: 50,
+            right: 0
+        )
 
         // Access the internal UIScrollView and configure two-finger scrolling
         if let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }
         ) as? UIScrollView {
+            scrollView.delegate = context.coordinator
             scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
+            //scrollView.delaysContentTouches = false
 
-            scrollView.delaysContentTouches = false
-            //scrollView.minimumZoomScale = 1
-            //scrollView.bouncesZoom = false
         }
 
         // Add observer for page changes
@@ -53,12 +58,13 @@ struct PDFCanvasView: UIViewRepresentable {
 
         // Add canvases as annotations to each page
         context.coordinator.addCanvasesToPages(
-            pdfView: pdfView
+            pdfView: pdfView,
+            displayDirection: displayDirection
         )
-
+        setPageBreakMargins(pdfView: pdfView)
         // Add page information (Current Page / Total Pages)
         context.coordinator.addPageIndicator(to: pdfView)
-        pdfView.setupGestureHandling()
+
         return pdfView
     }
 
@@ -67,19 +73,47 @@ struct PDFCanvasView: UIViewRepresentable {
         if uiView.displayDirection != displayDirection {
             uiView.displayDirection = displayDirection
             uiView.scaleFactor = 1.0
+            uiView.layoutDocumentView()
 
-            /*  uiView.pageBreakMargins = displayDirection == .vertical
-                  ? UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
-                  : UIEdgeInsets(top: 0, left: 50, bottom: 0, right: 0)*/
+            setPageBreakMargins(pdfView: uiView)
 
             context.coordinator.addCanvasesToPages(
-                pdfView: uiView
+                pdfView: uiView,
+                displayDirection: displayDirection
             )
 
             uiView.layoutDocumentView()
-
         }
 
+    }
+
+    func setPageBreakMargins(pdfView: CustomPDFView) {
+        guard let document = pdfView.document,
+            let page = document.page(at: 0)
+        else {
+            print("no padding")
+            return
+        }
+
+        let pageBounds = page.bounds(for: .mediaBox)
+        let rawPageFrame = pdfView.convert(pageBounds, from: page)
+        let screenWidth = UIScreen.main.bounds.width
+        let paddingHorizontal = (screenWidth - rawPageFrame.width) / 2
+
+        pdfView.pageBreakMargins =
+            displayDirection == .vertical
+            ? UIEdgeInsets(
+                top: 50,
+                left: 0,
+                bottom: 50,
+                right: 0
+            )
+            : UIEdgeInsets(
+                top: 100,
+                left: paddingHorizontal,
+                bottom: 100,
+                right: paddingHorizontal
+            )
     }
 
     func makeCoordinator() -> Coordinator {
@@ -134,29 +168,80 @@ struct PDFCanvasView: UIViewRepresentable {
                 rawPageFrames.append(pageFrame)
             }
             self.displayDirection = displayDirection
-            /* NotificationCenter.default.addObserver(
-                self,
-                selector: #selector(scaleChanged(_:)),
-                name: Notification.Name.PDFViewScaleChanged,
-                object: pdfView
-            )*/
         }
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? {
             return scrollView.subviews.first  // Assume first subview is the content
         }
 
-        /*@objc func scaleChanged(_ notification: Notification) {
-            if let pdfView = notification.object as? PDFView {
-                let scaleFactor = pdfView.scaleFactor
-                print("Scale factor changed: \(scaleFactor)")
-                self.scaleFactor = scaleFactor
-                //  addCanvasesToPages(pdfView: pdfView, displayDirection: .vertical, scaleFactor: scaleFactor)
+        func togglePageIndicatorLabel(_ show: Bool) {
+            UIView.animate(withDuration: 0.3) {
+                self.pageIndicatorLabel?.alpha = show ? 1.0 : 0.0
             }
-        }*/
+            self.pageIndicatorLabel?.isHidden = !show
+        }
+
+        func calculatePageFrameWithMargins(
+            pdfView: PDFView,
+            page: PDFPage,
+            displayDirection: PDFDisplayDirection
+        ) -> CGRect {
+
+            // Step 1: Get the page bounds
+            let pageBounds = page.bounds(for: .mediaBox)
+
+            // Step 2: Convert to PDFView's coordinate system
+            let rawPageFrame = pdfView.convert(pageBounds, from: page)
+
+            // Step 3: Get page margins (if any)
+            let pageBreakMargins = pdfView.pageBreakMargins
+            let pageIndex = pdfDocument.index(for: page)
+
+            // Step 4: Adjust for margins
+            let adjustedFrame = CGRect(
+                x: pageIndex == 0
+                    ? pageBreakMargins.left
+                    : displayDirection == .vertical
+                        ? pageBreakMargins.left
+                        : rawPageFrame.size.width * CGFloat(pageIndex)
+                            + (pageBreakMargins.left * CGFloat(pageIndex) * 2)
+                            + pageBreakMargins.left,
+                y: pageIndex == 0
+                    ? pageBreakMargins.top
+                    : displayDirection == .vertical
+                        ? rawPageFrame.size.height * CGFloat(pageIndex)
+                            + (pageBreakMargins.top * CGFloat(pageIndex) * 2)
+                            + pageBreakMargins.top : pageBreakMargins.top,
+                width: rawPageFrame.size.width,
+                height: rawPageFrame.size.height
+            )
+
+            return adjustedFrame
+        }
+
+        private func animateZoomAndScroll(pdfView: PDFView, frame: CGRect) {
+
+            // Access the scroll view
+            if let scrollView = pdfView.subviews.first(where: {
+                $0 is UIScrollView
+            }) as? UIScrollView {
+                UIView.animate(withDuration: 0.3) {
+                    // Zoom to scale factor 1.0
+                    pdfView.scaleFactor = 1.0
+                }
+
+                // Scroll to center of the tapped page
+                let offset = CGPoint(
+                    x: frame.minX - pdfView.pageBreakMargins.left,
+                    y: frame.minY - pdfView.pageBreakMargins.top
+                )
+                scrollView.setContentOffset(offset, animated: true)
+            }
+        }
 
         func addCanvasesToPages(
-            pdfView: CustomPDFView
+            pdfView: CustomPDFView,
+            displayDirection: PDFDisplayDirection
         ) {
             guard let document = pdfView.document,
                 let documentView = pdfView.documentView
@@ -167,31 +252,24 @@ struct PDFCanvasView: UIViewRepresentable {
                 if $0 is CanvasViewWrapper { $0.removeFromSuperview() }
             }
 
-            var originOffset: CGPoint = .zero
-            if let firstPage = document.page(at: 0) {
-                let firstPageBounds = firstPage.bounds(for: .mediaBox)
-                originOffset = pdfView.convert(
-                    firstPageBounds.origin,
-                    to: documentView
-                )
-            }
-
             for pageIndex in 0..<document.pageCount {
                 guard let page = document.page(at: pageIndex) else { continue }
-                let pageBounds = page.bounds(for: .mediaBox)
-                let rawPageFrame = pdfView.convert(pageBounds, from: page)
+                guard let documentView = pdfView.documentView else {
+                    print("Document view not found")
+                    return
+                }
 
-                let normalizedPageFrame = CGRect(
-                    x: rawPageFrame.origin.x + originOffset.x,
-                    y: rawPageFrame.origin.y + originOffset.y,
-                    width: rawPageFrames[pageIndex].width,
-                    height: rawPageFrames[pageIndex].height
+                let normalizedPageFrame = calculatePageFrameWithMargins(
+                    pdfView: pdfView,
+                    page: page,
+                    displayDirection: displayDirection
                 )
-                pdfView.layoutDocumentView()
 
                 print(
-                    "pageFrame \(rawPageFrame.midX), \(rawPageFrame.midY) - \(rawPageFrame) - \(documentView.subviews[pageIndex].frame) - \(normalizedPageFrame) - \(document.pageCount) - \( documentView.subviews.count) - \(pageIndex) - \(documentView.subviews)"
+                    "Adjusted Page Frame for First Page: \(pageIndex) - \(normalizedPageFrame)"
                 )
+
+                pdfView.layoutDocumentView()
 
                 let canvasViewWrapper = CanvasViewWrapper(
                     frame: normalizedPageFrame,
@@ -200,16 +278,41 @@ struct PDFCanvasView: UIViewRepresentable {
                     imageState: imageState,
                     canvasState: canvasState,
                     noteFile: noteFile,
-                    notePage: noteFile.notePages[pageIndex]
+                    notePage: noteFile.notePages[pageIndex],
+                    onDoubleTap: {
+                        self.animateZoomAndScroll(
+                            pdfView: pdfView,
+                            frame: normalizedPageFrame
+                        )
+                    }
                 )
-
                 canvasViewWrapper.backgroundColor = UIColor.clear
+
+                canvasViewWrapper.bounds = normalizedPageFrame
                 documentView.addSubview(canvasViewWrapper)
-
-                // documentView.addSubview(canvasViewWrapper)
                 canvasViewWrapper.layer.zPosition = 1
-
+                
+                //searchText(pdfView: pdfView, searchText: "ap_")
             }
+        }
+
+        private func searchText(pdfView: PDFView, searchText: String) {
+        
+            guard let document = pdfView.document else { return }
+
+            // Clear previous highlights
+            document.cancelFindString()
+            pdfView.highlightedSelections = nil
+
+            // Perform search
+            let matches = document.findString(
+                searchText,
+                withOptions: .caseInsensitive
+            )
+            for match in matches {
+                match.color = UIColor.yellow.withAlphaComponent(0.5)  // Highlight color
+            }
+            pdfView.highlightedSelections = matches
         }
 
         func addPageIndicator(to pdfView: PDFView) {
@@ -259,11 +362,19 @@ struct PDFCanvasView: UIViewRepresentable {
             let totalPageCount = document.pageCount
             pageIndicatorLabel?.text =
                 "Page \(currentPageIndex) / \(totalPageCount)"
+
         }
 
         @objc func pageDidChange(notification: Notification) {
             guard let pdfView = notification.object as? PDFView else { return }
             updatePageIndicator(for: pdfView)
+        }
+
+        func scrollViewDidZoom(_ scrollView: UIScrollView) {
+            guard let pdfView = pdfView else { return }
+            let newScaleFactor = pdfView.scaleFactor
+
+            self.togglePageIndicatorLabel(newScaleFactor > 0.8)
         }
 
     }

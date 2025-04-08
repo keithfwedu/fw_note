@@ -144,7 +144,7 @@ class FileHelper {
 
     static func newNote(userId: String, pdfPathUrl: URL) {
         // Generate a unique directory path for the note
-        let noteId = UUID()
+      /*  let noteId = UUID()
         let pdfFileName = pdfPathUrl.lastPathComponent
         let pdfFilePath = FileHelper.savePDFtoProject(
             userId: userId,
@@ -163,13 +163,12 @@ class FileHelper {
             userId: userId,
             noteId: noteId.uuidString,
             noteFile: noteFile
-        )
+        )*/
 
     }
 
     static func deleteNote(userId: String, noteFile: NoteFile) {
 
-        print(noteFile.pdfFilePath)
         if let relativeNotePath = noteFile.pdfFilePath {
             guard
                 let absoluteNotePath = getAbsoluteProjectPath(

@@ -223,7 +223,7 @@ class ImageHelper {
             requestOptions.isSynchronous = true
             requestOptions.deliveryMode = .highQualityFormat
             
-            manager.requestImageData(for: asset, options: requestOptions) { data, _, _, _ in
+            manager.requestImageDataAndOrientation(for: asset, options: requestOptions) { data, orientation, info, arg  in
                 completion(data)
             }
         }

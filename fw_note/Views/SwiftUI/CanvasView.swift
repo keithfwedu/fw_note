@@ -8,149 +8,6 @@
 import PDFKit
 import SwiftUI
 
-struct DropZoneView: View {
-    @Binding var isDraggingOver: Bool
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(style: StrokeStyle(lineWidth: 2, dash: [10]))
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.blue.opacity(0.5))  // Blue background with opacity
-                    )
-                    .frame(
-                        width: geometry.size.width * 0.8,
-                        height: geometry.size.height * 0.8
-                    )  // 80% of parent view size
-
-                Text(isDraggingOver ? "Dragging over..." : "Drop PDF here")
-                    .foregroundColor(.white)
-                    .font(.headline)
-            }
-            .allowsHitTesting(!isDraggingOver)
-
-        }
-    }
-}
-
-struct NonScrollableScrollView<Content: View>: UIViewRepresentable {
-    var content: Content
-
-    init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-
-    func makeUIView(context: Context) -> UIScrollView {
-        let scrollView = UIScrollView()
-        scrollView.isScrollEnabled = false  // Disable scrolling
-        scrollView.showsVerticalScrollIndicator = false
-        scrollView.showsHorizontalScrollIndicator = false
-
-        let hostingController = UIHostingController(rootView: content)
-        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.addSubview(hostingController.view)
-
-        NSLayoutConstraint.activate([
-            hostingController.view.topAnchor.constraint(
-                equalTo: scrollView.contentLayoutGuide.topAnchor
-            ),
-            hostingController.view.leadingAnchor.constraint(
-                equalTo: scrollView.contentLayoutGuide.leadingAnchor
-            ),
-            hostingController.view.bottomAnchor.constraint(
-                equalTo: scrollView.contentLayoutGuide.bottomAnchor
-            ),
-            hostingController.view.trailingAnchor.constraint(
-                equalTo: scrollView.contentLayoutGuide.trailingAnchor
-            ),
-
-            hostingController.view.widthAnchor.constraint(
-                equalTo: scrollView.frameLayoutGuide.widthAnchor
-            ),
-            hostingController.view.heightAnchor.constraint(
-                equalTo: scrollView.frameLayoutGuide.heightAnchor
-            ),
-        ])
-
-        return scrollView
-    }
-
-    func updateUIView(_ uiView: UIScrollView, context: Context) {
-        // Update logic if needed
-    }
-}
-
-extension View {
-    func snapshot() -> UIImage {
-        let controller = UIHostingController(rootView: self)
-        let view = controller.view
-
-        let targetSize = controller.view.intrinsicContentSize
-        view?.bounds = CGRect(origin: .zero, size: targetSize)
-        view?.backgroundColor = .clear
-
-        let renderer = UIGraphicsImageRenderer(size: targetSize)
-
-        return renderer.image { _ in
-            view?.drawHierarchy(
-                in: controller.view.bounds,
-                afterScreenUpdates: true
-            )
-        }
-    }
-}
-
-struct MyDropDelegate: DropDelegate {
-    @Binding var isDraggingOver: Bool
-    var onDrop: ([NSItemProvider]) -> Void = { _ in }
-    
-    
-
-    func dropEntered(info: DropInfo) {
-        isDraggingOver = true
-        print("Drag entered! \(info)")
-    }
-
-   
-    func dropExited(info: DropInfo) {
-        isDraggingOver = false
-        print("Drag exited!")
-    }
-    
-    func dropUpdated(info: DropInfo) {
-        print("Drag Updated \(info)")
-    }
-
-    func performDrop(info: DropInfo) -> Bool {
-        isDraggingOver = false // Reset state
-        print("Perform drop!")
-
-        // Fetch item providers and pass them to the handler
-        let providers = info.itemProviders(for: ["public.image", "com.compuserve.gif"])
-        handleProviders(providers)
-        
-        return !providers.isEmpty
-    }
-
-    func dropSessionEnded(info: DropInfo) {
-        isDraggingOver = false // Reset when drag session ends
-        print("Drag session ended (either completed or canceled)!")
-    }
-
-    func validateDrop(info: DropInfo) -> Bool {
-        // Validate if the drop has compatible types
-        return info.hasItemsConforming(to: ["public.image", "com.compuserve.gif"])
-    }
-
-    // Custom method to handle providers
-    private func handleProviders(_ providers: [NSItemProvider]) {
-        onDrop(providers)
-    }
-}
-
-
-
 struct CanvasView: View {
     let pageIndex: Int
     var onGesture: ((CGFloat, CGSize) -> Void)?
@@ -189,9 +46,7 @@ struct CanvasView: View {
 
     @State var imageStack: [ImageObj] = []
     @State private var pageSize: CGSize = .zero
-
-
-
+    let onDoubleTap: () -> Void
     //@Binding var shouldScroll: Bool
     private var axes: Axis.Set {
         //return shouldScroll ? .horizontal : []
@@ -309,45 +164,46 @@ struct CanvasView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                     .drawingGroup()
-                    .simultaneousGesture(
-                        gestureState.areGesturesEnabled
-                            ? DragGesture(minimumDistance: 0)  // Handles both taps and drags
-                                .onChanged { value in
-                                    focusedID = nil
-                                    print("touch1")
-                                    if value.translation == .zero {
-                                        print("touch1a")
-                                        // Handle as a tap gesture
-                                        handleTap(at: value.startLocation)
-                                    } else {
-                                        print("touch1b")
-                                        let customValue: CustomDragValue =
-                                            CustomDragValue(
-                                                time: value.time,
-                                                location: value.location,
-                                                startLocation: value
-                                                    .startLocation,
-                                                translation: value
-                                                    .translation,
-                                                predictedEndTranslation:
-                                                    value
-                                                    .predictedEndTranslation,
-                                                predictedEndLocation: value
-                                                    .predictedEndLocation
-                                            )
-                                        // Handle as a drag gesture
-                                        handleDragChange(
-                                            dragValue: customValue
-                                        )
-                                    }
-
-                                    //  handleDragChange(dragValue: value)
-                                }
-                                .onEnded { value in
-                                    print("onDrag ended")
-                                    handleDragEnded()  // Finalize drag action
-                                } : nil
-                    )
+                    /* .simultaneousGesture(
+                         gestureState.areGesturesEnabled
+                             ? DragGesture(minimumDistance: 0)  // Handles both taps and drags
+                                 .onChanged { value in
+                                     focusedID = nil
+                                     print("touch1")
+                                     if value.translation == .zero {
+                                         print("touch1a")
+                                         // Handle as a tap gesture
+                                         handleTap(at: value.startLocation)
+                                     } else {
+                                         print("touch1b")
+                    
+                                         let customValue: CustomDragValue =
+                                             CustomDragValue(
+                                                 time: value.time,
+                                                 location: value.location,
+                                                 startLocation: value
+                                                     .startLocation,
+                                                 translation: value
+                                                     .translation,
+                                                 predictedEndTranslation:
+                                                     value
+                                                     .predictedEndTranslation,
+                                                 predictedEndLocation: value
+                                                     .predictedEndLocation
+                                             )
+                                         // Handle as a drag gesture
+                                         handleDragChange(
+                                             dragValue: customValue
+                                         )
+                                     }
+                    
+                                     //  handleDragChange(dragValue: value)
+                                 }
+                                 .onEnded { value in
+                                     print("onDrag ended")
+                                     handleDragEnded()  // Finalize drag action
+                                 } : nil
+                     )*/
                 }.frame(
                     width: geometry.size.width,
                     height: geometry.size.height
@@ -468,7 +324,6 @@ struct CanvasView: View {
                 }
 
                 // Apply rotation handling explicitly
-                let rotationAngle = page.rotation
                 context.saveGState()  // Save the current graphics state
                 context.translateBy(x: 0, y: pageRect.height)  // Move origin to the bottom-left corner
                 context.scaleBy(x: 1.0, y: -1.0)  // Flip the y-axis vertically
@@ -510,11 +365,21 @@ struct CanvasView: View {
                     let picker = UIDocumentPickerViewController(forExporting: [
                         exportUrl
                     ])
-                    picker.delegate =
-                        UIApplication.shared.windows.first?.rootViewController
-                        as? UIDocumentPickerDelegate
-                    UIApplication.shared.windows.first?.rootViewController?
-                        .present(picker, animated: true, completion: nil)
+                    if let windowScene = UIApplication.shared.connectedScenes
+                        .first as? UIWindowScene
+                    {
+                        if let window = windowScene.windows.first {
+                            picker.delegate =
+                                window.rootViewController
+                                as? UIDocumentPickerDelegate
+                            window.rootViewController?.present(
+                                picker,
+                                animated: true,
+                                completion: nil
+                            )
+                        }
+                    }
+
                 } else {
                     print("Error: Could not save updated PDF")
                 }
@@ -581,21 +446,14 @@ struct CanvasView: View {
                         )
                     }.clipped()
                 }
-              
-                
-                /*.onDrop(
+
+                .onDrop(
                     of: ["public.image", "com.compuserve.gif"],
                     isTargeted: $isDraggingOver
                 ) { providers in
                     print("providers")
                     return handleDrop(providers: providers)
-                }*/
-                
-                .onDrop(of: ["public.image", "com.compuserve.gif"], delegate: MyDropDelegate(isDraggingOver: $isDraggingOver, onDrop: { providers in
-                    print("providers")
-                     handleDrop(providers: providers)
-                }))
-               
+                }
 
                 if isDraggingOver {
                     DropZoneView(isDraggingOver: $isDraggingOver)
@@ -657,11 +515,68 @@ struct CanvasView: View {
                 .drawingGroup()
                 .allowsHitTesting(false)
 
+                // Pencil Detection View as overlay
+                PencilDetectionView(
+                    onTouchStart: { touchData in
+
+                    },
+                    onTouchChange: { value in
+                        focusedID = nil
+                        print("touch1 \(value.type)")
+                        if value.type == .pencil {
+                            print("touch with pencil")
+                        } else {
+                            print("touch with fingers")
+                        }
+                        if value.translation == .zero {
+                            print("touch1a")
+                            // Handle as a tap gesture
+                            handleTap(at: value.startLocation)
+                        } else {
+                            print("touch1b")
+
+                            let customValue: CustomDragValue =
+                                CustomDragValue(
+                                    time: value.time,
+                                    location: value.location,
+                                    startLocation: value
+                                        .startLocation,
+                                    translation: value
+                                        .translation,
+                                    predictedEndTranslation:
+                                        value
+                                        .predictedEndTranslation,
+                                    predictedEndLocation: value
+                                        .predictedEndLocation
+                                )
+                            // Handle as a drag gesture
+                            handleDragChange(
+                                dragValue: customValue
+                            )
+                        }
+
+                    },
+                    onTouchEnd: { touchData in
+                        print("touch1 onEnded")
+                        handleDragEnded()  // Finalize drag action
+                    }
+
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.clear)
+
             }
             .onTapGesture {
                 isDraggingOver = false
+
             }
-            
+
+            .gesture(
+                TapGesture(count: 2)  // Double-tap gesture
+                    .onEnded {
+                        onDoubleTap()  // Trigger the closure when double-tap is detected
+                    }
+            )
             .onAppear {
                 noteFile.addToUndo(
                     pageIndex: self.pageIndex,

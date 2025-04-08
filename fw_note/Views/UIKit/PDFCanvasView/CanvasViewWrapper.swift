@@ -17,17 +17,19 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
     var pageIndex: Int
     private var hostingController: UIHostingController<CanvasView>?
     var gestureState = GestureState()
-  
     var pdfView: CustomPDFView
-    
-    func disableGestures(_ isDisabled: Bool) {
-            gestureState.areGesturesEnabled = !isDisabled  // Toggle gesture state dynamically
-        }
 
-    init(frame: CGRect, pageIndex: Int, pdfView: CustomPDFView, imageState: ImageState, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage) {
+    // Closure for handling double-tap action
+    var onDoubleTap: (() -> Void)?
+
+    func disableGestures(_ isDisabled: Bool) {
+        gestureState.areGesturesEnabled = !isDisabled  // Toggle gesture state dynamically
+    }
+
+    init(frame: CGRect, pageIndex: Int, pdfView: CustomPDFView, imageState: ImageState, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage, onDoubleTap: (() -> Void)? = nil) {
         self.pageIndex = pageIndex
-       
         self.pdfView = pdfView
+        self.onDoubleTap = onDoubleTap
         super.init(frame: frame)
 
         let canvasView = CanvasView(
@@ -39,7 +41,10 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
             gestureState: gestureState,
             canvasState: canvasState,
             noteFile: noteFile,
-            notePage: notePage
+            notePage: notePage,
+            onDoubleTap: { [weak self] in
+                            self?.onDoubleTap?() // Call onDoubleTap from CanvasView
+           },
         )
 
         hostingController = UIHostingController(rootView: canvasView)
@@ -49,17 +54,20 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
             hostingView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             self.addSubview(hostingView)
         }
-
-      
     }
-    
+
+    @objc private func handleDoubleTap(_ gesture: UITapGestureRecognizer) {
+        // Call the onDoubleTap closure if defined
+        onDoubleTap?()
+    }
+
     private func handleGesture(scale: CGFloat, translation: CGSize) {
-            // Post gesture updates to PDFCanvasView
-            NotificationCenter.default.post(
-                name: Notification.Name("CanvasGesture"),
-                object: ["scale": scale, "translation": translation]
-            )
-        }
+        // Post gesture updates to PDFCanvasView
+        NotificationCenter.default.post(
+            name: Notification.Name("CanvasGesture"),
+            object: ["scale": scale, "translation": translation]
+        )
+    }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
