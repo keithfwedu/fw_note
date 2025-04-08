@@ -430,7 +430,56 @@ struct CanvasView: View {
                             focusedID = nil
                             isDraggingOver = false
                         }
+                    // Pencil Detection View as overlay
+                    PencilDetectionView(
+                        onTap: { value in
+                            handleTap(at: value.startLocation)
+                        },
+                        onTouchMove: { value in
+                            focusedID = nil
+                            print("touch1b \(value.type) \(value.translation)")
+                            if value.type == .pencil {
+                                print("touch with pencil")
+                            } else {
+                                print("touch with fingers")
+                            }
+                            if value.translation == .zero {
+                                print("touch1a")
+                                // Handle as a tap gesture
+                                handleTap(at: value.startLocation)
+                            } else {
+                                print("touch1b")
 
+                                let customValue: CustomDragValue =
+                                    CustomDragValue(
+                                        time: value.time,
+                                        location: value.location,
+                                        startLocation: value
+                                            .startLocation,
+                                        translation: value
+                                            .translation,
+                                        predictedEndTranslation:
+                                            value
+                                            .predictedEndTranslation,
+                                        predictedEndLocation: value
+                                            .predictedEndLocation
+                                    )
+                                // Handle as a drag gesture
+                                handleDragChange(
+                                    dragValue: customValue
+                                )
+                            }
+
+                        },
+                        onTouchEnd: { value in
+                            print("touch1 onEnded")
+
+                            handleDragEnded()  // Finalize drag action
+                        }
+
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(.clear)
                     ForEach($imageStack) { imageObj in
                         InteractiveImageView(
                             imageObj: imageObj,
@@ -446,7 +495,6 @@ struct CanvasView: View {
                         )
                     }.clipped()
                 }
-
                 .onDrop(
                     of: ["public.image", "com.compuserve.gif"],
                     isTargeted: $isDraggingOver
@@ -514,56 +562,6 @@ struct CanvasView: View {
                 }
                 .drawingGroup()
                 .allowsHitTesting(false)
-
-                // Pencil Detection View as overlay
-                PencilDetectionView(
-                    onTouchStart: { touchData in
-
-                    },
-                    onTouchChange: { value in
-                        focusedID = nil
-                        print("touch1 \(value.type)")
-                        if value.type == .pencil {
-                            print("touch with pencil")
-                        } else {
-                            print("touch with fingers")
-                        }
-                        if value.translation == .zero {
-                            print("touch1a")
-                            // Handle as a tap gesture
-                            handleTap(at: value.startLocation)
-                        } else {
-                            print("touch1b")
-
-                            let customValue: CustomDragValue =
-                                CustomDragValue(
-                                    time: value.time,
-                                    location: value.location,
-                                    startLocation: value
-                                        .startLocation,
-                                    translation: value
-                                        .translation,
-                                    predictedEndTranslation:
-                                        value
-                                        .predictedEndTranslation,
-                                    predictedEndLocation: value
-                                        .predictedEndLocation
-                                )
-                            // Handle as a drag gesture
-                            handleDragChange(
-                                dragValue: customValue
-                            )
-                        }
-
-                    },
-                    onTouchEnd: { touchData in
-                        print("touch1 onEnded")
-                        handleDragEnded()  // Finalize drag action
-                    }
-
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(.clear)
 
             }
             .onTapGesture {
