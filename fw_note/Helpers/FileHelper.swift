@@ -10,51 +10,37 @@ import SwiftUI
 
 class FileHelper {
     static func getBaseDirectory() -> URL {
-        return FileManager.default.urls(
+        FileManager.default.urls(
             for: .applicationSupportDirectory,
             in: .userDomainMask
         ).first!
     }
 
+    static func getDirectory(basePath: URL, subDirectoryPath: String) -> URL? {
+        basePath.appendingPathComponent(subDirectoryPath, isDirectory: true)
+    }
+
     static func getImageDirectory() -> URL? {
-        let baseDirectory = FileHelper.getBaseDirectory()
-        let imageDirectory = subDirectory(
-            baseDirectory: baseDirectory,
-            subDirectoryPath: "images"
-        )
-        return imageDirectory
+        getDirectory(basePath: getBaseDirectory(), subDirectoryPath: "images")
     }
 
-    static func getProjectDirectory() -> URL? {
-        let baseDirectory = FileHelper.getBaseDirectory()
-        let projectDirectory = subDirectory(
-            baseDirectory: baseDirectory,
-            subDirectoryPath: "projects"
-        )
-        return projectDirectory
+    static func getProjectsDirectory() -> URL? {
+        getDirectory(basePath: getBaseDirectory(), subDirectoryPath: "projects")
     }
 
-    static func getProjectDirectory(userId: String) -> URL? {
-        guard let projectDirectory = getProjectDirectory() else {
+    static func getUserProjectsDirectory(userId: String) -> URL? {
+        guard let projectDirectory = getProjectsDirectory() else {
             return nil
         }
-
-        guard
-            let userProjectDirectory = subDirectory(
-                baseDirectory: projectDirectory,
-                subDirectoryPath: userId
-            )
-        else {
-            return nil
-        }
-
-        return userProjectDirectory
+        return getDirectory(basePath: projectDirectory, subDirectoryPath: userId)
     }
+
+
 
     static func getNoteDirectory(userId: String = "guest", noteId: String)
         -> URL?
     {
-        guard let projectDirectory = getProjectDirectory(userId: userId),
+        guard let projectDirectory = getUserProjectsDirectory(userId: userId),
             let pdfDirectory = subDirectory(
                 baseDirectory: projectDirectory,
                 subDirectoryPath: noteId
@@ -100,7 +86,7 @@ class FileHelper {
     }
 
     static func listProjects(userId: String) -> [NoteFile] {
-        guard let notesDirectory = getProjectDirectory(userId: userId) else {
+        guard let notesDirectory = getUserProjectsDirectory(userId: userId) else {
             print("Error: Failed to get notes directory for user ID \(userId).")
             return []
         }

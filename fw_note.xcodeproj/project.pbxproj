@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		89A807DE9C3418C7525AC7C8 /* Pods_fw_note.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7BD733864E3232923985473B /* Pods_fw_note.framework */; };
 		B25C92842D9A888800CE776C /* FLAnimatedImage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B25C92832D9A888800CE776C /* FLAnimatedImage.framework */; };
+		B267BECF2DA624A700EF414B /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B267BECE2DA624A700EF414B /* CoreData.framework */; };
 		D46915D5B3FDEB14B6638177 /* Pods_fw_note_fw_noteUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B0FF2072D95A52D7E3A782ED /* Pods_fw_note_fw_noteUITests.framework */; };
 		DE849011DB899157024152CF /* Pods_fw_noteTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2AB9C3FD005992271D59344 /* Pods_fw_noteTests.framework */; };
 /* End PBXBuildFile section */
@@ -40,6 +41,7 @@
 		B25C92832D9A888800CE776C /* FLAnimatedImage.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FLAnimatedImage.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B25C93022D9AA18B00CE776C /* YYImage.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = YYImage.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B25C93812D9AA27400CE776C /* YYImage.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = YYImage.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B267BECE2DA624A700EF414B /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		B27884E72D9A869500004B89 /* fw_note.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = fw_note.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B27884F92D9A869800004B89 /* fw_noteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = fw_noteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B27885032D9A869800004B89 /* fw_noteUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = fw_noteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -71,6 +73,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B267BECF2DA624A700EF414B /* CoreData.framework in Frameworks */,
 				B25C92842D9A888800CE776C /* FLAnimatedImage.framework in Frameworks */,
 				89A807DE9C3418C7525AC7C8 /* Pods_fw_note.framework in Frameworks */,
 			);
@@ -98,6 +101,7 @@
 		0057BE58CB0F79F512E9938C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				B267BECE2DA624A700EF414B /* CoreData.framework */,
 				B25C93812D9AA27400CE776C /* YYImage.framework */,
 				B25C93022D9AA18B00CE776C /* YYImage.framework */,
 				B25C92832D9A888800CE776C /* FLAnimatedImage.framework */,
