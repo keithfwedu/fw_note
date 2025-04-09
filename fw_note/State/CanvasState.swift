@@ -25,7 +25,7 @@ class CanvasState: ObservableObject {
     @Published var currentProjectId: String? = nil
     
     //Configs
-    @Published var penSize: CGFloat = 3.0
+    @Published var penSize: CGFloat = 0.5
     @Published var penColor: Color = .black
     @Published var recentColors: [Color] = [Color.black, Color.blue, Color.red, Color.yellow, Color.green];
 
