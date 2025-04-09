@@ -21,6 +21,8 @@ class CanvasState: ObservableObject {
     @Published var showImagePicker: Bool = false
     
     @Published var isDragging: Bool = false
+    @Published var canvasPool: [Int: AnyView] = [:]
+    @Published var currentProjectId: String? = nil
     
     //Configs
     @Published var penSize: CGFloat = 3.0

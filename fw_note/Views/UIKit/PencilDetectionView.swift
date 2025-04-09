@@ -9,28 +9,43 @@ import SwiftUI
 import UIKit
 
 struct PencilDetectionView: UIViewRepresentable {
-    var onTap: (TouchData) -> Void
-    var onTouchMove: (TouchData) -> Void
-    var onTouchEnd: (TouchData) -> Void
+    @ObservedObject var noteFile: NoteFile
+    var onTap: (TouchData, NoteFile?) -> Void
+    var onTouchMove: (TouchData, NoteFile?) -> Void
+    var onTouchEnd: (TouchData, NoteFile?) -> Void
 
     func makeUIView(context: Context) -> PencilTouchDetectingView {
-        let view = PencilTouchDetectingView()
-        view.onTap = onTap
-        view.onTouchMove = onTouchMove
-        view.onTouchEnd = onTouchEnd
+        let view = PencilTouchDetectingView(
+            noteFile: noteFile,
+            onTap: onTap,
+            onTouchMove: onTouchMove,
+            onTouchEnd: onTouchEnd)
         return view
     }
 
     func updateUIView(_ uiView: PencilTouchDetectingView, context: Context) {}
 
     class PencilTouchDetectingView: UIView {
-        var onTap: ((TouchData) -> Void)?
-        var onTouchMove: ((TouchData) -> Void)?
-        var onTouchEnd: ((TouchData) -> Void)?
+        @ObservedObject var noteFile: NoteFile
+        var onTap: ((TouchData, NoteFile?) -> Void)?
+        var onTouchMove: ((TouchData, NoteFile?) -> Void)?
+        var onTouchEnd: ((TouchData, NoteFile?) -> Void)?
 
         private var startTouchLocation: CGPoint = .zero
         private var isTap: Bool = true
-
+        
+        init(noteFile: NoteFile, onTap: ((TouchData, NoteFile?) -> Void)? = nil, onTouchMove: ((TouchData, NoteFile?) -> Void)? = nil, onTouchEnd: ((TouchData, NoteFile?) -> Void)? = nil) {
+            self.noteFile = noteFile
+            self.onTap = onTap
+            self.onTouchMove = onTouchMove
+            self.onTouchEnd = onTouchEnd
+            super.init(frame: .zero)
+        }
+        
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+        
         override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
             guard let touch = touches.first else { return }
             let location = touch.location(in: self)
@@ -46,7 +61,7 @@ struct PencilDetectionView: UIViewRepresentable {
                 predictedEndTranslation: .zero,
                 time: Date()
             )
-            onTap?(touchData) // Optionally handle the tap in touchesBegan
+            onTap?(touchData, noteFile ?? nil) // Optionally handle the tap in touchesBegan
         }
 
         override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -71,7 +86,7 @@ struct PencilDetectionView: UIViewRepresentable {
                 predictedEndTranslation: .zero,
                 time: Date()
             )
-            onTouchMove?(touchData)
+            onTouchMove?(touchData, noteFile ?? nil)
         }
 
         override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -89,9 +104,9 @@ struct PencilDetectionView: UIViewRepresentable {
             )
 
             if isTap {
-                onTap?(touchData)
+                onTap?(touchData, noteFile ?? nil)
             } else {
-                onTouchEnd?(touchData)
+                onTouchEnd?(touchData, noteFile ?? nil)
             }
         }
     }

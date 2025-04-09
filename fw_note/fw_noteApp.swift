@@ -8,13 +8,14 @@
 import SwiftUI
 import SwiftData
 
+var currentProjectId: UUID? = nil
+
 @main
 struct fw_noteApp: App {
     let persistenceController = PersistenceController.shared
     
     init() {
-       // FileHelper.ensureDirectoriesExist()
-
+       FileHelper.ensureProjectDirectoriesExist()
     }
     
     var body: some Scene {

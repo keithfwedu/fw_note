@@ -19,14 +19,9 @@ struct PdfNoteScreen: View {
         VStack {
             CanvasToolBar(noteFile: noteFile, canvasState: canvasState)
             ZStack {
-                if let pdfFilePath = noteFile.pdfFilePath {
-                    let absolutePath = FileManager.default.urls(
-                        for: .applicationSupportDirectory, in: .userDomainMask
-                    )
-                    .first!.appendingPathComponent(pdfFilePath).path
-
+               let pdfFilePath = FileHelper.getPDFPath(projectId: noteFile.id)
                     if let pdfDocument = PDFDocument(
-                        url: URL(fileURLWithPath: absolutePath))
+                        url: URL(fileURLWithPath: pdfFilePath ))
                     {
                         // Embedding the PDFView
                         PDFCanvasView(
@@ -44,11 +39,7 @@ struct PdfNoteScreen: View {
                             .foregroundColor(.red)
                             .font(.headline)
                     }
-                } else {
-                    Text("PDF path not available")
-                        .foregroundColor(.red)
-                        .font(.headline)
-                }
+             
 
                 ImageSideMenu(
                     width: 280,
@@ -62,7 +53,7 @@ struct PdfNoteScreen: View {
             }
 
         }
-
+        
         .background(Color(UIColor.systemGray6))
         .navigationTitle(noteFile.title)  // Set the navigation title
         .navigationBarTitleDisplayMode(.inline)  // Optional: inline style for the title

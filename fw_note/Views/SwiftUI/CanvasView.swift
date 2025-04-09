@@ -162,6 +162,9 @@ struct CanvasView: View {
 
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onAppear {
+                        canvasState.canvasPool[pageIndex] = AnyView(canvas)
+                    }
 
                     .drawingGroup()
                     /* .simultaneousGesture(
@@ -292,6 +295,7 @@ struct CanvasView: View {
                         )
                         .border(.red, width: 1)
                         .onAppear {
+                            currentProjectId = noteFile.id
                             pageSize = geometry.size
                             redrawTrigger.toggle()
                             notePage.pageCenterPoint = CGPoint(
@@ -300,6 +304,10 @@ struct CanvasView: View {
                             )
                             notePage.canvasWidth = geometry.size.width
                             notePage.canvasHeight = geometry.size.height
+                            imageStack = notePage.canvasStack.compactMap { $0.imageObj }
+                            focusedID = nil
+                            isDraggingOver = false
+                            exportSnapShot()
                         }
                         .allowsHitTesting(gestureState.areGesturesEnabled)  // Toggle interaction
                         .onChange(of: canvasState.canvasMode) {
@@ -314,10 +322,13 @@ struct CanvasView: View {
                         }
                     // Pencil Detection View as overlay
                     PencilDetectionView(
-                        onTap: { value in
-                            handleTap(at: value.startLocation)
+                        noteFile: noteFile,
+                        onTap: { value, noteFile in
+                            print("tap")
+                            focusedID = nil
+                            handleTap(at: value.startLocation, noteFile: noteFile)
                         },
-                        onTouchMove: { value in
+                        onTouchMove: { value, noteFile in
                             focusedID = nil
                             print("touch1b \(value.type) \(value.translation)")
                             if value.type == .pencil {
@@ -328,7 +339,7 @@ struct CanvasView: View {
                             if value.translation == .zero {
                                 print("touch1a")
                                 // Handle as a tap gesture
-                                handleTap(at: value.startLocation)
+                                handleTap(at: value.startLocation, noteFile: noteFile)
                             } else {
                                 print("touch1b")
 
@@ -353,7 +364,7 @@ struct CanvasView: View {
                             }
 
                         },
-                        onTouchEnd: { value in
+                        onTouchEnd: { value, noteFile in
                             print("touch1 onEnded")
 
                             handleDragEnded()  // Finalize drag action
@@ -450,6 +461,7 @@ struct CanvasView: View {
                 isDraggingOver = false
 
             }
+           
 
             .gesture(
                 TapGesture(count: 2)  // Double-tap gesture
@@ -462,6 +474,7 @@ struct CanvasView: View {
                     pageIndex: self.pageIndex,
                     canvasStack: self.notePage.canvasStack
                 )
+              
             }
 
         }
@@ -542,7 +555,7 @@ struct CanvasView: View {
     }
 
     // Modularized Tap Handling Function
-    private func handleTap(at location: CGPoint) {
+    private func handleTap(at location: CGPoint, noteFile: NoteFile?) {
         // Perform hit-testing for images in canvasStack
         for canvasObj in notePage.canvasStack.reversed() {
             if let imageObj = canvasObj.imageObj {
@@ -1046,7 +1059,7 @@ struct CanvasView: View {
     }
     
     func exportSnapShot() {
-        guard let relativePath = noteFile.pdfFilePath else {
+       /* guard let relativePath = noteFile.pdfFilePath else {
             print("Error: PDF file path is nil")
             return
         }
@@ -1102,7 +1115,7 @@ struct CanvasView: View {
         } catch {
             print("image saved error \(error)")
         }
-
+*/
     }
 
 }

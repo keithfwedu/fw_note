@@ -15,8 +15,8 @@ struct NoteItemView: View {
 
     var body: some View {
         VStack {
-            if let pdfPath = noteFile.pdfFilePath,
-               let thumbnail = generateThumbnail(for: appSupportDirectory.appendingPathComponent(pdfPath)) {
+            if
+                let thumbnail = FileHelper.getThumbnailData(projectId: noteFile.id) {
                 Image(uiImage: thumbnail)
                     .resizable()
                     .scaledToFit()
@@ -40,14 +40,5 @@ struct NoteItemView: View {
         }
     }
 
-    // Helper method to generate thumbnail
-    private func generateThumbnail(for pdfURL: URL) -> UIImage? {
-        guard let pdfDocument = PDFDocument(url: pdfURL),
-              let firstPage = pdfDocument.page(at: 0) else {
-            return nil
-        }
-
-        let thumbnailSize = CGSize(width: 300, height: 400)
-        return firstPage.thumbnail(of: thumbnailSize, for: .mediaBox)
-    }
+  
 }

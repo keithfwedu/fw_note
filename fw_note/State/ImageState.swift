@@ -34,6 +34,8 @@ class ImageState: ObservableObject {
             return nil
         }
         
+      //  const FileHelper.getRelativePath(from: filePath)
+        
         // Create the ImageObj with the filtered and adjusted position
         let newImageObj = OriginalImageObj(
             path: filePath

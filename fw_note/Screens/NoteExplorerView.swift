@@ -75,7 +75,7 @@ struct NoteExplorerView: View {
             }
             .onAppear {
                 updateFreeSpace()
-                noteFiles = FileHelper.listProjects(userId: userId)
+                noteFiles = FileHelper.listProjects()
             }
         }
         .navigationViewStyle(StackNavigationViewStyle()) // Ensure it works even on iPad
@@ -94,8 +94,8 @@ struct NoteExplorerView: View {
 
    
     private func deleteNoteProject(userId: String, noteFile: NoteFile) {
-        FileHelper.deleteNote(userId: userId, noteFile: noteFile)
-        noteFiles = FileHelper.listProjects(userId: userId)
+        FileHelper.deleteProject(projectId: noteFile.id.uuidString)
+        noteFiles = FileHelper.listProjects()
     }
 
     // MARK: - Handle File Selection
@@ -111,9 +111,9 @@ struct NoteExplorerView: View {
             let fileAccessed = selectedFileURL.startAccessingSecurityScopedResource()
             defer { if fileAccessed { selectedFileURL.stopAccessingSecurityScopedResource() } }
             
-            FileHelper.newNote(userId: userId, pdfPathUrl: selectedFileURL)
+            FileHelper.createNewProject(pdfPathUrl: selectedFileURL)
             // Update the list of notes
-            noteFiles = FileHelper.listProjects(userId: userId)
+            noteFiles = FileHelper.listProjects()
 
         } catch let fileError as NSError {
             // Specific error handling with descriptive logging

@@ -19,16 +19,28 @@ struct ImageObj: Identifiable, Codable, Equatable {
     var angle: CGFloat
 
     // CGImage is excluded from Codable
-  
+
     private(set) var cgImage: CGImage?
-    private(set) var animatedImage: UIImage? // For animated GIFs
-    
+    private(set) var animatedImage: UIImage?  // For animated GIFs
+
     func clone() -> ImageObj {
-        return ImageObj(id: id, path: path, position: position, size: size, angle: angle)
+        return ImageObj(
+            id: id,
+            path: path,
+            position: position,
+            size: size,
+            angle: angle
+        )
     }
-    
+
     // Initializer
-    init(id: UUID = UUID(), path: String? = nil, position: CGPoint, size: CGSize, angle: CGFloat = 0) {
+    init(
+        id: UUID = UUID(),
+        path: String? = nil,
+        position: CGPoint,
+        size: CGSize,
+        angle: CGFloat = 0
+    ) {
         self.id = id
         self.path = path
         self.position = position
@@ -61,45 +73,62 @@ struct ImageObj: Identifiable, Codable, Equatable {
     }
 
     // Function to calculate bounding size after rotation
-    func calculateBoundingSize(width: CGFloat, height: CGFloat, angle: CGFloat) -> CGSize {
+    func calculateBoundingSize(width: CGFloat, height: CGFloat, angle: CGFloat)
+        -> CGSize
+    {
         let radians = angle * .pi / 180
-        let boundingWidth = abs(width * cos(radians)) + abs(height * sin(radians))
-        let boundingHeight = abs(width * sin(radians)) + abs(height * cos(radians))
+        let boundingWidth =
+            abs(width * cos(radians)) + abs(height * sin(radians))
+        let boundingHeight =
+            abs(width * sin(radians)) + abs(height * cos(radians))
         return CGSize(width: boundingWidth, height: boundingHeight)
     }
 
     // Equatable conformance
     static func == (lhs: ImageObj, rhs: ImageObj) -> Bool {
-        return lhs.id == rhs.id &&
-               lhs.path == rhs.path &&
-               lhs.position == rhs.position &&
-               lhs.size == rhs.size &&
-               lhs.angle == rhs.angle
+        return lhs.id == rhs.id && lhs.path == rhs.path
+            && lhs.position == rhs.position && lhs.size == rhs.size
+            && lhs.angle == rhs.angle
     }
 
-   
     // Load the CGImage from the path
     mutating func loadImageFromPath() {
         guard let path = path else {
             print("Error: Path is nil")
             return
         }
+        guard let projectId = currentProjectId else {
+            print("Error: currentProjectId is nil")
+            return
+        }
 
-        if isAnimatedGIF, let _ = try? Data(contentsOf: URL(fileURLWithPath: path)) {
+        guard
+            let absolutePath = FileHelper.getProjectImageFilePath(
+                imageName: path,
+                projectId: projectId
+            )
+        else {
+            print("Error: absolutePath is nil")
+            return
+        }
+
+        if isAnimatedGIF,
+            (try? Data(contentsOf: URL(fileURLWithPath: absolutePath))) != nil
+        {
             // Load animated GIF as UIImage
-          //  animatedImage = UIImage.animatedImage(withAnimatedGIFData: data)
-           // cgImage = animatedImage?.cgImage
-        } else if let uiImage = UIImage(contentsOfFile: path) {
+            //  animatedImage = UIImage.animatedImage(withAnimatedGIFData: data)
+            // cgImage = animatedImage?.cgImage
+        } else if let uiImage = UIImage(contentsOfFile: absolutePath) {
             // Load static image as CGImage
             animatedImage = nil
             cgImage = uiImage.cgImage
         } else {
-            print("Error: Unable to load image at path \(path)")
+            print("Error: Unable to load image at path \(absolutePath)")
             cgImage = nil
         }
+
     }
 
-   
     // MARK: - Codable Conformance
     enum CodingKeys: String, CodingKey {
         case id
@@ -132,4 +161,3 @@ struct ImageObj: Identifiable, Codable, Equatable {
         loadImageFromPath()
     }
 }
-

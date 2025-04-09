@@ -135,13 +135,80 @@ struct CanvasToolBar: View {
     // Mock functions
     func savePDF() {
         print("Save PDF")
-        do {
-            try noteFile.save()
-        } catch {
-            print("save failed: \(error)")
+        FileHelper.saveProject(noteFile: noteFile)
+       // print("draw2 \(canvasState.canvasPool[0])")
+        let pageSize = CGSize(
+            width:  noteFile.notePages[0].canvasWidth,
+            height:  noteFile.notePages[0].canvasHeight
+            )
+      let canvasSnapshot = canvasState.canvasPool[0].frame(
+            width: pageSize.width,
+            height:pageSize.height
+        ).snapshot()
+       
+        let pdfFilePath = FileHelper.getPDFPath(projectId:  noteFile.id)
+        if let pdfDocument = PDFDocument(url: URL(fileURLWithPath: pdfFilePath))
+        {
+            guard
+                let page = pdfDocument.page(
+                    at: canvasState.currentPageIndex
+                )
+            else {
+                print(
+                    "Error: Could not get page at index \(canvasState.currentPageIndex)"
+                )
+                return
+            }
+            
+            
+            let pdfImage = page.thumbnail(of: pageSize, for: .mediaBox)
+            
+            guard
+                let combinedImage = combineImages(
+                    baseImage: pdfImage,
+                    overlayImage: canvasSnapshot
+                ) else {
+                print("Error combining images")
+                return
+            }
+            
+            let currentUserId = FileHelper.getCurrentUserId() // Fetch the current user ID
+            let baseDirectory = FileHelper.getBaseDirectory() // Base directory of your app
+            
+            // Define the project and images directories
+            let projectDirectory = baseDirectory.appendingPathComponent(
+                "users/\(currentUserId)/projects/\(noteFile.id.uuidString)",
+                isDirectory: true
+            )
+            let thumbnailPath = projectDirectory.appendingPathComponent(
+                "thumbnail.jpg"
+            )
+            do {
+                try combinedImage.pngData()?.write(to: thumbnailPath)
+            } catch {
+                print(error)
+            }
         }
-        
+
     }
+    
+    func combineImages(baseImage: UIImage, overlayImage: UIImage) -> UIImage? {
+        let size = baseImage.size  // Use the size of the base image
+        UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+
+        // Draw the base image
+        baseImage.draw(in: CGRect(origin: .zero, size: size))
+
+        // Draw the overlay image on top
+        overlayImage.draw(in: CGRect(origin: .zero, size: size))
+
+        // Generate the combined image
+        let combinedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return combinedImage
+    }
+    
     func selectPenTool() {
         print("selectPenTool")
         canvasState.canvasMode = CanvasMode.draw
@@ -186,6 +253,7 @@ struct CanvasToolBar: View {
     }
     
     func exportFile() {
+       
       /*  guard let relativePath = noteFile.pdfFilePath else {
             print("Error: PDF file path is nil")
             return

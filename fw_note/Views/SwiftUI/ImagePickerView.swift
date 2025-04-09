@@ -201,6 +201,9 @@ struct ImagePickerView: View {
     }
 
     private func addImageToStack(image: OriginalImageObj) {
+        print("image.path \(image.path)")
+        let projectImagePath = FileHelper.copyImageToProject(imagePath: image.path, projectId: noteFile.id)
+      
         // Calculate base position
         let pageIndex = canvasState.currentPageIndex
         let page = noteFile.notePages[pageIndex]
@@ -210,7 +213,7 @@ struct ImagePickerView: View {
 
         // Create the ImageObj with the filtered and adjusted position
         let newImageObj = ImageObj(
-            path: image.absolutePath,
+            path: projectImagePath,
             position: newPosition,
             size: image.size
         )
