@@ -29,4 +29,7 @@ class CanvasState: ObservableObject {
     @Published var penColor: Color = .black
     @Published var recentColors: [Color] = [Color.black, Color.blue, Color.red, Color.yellow, Color.green];
 
+    func setPageIndex(_ index: Int) {
+        self.currentPageIndex = index
+    }
 }

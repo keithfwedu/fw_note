@@ -11,9 +11,9 @@ struct ImageSideMenu: View {
     let isOpen: Bool
     let menuClose: () -> Void
     
-    @StateObject var imageState: ImageState
-    @StateObject private var canvasState = CanvasState()
-    @StateObject var noteUndoManager: NoteUndoManager
+    @ObservedObject var imageState: ImageState
+    @ObservedObject var canvasState: CanvasState
+    @ObservedObject var noteUndoManager: NoteUndoManager
    
     @State var noteFile: NoteFile
 

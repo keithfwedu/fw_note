@@ -40,7 +40,7 @@ struct PDFCanvasView: UIViewRepresentable {
             scrollView.delegate = context.coordinator
             scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
-            //scrollView.delaysContentTouches = false
+            scrollView.delaysContentTouches = false
 
         }
 
@@ -125,7 +125,7 @@ struct PDFCanvasView: UIViewRepresentable {
             noteUndoManager: noteUndoManager,
             imageState: imageState,
             canvasState: canvasState
-            
+
         )
     }
 
@@ -146,7 +146,7 @@ struct PDFCanvasView: UIViewRepresentable {
             pdfView: CustomPDFView,
             pdfDocument: PDFDocument,
             noteFile: NoteFile,
-        noteUndoManager: NoteUndoManager,
+            noteUndoManager: NoteUndoManager,
             imageState: ImageState,
             canvasState: CanvasState
         ) {
@@ -226,7 +226,6 @@ struct PDFCanvasView: UIViewRepresentable {
         }
 
         private func animateZoomAndScroll(pdfView: PDFView, frame: CGRect) {
-
             // Access the scroll view
             if let scrollView = pdfView.subviews.first(where: {
                 $0 is UIScrollView
@@ -241,7 +240,12 @@ struct PDFCanvasView: UIViewRepresentable {
                     x: frame.minX - pdfView.pageBreakMargins.left,
                     y: frame.minY - pdfView.pageBreakMargins.top
                 )
-                scrollView.setContentOffset(offset, animated: true)
+                let pdfPoint = pdfView.convert(offset, from: scrollView)
+                if let newPage = pdfView.page(for: pdfPoint, nearest: true) {
+                    scrollView.setContentOffset(offset, animated: true)
+                    pdfView.go(to: newPage)
+                }
+
             }
         }
 
@@ -291,6 +295,7 @@ struct PDFCanvasView: UIViewRepresentable {
                             pdfView: pdfView,
                             frame: normalizedPageFrame
                         )
+
                     }
                 )
                 canvasViewWrapper.backgroundColor = UIColor.clear
@@ -298,13 +303,13 @@ struct PDFCanvasView: UIViewRepresentable {
                 canvasViewWrapper.bounds = normalizedPageFrame
                 documentView.addSubview(canvasViewWrapper)
                 canvasViewWrapper.layer.zPosition = 1
-                
+
                 //searchText(pdfView: pdfView, searchText: "ap_")
             }
         }
 
         private func searchText(pdfView: PDFView, searchText: String) {
-        
+
             guard let document = pdfView.document else { return }
 
             // Clear previous highlights
@@ -353,35 +358,71 @@ struct PDFCanvasView: UIViewRepresentable {
             ])
 
             self.pageIndicatorLabel = label
-            updatePageIndicator(for: pdfView)  // Update immediately
+            updatePageIndicator(for: pdfView, currentPageIndex: nil)  // Update immediately
         }
 
-        func updatePageIndicator(for pdfView: PDFView) {
+        func updatePageIndicator(for pdfView: PDFView, currentPageIndex: Int?) {
             guard let document = pdfView.document,
                 let currentPage = pdfView.currentPage
             else { return }
-            let currentPageIndex = document.index(for: currentPage) + 1  // Page indices are 0-based
+            let pageIndex: Int =
+                (currentPageIndex != nil)
+                ? (currentPageIndex ?? 0) + 1
+                : document.index(for: currentPage) + 1  // Page indices are 0-based
             DispatchQueue.main.async {
+
                 self.canvasState.currentPageIndex = document.index(
                     for: currentPage
                 )
+
             }
             let totalPageCount = document.pageCount
             pageIndicatorLabel?.text =
-                "Page \(currentPageIndex) / \(totalPageCount)"
+                "Page \(pageIndex) / \(totalPageCount)"
 
         }
 
-        @objc func pageDidChange(notification: Notification) {
-            guard let pdfView = notification.object as? PDFView else { return }
-            updatePageIndicator(for: pdfView)
-        }
+        /* @objc func pageDidChange(notification: Notification) {
+             print("page did change")
+             guard let pdfView = notification.object as? PDFView else { return }
+             updatePageIndicator(for: pdfView, currentPageIndex: nil)
+        
+         }*/
 
         func scrollViewDidZoom(_ scrollView: UIScrollView) {
             guard let pdfView = pdfView else { return }
             let newScaleFactor = pdfView.scaleFactor
 
             self.togglePageIndicatorLabel(newScaleFactor > 0.8)
+        }
+
+        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            guard let pdfView = pdfView else { return }
+
+            // Convert the visible center point to PDFView's coordinate space
+            let visibleCenter = CGPoint(
+                x: scrollView.contentOffset.x + scrollView.bounds.width / 2,
+                y: scrollView.contentOffset.y + scrollView.bounds.height / 2
+            )
+            let centerInPDFView = pdfView.convert(
+                visibleCenter,
+                from: scrollView
+            )
+
+            // Find the current page in the PDFView
+            if let currentPage = pdfView.page(
+                for: centerInPDFView,
+                nearest: true
+            ) {
+                let currentPageIndex =
+                    pdfView.document?.index(for: currentPage) ?? 0
+                print("Current page index: \(currentPageIndex)")
+
+                updatePageIndicator(
+                    for: pdfView,
+                    currentPageIndex: currentPageIndex
+                )
+            }
         }
 
     }

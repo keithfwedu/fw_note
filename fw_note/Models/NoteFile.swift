@@ -8,7 +8,6 @@ class NoteFile: ObservableObject, Identifiable, Codable {
     
     @Published var notePages: [NotePage] = []
 
-    
 
     // Initializer for NoteFile with default title and optional PDF file path
     init(id: UUID, title: String? = nil) {

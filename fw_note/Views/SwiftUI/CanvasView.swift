@@ -17,7 +17,6 @@ struct CanvasView: View {
     @ObservedObject var noteFile: NoteFile
     @ObservedObject var noteUndoManager: NoteUndoManager
     @ObservedObject var notePage: NotePage
-   
 
     //Selected
     @State var selectionPaths: [CGPoint] = []
@@ -219,63 +218,63 @@ struct CanvasView: View {
 
     var body: some View {
         VStack {
-           /* Button("Save") {
-                guard let relativePath = noteFile.pdfFilePath else {
-                    print("Error: PDF file path is nil")
-                    return
-                }
-
-                let pdfFileUrl = FileHelper.getAbsoluteProjectPath(
-                    userId: "guest",
-                    relativePath: relativePath
-                )
-                guard let pdfFileUrl = pdfFileUrl else {
-                    print("Error: Could not get absolute project path")
-                    return
-                }
-
-                print("Press \(pdfFileUrl)")
-                guard let pdfDocument = PDFDocument(url: pdfFileUrl) else {
-                    print("Error opening PDF file")
-                    return
-                }
-
-                guard
-                    let page = pdfDocument.page(
-                        at: canvasState.currentPageIndex
-                    )
-                else {
-                    print(
-                        "Error: Could not get page at index \(canvasState.currentPageIndex)"
-                    )
-                    return
-                }
-
-                let canvasSnapshot = canvas.frame(
-                    width: pageSize.width,
-                    height: pageSize.height
-                ).snapshot()
-                let pdfImage = page.thumbnail(of: pageSize, for: .mediaBox)
-
-                guard
-                    let combinedImage = combineImages(
-                        baseImage: pdfImage,
-                        overlayImage: canvasSnapshot
-                    )
-                else {
-                    print("Error combining images")
-                    return
-                }
-
-                UIImageWriteToSavedPhotosAlbum(combinedImage, nil, nil, nil)
-            }*/
+            /* Button("Save") {
+                 guard let relativePath = noteFile.pdfFilePath else {
+                     print("Error: PDF file path is nil")
+                     return
+                 }
             
+                 let pdfFileUrl = FileHelper.getAbsoluteProjectPath(
+                     userId: "guest",
+                     relativePath: relativePath
+                 )
+                 guard let pdfFileUrl = pdfFileUrl else {
+                     print("Error: Could not get absolute project path")
+                     return
+                 }
+            
+                 print("Press \(pdfFileUrl)")
+                 guard let pdfDocument = PDFDocument(url: pdfFileUrl) else {
+                     print("Error opening PDF file")
+                     return
+                 }
+            
+                 guard
+                     let page = pdfDocument.page(
+                         at: canvasState.currentPageIndex
+                     )
+                 else {
+                     print(
+                         "Error: Could not get page at index \(canvasState.currentPageIndex)"
+                     )
+                     return
+                 }
+            
+                 let canvasSnapshot = canvas.frame(
+                     width: pageSize.width,
+                     height: pageSize.height
+                 ).snapshot()
+                 let pdfImage = page.thumbnail(of: pageSize, for: .mediaBox)
+            
+                 guard
+                     let combinedImage = combineImages(
+                         baseImage: pdfImage,
+                         overlayImage: canvasSnapshot
+                     )
+                 else {
+                     print("Error combining images")
+                     return
+                 }
+            
+                 UIImageWriteToSavedPhotosAlbum(combinedImage, nil, nil, nil)
+             }*/
+
             HStack {
                 Text("init: \(noteUndoManager.initCanvasStack.count)")
                 Text("Undo: \(noteUndoManager.undoStack.count)")
                 Text("Redo: \(noteUndoManager.redoStack.count)")
+                Text("currentIndex: \(canvasState.currentPageIndex)")
             }
-
 
             ZStack {
                 //For force refresh UI
@@ -312,7 +311,9 @@ struct CanvasView: View {
                             )
                             notePage.canvasWidth = geometry.size.width
                             notePage.canvasHeight = geometry.size.height
-                            imageStack = notePage.canvasStack.compactMap { $0.imageObj }
+                            imageStack = notePage.canvasStack.compactMap {
+                                $0.imageObj
+                            }
                             focusedID = nil
                             isDraggingOver = false
                             exportSnapShot()
@@ -334,7 +335,10 @@ struct CanvasView: View {
                         onTap: { value, noteFile in
                             print("tap")
                             focusedID = nil
-                            handleTap(at: value.startLocation, noteFile: noteFile)
+                            handleTap(
+                                at: value.startLocation,
+                                noteFile: noteFile
+                            )
                         },
                         onTouchMove: { value, noteFile in
                             focusedID = nil
@@ -347,7 +351,10 @@ struct CanvasView: View {
                             if value.translation == .zero {
                                 print("touch1a")
                                 // Handle as a tap gesture
-                                handleTap(at: value.startLocation, noteFile: noteFile)
+                                handleTap(
+                                    at: value.startLocation,
+                                    noteFile: noteFile
+                                )
                             } else {
                                 print("touch1b")
 
@@ -469,7 +476,6 @@ struct CanvasView: View {
                 isDraggingOver = false
 
             }
-           
 
             .gesture(
                 TapGesture(count: 2)  // Double-tap gesture
@@ -478,7 +484,11 @@ struct CanvasView: View {
                     }
             )
             .onAppear {
-                noteUndoManager.addInitialCanvasStack(pageIndex: pageIndex, canvasStack:self.notePage.canvasStack.last ?? CanvasObj(id: UUID(), lineObj: nil, imageObj: nil))
+                noteUndoManager.addInitialCanvasStack(
+                    pageIndex: pageIndex,
+                    canvasStack: self.notePage.canvasStack.last
+                        ?? CanvasObj(id: UUID(), lineObj: nil, imageObj: nil)
+                )
             }
 
         }
@@ -523,31 +533,36 @@ struct CanvasView: View {
 
     func onRemoveImage(id: UUID) {
         // Find the index of the image object to be removed
-           if let index = notePage.canvasStack.firstIndex(where: { $0.imageObj?.id == id }) {
-               guard let pathToRemove = notePage.canvasStack[index].imageObj?.path else {
-                   print("Path not found for the image object")
-                   return
-               }
+        if let index = notePage.canvasStack.firstIndex(where: {
+            $0.imageObj?.id == id
+        }) {
+            guard let pathToRemove = notePage.canvasStack[index].imageObj?.path
+            else {
+                print("Path not found for the image object")
+                return
+            }
 
-               // Check if any other image objects contain the same path
-               let isUniquePath = !notePage.canvasStack.contains(where: { $0.imageObj?.path == pathToRemove && $0.imageObj?.id != id })
+            // Check if any other image objects contain the same path
+            let isUniquePath = !notePage.canvasStack.contains(where: {
+                $0.imageObj?.path == pathToRemove && $0.imageObj?.id != id
+            })
 
-               // If this path is unique (only one image object has it), remove the file
-               if isUniquePath {
-                   removeFile(at: pathToRemove)
-               }
+            // If this path is unique (only one image object has it), remove the file
+            if isUniquePath {
+                removeFile(at: pathToRemove)
+            }
 
-               // Remove the image object from the canvas stack
-               notePage.canvasStack.remove(at: index)
+            // Remove the image object from the canvas stack
+            notePage.canvasStack.remove(at: index)
 
-               // Add the current state of the canvas stack to the undo manager
-               noteUndoManager.addToUndo(
-                   pageIndex: pageIndex,
-                   canvasStack: notePage.canvasStack
-               )
-           }
+            // Add the current state of the canvas stack to the undo manager
+            noteUndoManager.addToUndo(
+                pageIndex: pageIndex,
+                canvasStack: notePage.canvasStack
+            )
+        }
     }
-    
+
     private func removeFile(at path: String) {
         do {
             guard
@@ -560,8 +575,6 @@ struct CanvasView: View {
                 return
             }
 
-            
-            
             try FileManager.default.removeItem(atPath: absolutePath)
             print("File removed at path: \(absolutePath)")
         } catch {
@@ -712,7 +725,7 @@ struct CanvasView: View {
                 }
             })
         }
-        
+
         exportSnapShot()
     }
 
@@ -744,6 +757,10 @@ struct CanvasView: View {
     }
 
     private func handleDrawing(dragValue: CustomDragValue) {
+        DispatchQueue.main.async {
+            print("changed pageIndex: \(pageIndex)")
+            canvasState.setPageIndex(pageIndex)
+        }
         if lastDrawPosition == nil {
             // Start a new stroke when drag begins
             print("First drag detected for a new stroke")
@@ -1072,7 +1089,7 @@ struct CanvasView: View {
 
     private func addImageToStack(image: OriginalImageObj) {
         // Calculate base position
-
+        let pageIndex = canvasState.currentPageIndex
         let basePosition = notePage.pageCenterPoint
         let newPosition = CGPoint(x: basePosition.x, y: basePosition.y)
 
@@ -1097,65 +1114,65 @@ struct CanvasView: View {
             canvasStack: notePage.canvasStack
         )
     }
-    
+
     func exportSnapShot() {
-       /* guard let relativePath = noteFile.pdfFilePath else {
-            print("Error: PDF file path is nil")
-            return
-        }
-
-        let pdfFileUrl = FileHelper.getAbsoluteProjectPath(
-            userId: "guest",
-            relativePath: relativePath
-        )
-        guard let pdfFileUrl = pdfFileUrl else {
-            print("Error: Could not get absolute project path")
-            return
-        }
-
-        print("Press \(pdfFileUrl)")
-        guard let pdfDocument = PDFDocument(url: pdfFileUrl) else {
-            print("Error opening PDF file")
-            return
-        }
-
-        guard
-            let page = pdfDocument.page(
-                at: canvasState.currentPageIndex
-            )
-        else {
-            print(
-                "Error: Could not get page at index \(canvasState.currentPageIndex)"
-            )
-            return
-        }
-
-        let canvasSnapshot = canvas.frame(
-            width: pageSize.width,
-            height: pageSize.height
-        ).snapshot()
-        let pdfImage = page.thumbnail(of: pageSize, for: .mediaBox)
-
+        /* guard let relativePath = noteFile.pdfFilePath else {
+             print("Error: PDF file path is nil")
+             return
+         }
         
-        let imageName = "drawing_\(pageIndex).png"  // Start index from 1 for readability
+         let pdfFileUrl = FileHelper.getAbsoluteProjectPath(
+             userId: "guest",
+             relativePath: relativePath
+         )
+         guard let pdfFileUrl = pdfFileUrl else {
+             print("Error: Could not get absolute project path")
+             return
+         }
         
-        guard
-            let noteThumbnailDirectory = FileHelper.getNoteThumbnailDirectory(
-                userId: "guest",
-                noteId: noteFile.id.uuidString
-            )
-        else {
-            print("Error get note thumbnail directory")
-            return
-        }
-        do {
-            let imageURL = noteThumbnailDirectory.appendingPathComponent(imageName)
-            try canvasSnapshot.pngData()?.write(to: imageURL)
-            print("image saved successfully to \(imageURL)")
-        } catch {
-            print("image saved error \(error)")
-        }
-*/
+         print("Press \(pdfFileUrl)")
+         guard let pdfDocument = PDFDocument(url: pdfFileUrl) else {
+             print("Error opening PDF file")
+             return
+         }
+        
+         guard
+             let page = pdfDocument.page(
+                 at: canvasState.currentPageIndex
+             )
+         else {
+             print(
+                 "Error: Could not get page at index \(canvasState.currentPageIndex)"
+             )
+             return
+         }
+        
+         let canvasSnapshot = canvas.frame(
+             width: pageSize.width,
+             height: pageSize.height
+         ).snapshot()
+         let pdfImage = page.thumbnail(of: pageSize, for: .mediaBox)
+        
+        
+         let imageName = "drawing_\(pageIndex).png"  // Start index from 1 for readability
+        
+         guard
+             let noteThumbnailDirectory = FileHelper.getNoteThumbnailDirectory(
+                 userId: "guest",
+                 noteId: noteFile.id.uuidString
+             )
+         else {
+             print("Error get note thumbnail directory")
+             return
+         }
+         do {
+             let imageURL = noteThumbnailDirectory.appendingPathComponent(imageName)
+             try canvasSnapshot.pngData()?.write(to: imageURL)
+             print("image saved successfully to \(imageURL)")
+         } catch {
+             print("image saved error \(error)")
+         }
+        */
     }
 
 }

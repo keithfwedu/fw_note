@@ -9,8 +9,8 @@ import PDFKit
 import SwiftUI
 
 struct PdfNoteScreen: View {
-    @StateObject private var canvasState = CanvasState()
-    @StateObject private var imageState = ImageState()
+    @StateObject var canvasState = CanvasState()
+    @StateObject var imageState = ImageState()
     @State var noteFile: NoteFile
     @State var noteUndoManager: NoteUndoManager
 
@@ -48,6 +48,7 @@ struct PdfNoteScreen: View {
                         canvasState.showImagePicker = false
                     },
                     imageState: imageState,
+                    canvasState: canvasState,
                     noteUndoManager: noteUndoManager,
                     noteFile: noteFile
                 )
