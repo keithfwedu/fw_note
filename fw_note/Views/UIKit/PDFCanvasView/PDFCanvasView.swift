@@ -33,24 +33,24 @@ struct PDFCanvasView: UIViewRepresentable {
             bottom: 50,
             right: 0
         )
+       // pdfView.setupGestureHandling()
 
         // Access the internal UIScrollView and configure two-finger scrolling
         if let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }
         ) as? UIScrollView {
             scrollView.delegate = context.coordinator
+            scrollView.delaysContentTouches = true
             scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
-            scrollView.delaysContentTouches = false
-
         }
 
         // Add observer for page changes
-        NotificationCenter.default.addObserver(
+        /*NotificationCenter.default.addObserver(
             context.coordinator,
             selector: #selector(context.coordinator.pageDidChange),
             name: Notification.Name.PDFViewPageChanged,
             object: pdfView
-        )
+        )*/
 
         context.coordinator.configure(
             pdfView: pdfView,
@@ -416,7 +416,7 @@ struct PDFCanvasView: UIViewRepresentable {
             ) {
                 let currentPageIndex =
                     pdfView.document?.index(for: currentPage) ?? 0
-                print("Current page index: \(currentPageIndex)")
+               // print("Current page index: \(currentPageIndex)")
 
                 updatePageIndicator(
                     for: pdfView,

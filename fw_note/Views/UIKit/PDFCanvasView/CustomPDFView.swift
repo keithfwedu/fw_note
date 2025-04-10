@@ -33,11 +33,7 @@ class CustomPDFView: PDFView {
             print("Parent is handling multi-touch: \(isMultiTouch)")
 
             // Manage subview gestures
-            self.documentView?.subviews.forEach { subview in
-                if let canvasWrapper = subview as? CanvasViewWrapper {
-                    canvasWrapper.disableGestures(isMultiTouch)
-                }
-            }
+          
         }
 
         self.addGestureRecognizer(gestureRecognizer)
@@ -46,10 +42,25 @@ class CustomPDFView: PDFView {
     @objc private func handleMultiTouch(_ gesture: MultiTouchGestureRecognizer) {
         if gesture.state == .began {
             print("CustomPDFView multi-touch gesture began")
+            self.documentView?.subviews.forEach { subview in
+                if let canvasWrapper = subview as? CanvasViewWrapper {
+                    canvasWrapper.disableGestures(true)
+                }
+            }
         } else if gesture.state == .changed {
             print("CustomPDFView multi-touch gesture changed")
+            self.documentView?.subviews.forEach { subview in
+                if let canvasWrapper = subview as? CanvasViewWrapper {
+                    canvasWrapper.disableGestures(true)
+                }
+            }
         } else if gesture.state == .ended {
             print("CustomPDFView multi-touch gesture ended")
+            self.documentView?.subviews.forEach { subview in
+                if let canvasWrapper = subview as? CanvasViewWrapper {
+                    canvasWrapper.disableGestures(false)
+                }
+            }
         }
     }
 }

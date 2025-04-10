@@ -163,9 +163,6 @@ struct CanvasView: View {
 
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .onAppear {
-                        canvasState.canvasPool[pageIndex] = AnyView(canvas)
-                    }
 
                     .drawingGroup()
                     /* .simultaneousGesture(
@@ -342,66 +339,60 @@ struct CanvasView: View {
                         },
                         onTouchMove: { value, noteFile in
                             focusedID = nil
-                            print("touch1b \(value.type) \(value.translation)")
+                           
                             if value.type == .pencil {
                                 print("touch with pencil")
                             } else {
                                 print("touch with fingers")
                             }
-                            if value.translation == .zero {
-                                print("touch1a")
-                                // Handle as a tap gesture
-                                handleTap(
-                                    at: value.startLocation,
-                                    noteFile: noteFile
-                                )
-                            } else {
-                                print("touch1b")
 
-                                let customValue: CustomDragValue =
-                                    CustomDragValue(
-                                        time: value.time,
-                                        location: value.location,
-                                        startLocation: value
-                                            .startLocation,
-                                        translation: value
-                                            .translation,
-                                        predictedEndTranslation:
-                                            value
-                                            .predictedEndTranslation,
-                                        predictedEndLocation: value
-                                            .predictedEndLocation
-                                    )
-                                // Handle as a drag gesture
-                                handleDragChange(
-                                    dragValue: customValue
+                            print("touch1b")
+
+                            let customValue: CustomDragValue =
+                                CustomDragValue(
+                                    time: value.time,
+                                    location: value.location,
+                                    startLocation: value
+                                        .startLocation,
+                                    translation: value
+                                        .translation,
+                                    predictedEndTranslation:
+                                        value
+                                        .predictedEndTranslation,
+                                    predictedEndLocation: value
+                                        .predictedEndLocation
                                 )
-                            }
+                            // Handle as a drag gesture
+                            handleDragChange(
+                                dragValue: customValue
+                            )
 
                         },
                         onTouchEnd: { value, noteFile in
                             print("touch1 onEnded")
-
                             handleDragEnded()  // Finalize drag action
                         }
 
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(.clear)
-                    ForEach($imageStack) { imageObj in
-                        InteractiveImageView(
-                            imageObj: imageObj,
-                            selectMode: .constant(
-                                canvasState.canvasMode != CanvasMode.lasso
-                            ),  // Avoid binding if it's derived
-                            isFocused: .constant(focusedID == imageObj.id),
-                            frameSize: geometry.size,
-                            onTap: onTapImage,
-                            onRemove: onRemoveImage,
-                            onChanged: onChangeImage,
-                            afterChanged: afterChangeImage
-                        )
-                    }.clipped()
+                   
+                    ZStack {
+                        ForEach($imageStack) { imageObj in
+                            InteractiveImageView(
+                                imageObj: imageObj,
+                                selectMode: .constant(
+                                    canvasState.canvasMode != CanvasMode.lasso
+                                ),  // Avoid binding if it's derived
+                                isFocused: .constant(focusedID == imageObj.id),
+                                frameSize: geometry.size,
+                                onTap: onTapImage,
+                                onRemove: onRemoveImage,
+                                onChanged: onChangeImage,
+                                afterChanged: afterChangeImage
+                            )
+                        }.clipped()
+                    }
                 }
                 .onDrop(
                     of: ["public.image", "com.compuserve.gif"],
@@ -476,7 +467,6 @@ struct CanvasView: View {
                 isDraggingOver = false
 
             }
-
             .gesture(
                 TapGesture(count: 2)  // Double-tap gesture
                     .onEnded {
@@ -484,6 +474,7 @@ struct CanvasView: View {
                     }
             )
             .onAppear {
+                canvasState.canvasPool[pageIndex] = AnyView(canvas)
                 noteUndoManager.addInitialCanvasStack(
                     pageIndex: pageIndex,
                     canvasStack: self.notePage.canvasStack.last

@@ -20,12 +20,14 @@ struct PencilDetectionView: UIViewRepresentable {
             onTap: onTap,
             onTouchMove: onTouchMove,
             onTouchEnd: onTouchEnd)
+        
+        view.isExclusiveTouch  = false
         return view
     }
 
     func updateUIView(_ uiView: PencilTouchDetectingView, context: Context) {}
 
-    class PencilTouchDetectingView: UIView {
+    class PencilTouchDetectingView: UIView, UIGestureRecognizerDelegate {
         @ObservedObject var noteFile: NoteFile
         var onTap: ((TouchData, NoteFile?) -> Void)?
         var onTouchMove: ((TouchData, NoteFile?) -> Void)?
@@ -39,6 +41,8 @@ struct PencilDetectionView: UIViewRepresentable {
             self.onTap = onTap
             self.onTouchMove = onTouchMove
             self.onTouchEnd = onTouchEnd
+            
+          
             super.init(frame: .zero)
         }
         
@@ -47,11 +51,13 @@ struct PencilDetectionView: UIViewRepresentable {
         }
         
         override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+            print("touches.count1 \(touches.count)")
+            if(touches.count > 1) { return }
             guard let touch = touches.first else { return }
             let location = touch.location(in: self)
             startTouchLocation = location
             isTap = true // Assume it's a tap until movement is detected
-
+            
             let touchData = TouchData(
                 type: touch.type,
                 location: location,
@@ -65,6 +71,8 @@ struct PencilDetectionView: UIViewRepresentable {
         }
 
         override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+            print("touches.count2 \(touches.count)")
+            if(touches.count > 1) { return }
             guard let touch = touches.first else { return }
             let location = touch.location(in: self)
             let translation = CGSize(
@@ -90,6 +98,8 @@ struct PencilDetectionView: UIViewRepresentable {
         }
 
         override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+            print("touches.count3 \(touches.count)")
+            if(touches.count > 1) { return }
             guard let touch = touches.first else { return }
             let location = touch.location(in: self)
 
@@ -109,6 +119,21 @@ struct PencilDetectionView: UIViewRepresentable {
                 onTouchEnd?(touchData, noteFile)
             }
         }
+        
+        override func didMoveToSuperview() {
+               super.didMoveToSuperview()
+
+               // Add gesture recognizers for the parent view
+               if let superview = self.superview {
+                   for recognizer in superview.gestureRecognizers ?? [] {
+                       recognizer.delegate = self // Set the delegate to allow simultaneous recognition
+                   }
+               }
+           }
+
+           func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+               return true // Allow child and parent gestures to work simultaneously
+           }
     }
 }
 

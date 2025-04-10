@@ -23,12 +23,15 @@ struct MultiFingerGestureView: UIViewRepresentable {
             target: context.coordinator,
             action: #selector(Coordinator.handlePan(_:)))
         view.addGestureRecognizer(panGesture)
-
+       
         // Add tap gesture recognizer
         let tapGesture = UITapGestureRecognizer(
             target: context.coordinator,
             action: #selector(Coordinator.handleTap(_:)))
         view.addGestureRecognizer(tapGesture)
+        
+        panGesture.maximumNumberOfTouches = 1
+      
 
         return view
     }
@@ -72,6 +75,7 @@ struct MultiFingerGestureView: UIViewRepresentable {
         }
 
         @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
+            print("Pan detected")
             // Existing pan gesture handling code
             let numberOfTouches = gesture.numberOfTouches
             let location = gesture.location(in: gesture.view)
