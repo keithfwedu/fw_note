@@ -522,14 +522,50 @@ struct CanvasView: View {
     }
 
     func onRemoveImage(id: UUID) {
-        if let index = notePage.canvasStack.firstIndex(where: {
-            $0.imageObj?.id == id
-        }) {
-            notePage.canvasStack.remove(at: index)
-            noteUndoManager.addToUndo(
-                pageIndex: pageIndex,
-                canvasStack: notePage.canvasStack
-            )
+        // Find the index of the image object to be removed
+           if let index = notePage.canvasStack.firstIndex(where: { $0.imageObj?.id == id }) {
+               guard let pathToRemove = notePage.canvasStack[index].imageObj?.path else {
+                   print("Path not found for the image object")
+                   return
+               }
+
+               // Check if any other image objects contain the same path
+               let isUniquePath = !notePage.canvasStack.contains(where: { $0.imageObj?.path == pathToRemove && $0.imageObj?.id != id })
+
+               // If this path is unique (only one image object has it), remove the file
+               if isUniquePath {
+                   removeFile(at: pathToRemove)
+               }
+
+               // Remove the image object from the canvas stack
+               notePage.canvasStack.remove(at: index)
+
+               // Add the current state of the canvas stack to the undo manager
+               noteUndoManager.addToUndo(
+                   pageIndex: pageIndex,
+                   canvasStack: notePage.canvasStack
+               )
+           }
+    }
+    
+    private func removeFile(at path: String) {
+        do {
+            guard
+                let absolutePath = FileHelper.getProjectImageFilePath(
+                    imageName: path,
+                    projectId: currentProjectId!
+                )
+            else {
+                print("Error: absolutePath is nil")
+                return
+            }
+
+            
+            
+            try FileManager.default.removeItem(atPath: absolutePath)
+            print("File removed at path: \(absolutePath)")
+        } catch {
+            print("Failed to remove file at path: \(path), error: \(error)")
         }
     }
 
