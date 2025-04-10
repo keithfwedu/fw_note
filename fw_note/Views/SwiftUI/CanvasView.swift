@@ -15,7 +15,9 @@ struct CanvasView: View {
     @ObservedObject var gestureState: GestureState
     @ObservedObject var canvasState: CanvasState
     @ObservedObject var noteFile: NoteFile
+    @ObservedObject var noteUndoManager: NoteUndoManager
     @ObservedObject var notePage: NotePage
+   
 
     //Selected
     @State var selectionPaths: [CGPoint] = []
@@ -267,6 +269,12 @@ struct CanvasView: View {
 
                 UIImageWriteToSavedPhotosAlbum(combinedImage, nil, nil, nil)
             }*/
+            
+            HStack {
+                Text("init: \(noteUndoManager.initCanvasStack.count)")
+                Text("Undo: \(noteUndoManager.undoStack.count)")
+                Text("Redo: \(noteUndoManager.redoStack.count)")
+            }
 
 
             ZStack {
@@ -470,11 +478,7 @@ struct CanvasView: View {
                     }
             )
             .onAppear {
-                noteFile.addToUndo(
-                    pageIndex: self.pageIndex,
-                    canvasStack: self.notePage.canvasStack
-                )
-              
+                noteUndoManager.addInitialCanvasStack(pageIndex: pageIndex, canvasStack:self.notePage.canvasStack.last ?? CanvasObj(id: UUID(), lineObj: nil, imageObj: nil))
             }
 
         }
@@ -522,7 +526,7 @@ struct CanvasView: View {
             $0.imageObj?.id == id
         }) {
             notePage.canvasStack.remove(at: index)
-            noteFile.addToUndo(
+            noteUndoManager.addToUndo(
                 pageIndex: pageIndex,
                 canvasStack: notePage.canvasStack
             )
@@ -545,7 +549,7 @@ struct CanvasView: View {
             print("imageObj - \(imageObj.size)")
             notePage.canvasStack[index].imageObj = imageObj
 
-            noteFile.addToUndo(
+            noteUndoManager.addToUndo(
                 pageIndex: self.pageIndex,
                 canvasStack: notePage.canvasStack
             )
@@ -621,7 +625,7 @@ struct CanvasView: View {
             lastDragPosition = nil
             canvasState.timerManager.cancelHoldTimer()
             if self.isTapImage == false {
-                noteFile.addToUndo(
+                noteUndoManager.addToUndo(
                     pageIndex: pageIndex,
                     canvasStack: self.notePage.canvasStack
                 )
@@ -631,7 +635,7 @@ struct CanvasView: View {
             }
         case .eraser:  // Erase Mode
             lastDragPosition = nil
-            noteFile.addToUndo(
+            noteUndoManager.addToUndo(
                 pageIndex: pageIndex,
                 canvasStack: self.notePage.canvasStack
             )
@@ -1052,7 +1056,7 @@ struct CanvasView: View {
         )
 
         // Add the operation to the undo stack
-        noteFile.addToUndo(
+        noteUndoManager.addToUndo(
             pageIndex: pageIndex,
             canvasStack: notePage.canvasStack
         )

@@ -11,6 +11,7 @@ import PDFKit
 struct CanvasToolBar: View {
     @StateObject var noteFile: NoteFile
     @StateObject var canvasState: CanvasState
+    @ObservedObject var noteUndoManager: NoteUndoManager
 
     var body: some View {
         HStack {
@@ -233,11 +234,11 @@ struct CanvasToolBar: View {
     }
     func undoAction() {
         print("undoAction")
-        noteFile.undo()
+        noteUndoManager.undo()
     }
     func redoAction() {
         print("redoAction")
-        noteFile.redo()
+        noteUndoManager.redo()
     }
 
     func toggleDisplayDirection() {

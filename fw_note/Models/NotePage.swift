@@ -16,6 +16,7 @@ class NotePage: Identifiable, Codable, ObservableObject {
     @Published var pageIndex: Int
     @Published var canvasStack: [CanvasObj] = []
     
+    
 
     init(pageIndex: Int) {
         print("pageIndex: \(pageIndex)")

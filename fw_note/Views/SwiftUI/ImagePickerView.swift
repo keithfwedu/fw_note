@@ -12,6 +12,7 @@ struct ImagePickerView: View {
     @ObservedObject var noteFile: NoteFile
     @ObservedObject var imageState: ImageState
     @ObservedObject var canvasState: CanvasState
+    @ObservedObject var noteUndoManager: NoteUndoManager
 
     @State private var images: [UIImage] = []
     @State private var isShowingImagePicker = false
@@ -228,7 +229,7 @@ struct ImagePickerView: View {
             newCanvasObj)
 
         // Add the operation to the undo stack
-        noteFile.addToUndo(
+        noteUndoManager.addToUndo(
             pageIndex: pageIndex,
             canvasStack: page.canvasStack
         )

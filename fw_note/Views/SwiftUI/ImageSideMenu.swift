@@ -13,6 +13,8 @@ struct ImageSideMenu: View {
     
     @StateObject var imageState: ImageState
     @StateObject private var canvasState = CanvasState()
+    @StateObject var noteUndoManager: NoteUndoManager
+   
     @State var noteFile: NoteFile
 
     var body: some View {
@@ -24,6 +26,7 @@ struct ImageSideMenu: View {
                         noteFile: noteFile,
                         imageState: imageState,
                         canvasState: canvasState,
+                        noteUndoManager: noteUndoManager,
                         onClose: menuClose
                     )
                     .frame(width: self.width)

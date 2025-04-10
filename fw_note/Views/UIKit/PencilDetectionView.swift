@@ -61,7 +61,7 @@ struct PencilDetectionView: UIViewRepresentable {
                 predictedEndTranslation: .zero,
                 time: Date()
             )
-            onTap?(touchData, noteFile ?? nil) // Optionally handle the tap in touchesBegan
+            onTap?(touchData, noteFile) // Optionally handle the tap in touchesBegan
         }
 
         override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -86,7 +86,7 @@ struct PencilDetectionView: UIViewRepresentable {
                 predictedEndTranslation: .zero,
                 time: Date()
             )
-            onTouchMove?(touchData, noteFile ?? nil)
+            onTouchMove?(touchData, noteFile)
         }
 
         override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -104,9 +104,9 @@ struct PencilDetectionView: UIViewRepresentable {
             )
 
             if isTap {
-                onTap?(touchData, noteFile ?? nil)
+                onTap?(touchData, noteFile)
             } else {
-                onTouchEnd?(touchData, noteFile ?? nil)
+                onTouchEnd?(touchData, noteFile)
             }
         }
     }

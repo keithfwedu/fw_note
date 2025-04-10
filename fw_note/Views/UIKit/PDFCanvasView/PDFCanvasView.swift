@@ -13,6 +13,7 @@ struct PDFCanvasView: UIViewRepresentable {
     var imageState: ImageState
     var canvasState: CanvasState
     var noteFile: NoteFile
+    var noteUndoManager: NoteUndoManager
     var pdfView: CustomPDFView = CustomPDFView()
 
     @Binding var displayDirection: PDFDisplayDirection  // Bindable property to change display direction
@@ -121,8 +122,10 @@ struct PDFCanvasView: UIViewRepresentable {
             pdfView: pdfView,
             pdfDocument: pdfDocument,
             noteFile: noteFile,
+            noteUndoManager: noteUndoManager,
             imageState: imageState,
             canvasState: canvasState
+            
         )
     }
 
@@ -133,6 +136,7 @@ struct PDFCanvasView: UIViewRepresentable {
         private var imageState: ImageState
         private var canvasState: CanvasState
         var noteFile: NoteFile
+        var noteUndoManager: NoteUndoManager
         var pageIndicatorLabel: UILabel?  // Page indicator label to show current/total pages
         var scaleFactor: CGFloat = 1.0
         var displayDirection: PDFDisplayDirection = .vertical
@@ -142,11 +146,13 @@ struct PDFCanvasView: UIViewRepresentable {
             pdfView: CustomPDFView,
             pdfDocument: PDFDocument,
             noteFile: NoteFile,
+        noteUndoManager: NoteUndoManager,
             imageState: ImageState,
             canvasState: CanvasState
         ) {
             self.pdfDocument = pdfDocument
             self.noteFile = noteFile
+            self.noteUndoManager = noteUndoManager
             self.imageState = imageState
             self.canvasState = canvasState
             self.pdfView = pdfView
@@ -278,6 +284,7 @@ struct PDFCanvasView: UIViewRepresentable {
                     imageState: imageState,
                     canvasState: canvasState,
                     noteFile: noteFile,
+                    noteUndoManager: noteUndoManager,
                     notePage: noteFile.notePages[pageIndex],
                     onDoubleTap: {
                         self.animateZoomAndScroll(

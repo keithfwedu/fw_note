@@ -26,7 +26,7 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
         gestureState.areGesturesEnabled = !isDisabled  // Toggle gesture state dynamically
     }
 
-    init(frame: CGRect, pageIndex: Int, pdfView: CustomPDFView, imageState: ImageState, canvasState: CanvasState, noteFile: NoteFile, notePage: NotePage, onDoubleTap: (() -> Void)? = nil) {
+    init(frame: CGRect, pageIndex: Int, pdfView: CustomPDFView, imageState: ImageState, canvasState: CanvasState, noteFile: NoteFile, noteUndoManager:NoteUndoManager, notePage: NotePage, onDoubleTap: (() -> Void)? = nil) {
         self.pageIndex = pageIndex
         self.pdfView = pdfView
         self.onDoubleTap = onDoubleTap
@@ -41,6 +41,7 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
             gestureState: gestureState,
             canvasState: canvasState,
             noteFile: noteFile,
+            noteUndoManager: noteUndoManager,
             notePage: notePage,
             onDoubleTap: { [weak self] in
                             self?.onDoubleTap?() // Call onDoubleTap from CanvasView
