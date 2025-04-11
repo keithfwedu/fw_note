@@ -9,7 +9,7 @@ import SwiftUI
 class EraseHelper {
     static func eraseLineObjs(
         canvasStack: [CanvasObj],
-        dragValue: CustomDragValue,
+        dragValue: TouchData,
         eraserRadius: CGFloat = 8
     ) -> [CanvasObj] {
         let adjustedLocation = dragValue.location
@@ -49,7 +49,7 @@ class EraseHelper {
 
     static func eraseLines(
         canvasStack: [CanvasObj],
-        dragValue: CustomDragValue,
+        dragValue: TouchData,
         eraserRadius: CGFloat = 8
     ) -> [CanvasObj] {
         let adjustedLocation = dragValue.location

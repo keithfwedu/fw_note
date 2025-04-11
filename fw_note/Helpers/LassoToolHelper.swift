@@ -86,7 +86,7 @@ class LassoToolHelper {
     }
     
     static func getCenterTranslation(
-        dragValue: CustomDragValue,
+        dragValue: TouchData,
         imageStack: [ImageObj],
         selectedLines: [LineObj],
         selectedImages: [UUID]

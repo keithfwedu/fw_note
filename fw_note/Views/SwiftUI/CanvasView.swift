@@ -359,17 +359,16 @@ struct CanvasView: View {
                         .allowsHitTesting(false)  // Toggle interaction
                        
                     // Pencil Detection View as overlay
-                    PencilDetectionView(
-                        noteFile: noteFile,
-                        onTap: { value, noteFile in
-                            print("tap")
+                   PencilDetectionView(
+                        onTap: { value in
+                           
                             focusedID = nil
                             handleTap(
                                 at: value.startLocation,
                                 noteFile: noteFile
                             )
                         },
-                        onTouchMove: { value, noteFile in
+                        onTouchBegin: { value in
                             focusedID = nil
                            
                             if value.type == .pencil {
@@ -377,32 +376,27 @@ struct CanvasView: View {
                             } else {
                                 print("touch with fingers")
                             }
-
-                            print("touch1b")
-
-                            let customValue: CustomDragValue =
-                                CustomDragValue(
-                                    time: value.time,
-                                    location: value.location,
-                                    startLocation: value
-                                        .startLocation,
-                                    translation: value
-                                        .translation,
-                                    predictedEndTranslation:
-                                        value
-                                        .predictedEndTranslation,
-                                    predictedEndLocation: value
-                                        .predictedEndLocation
-                                )
-                            // Handle as a drag gesture
-                            handleDragChange(
-                                dragValue: customValue
+                            
+                            handleDragBegin(
+                                dragValue: value
                             )
-
                         },
-                        onTouchEnd: { value, noteFile in
-                            print("touch1 onEnded")
-                            handleDragEnded()  // Finalize drag action
+                        onTouchMove: { value in
+                           handleDragChange(
+                                dragValue: value,
+                                callback: {}
+                            )
+                        },
+                        onTouchEnd: { value in
+                          handleDragChange(
+                                dragValue: value,
+                                callback: {
+                                    handleDragEnded()
+                                }
+                            )
+                        },
+                        onTouchCancel: {
+                           handleDragEnded()
                         }
 
                     )
@@ -622,8 +616,25 @@ struct CanvasView: View {
             resetSelection()
         }
     }
+    
+    private func handleDragBegin(dragValue: TouchData) {
+        self.isTouching = true
+        self.isTapImage = false
+        self.touchPoint = dragValue.location
 
-    private func handleDragChange(dragValue: CustomDragValue) {
+        switch canvasState.canvasMode {
+        case .draw:  // Draw Mode
+            handleBeginDrawing(dragValue: dragValue)
+        case .eraser:  // Erase Mode
+            break
+        case .lasso:  // Select Mode
+            break
+        case .laser:  // Laser Mode
+            break
+        }
+    }
+
+    private func handleDragChange(dragValue: TouchData, callback: nil) {
         self.isTouching = true
         self.isTapImage = false
         self.touchPoint = dragValue.location
@@ -732,26 +743,25 @@ struct CanvasView: View {
         let lineStack = notePage.canvasStack.compactMap { $0.lineObj }
         return lineStack.first(where: { $0.id == drawingLineID })
     }
+    
+    private func handleBeginDrawing(dragValue: TouchData) {
+        print("changed pageIndex: \(pageIndex)")
+        canvasState.setPageIndex(pageIndex)
+        print("First drag detected for a new stroke")
+        let newLineObj = LineObj(
+            color: canvasState.penColor,
+            points: [dragValue.location],
+            lineWidth: canvasState.penSize,
+            mode: .draw
+        )
 
-    private func handleDrawing(dragValue: CustomDragValue) {
-        DispatchQueue.main.async {
-            print("changed pageIndex: \(pageIndex)")
-            canvasState.setPageIndex(pageIndex)
-        }
-        if lastDrawPosition == nil {
-            // Start a new stroke when drag begins
-            print("First drag detected for a new stroke")
-            let newLineObj = LineObj(
-                color: canvasState.penColor,
-                points: [dragValue.location],
-                lineWidth: canvasState.penSize,
-                mode: .draw
-            )
+        let newCanvasObj = CanvasObj(lineObj: newLineObj, imageObj: nil)
+        notePage.canvasStack.append(newCanvasObj)  // Add a new line
+        currentDrawingLineID = newLineObj.id
+    }
 
-            let newCanvasObj = CanvasObj(lineObj: newLineObj, imageObj: nil)
-            notePage.canvasStack.append(newCanvasObj)  // Add a new line
-            currentDrawingLineID = newLineObj.id
-        } else {
+    private func handleDrawing(dragValue: TouchData, callback: (() -> Void)?) {
+        
             // Add points to the current stroke
             print("drag detected for a new stroke2")
             if let lastCanvasWithLine = notePage.canvasStack.last(where: {
@@ -770,7 +780,7 @@ struct CanvasView: View {
                         contentsOf: interpolatedPoints
                     )
                 }
-            }
+          
         }
 
         // Update hold detection logic for the latest position
@@ -795,6 +805,8 @@ struct CanvasView: View {
         } else {
             lastDrawPosition = dragValue.location
         }
+        
+       
     }
 
     private func processLineForTransformation(_ line: LineObj) {
@@ -832,7 +844,7 @@ struct CanvasView: View {
         }
     }
 
-    private func handleLaser(dragValue: CustomDragValue) {
+    private func handleLaser(dragValue: TouchData) {
         isLaserCreated = true
         if lastDrawLaserPosition == nil {
             // Start a new stroke when drag begins
@@ -862,7 +874,7 @@ struct CanvasView: View {
         lastDrawLaserPosition = dragValue.location
     }
 
-    private func handleErasing(dragValue: CustomDragValue) {
+    private func handleErasing(dragValue: TouchData) {
         if canvasState.eraseMode == EraseMode.whole {
             // Whole-line erasing: Remove entire CanvasObj if lineObj is erased
             notePage.canvasStack = EraseHelper.eraseLineObjs(
@@ -880,7 +892,7 @@ struct CanvasView: View {
         }
     }
 
-    private func handleSelection(dragValue: CustomDragValue) {
+    private func handleSelection(dragValue: TouchData) {
         let imageStack = notePage.canvasStack.compactMap { $0.imageObj }
         let hasSelectedItems: Bool =
             !selectedLineStack.isEmpty

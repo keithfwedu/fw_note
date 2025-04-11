@@ -9,59 +9,67 @@ import SwiftUI
 import UIKit
 
 struct PencilDetectionView: UIViewRepresentable {
-    @ObservedObject var noteFile: NoteFile
-    var onTap: (TouchData, NoteFile?) -> Void
-    var onTouchMove: (TouchData, NoteFile?) -> Void
-    var onTouchEnd: (TouchData, NoteFile?) -> Void
+    var onTap: (TouchData) -> Void
+    var onTouchBegin: (TouchData) -> Void
+    var onTouchMove: (TouchData) -> Void
+    var onTouchEnd: (TouchData) -> Void
+    var onTouchCancel: () -> Void
 
     func makeUIView(context: Context) -> PencilTouchDetectingView {
         let view = PencilTouchDetectingView(
-            noteFile: noteFile,
             onTap: onTap,
+            onTouchBegin: onTouchBegin,
             onTouchMove: onTouchMove,
-            onTouchEnd: onTouchEnd)
-       
-      
-        //view.isMultipleTouchEnabled = true
+            onTouchEnd: onTouchEnd,
+            onTouchCancel: onTouchCancel
+        )
+
         return view
     }
 
     func updateUIView(_ uiView: PencilTouchDetectingView, context: Context) {}
 
     class PencilTouchDetectingView: UIView, UIGestureRecognizerDelegate {
-        @ObservedObject var noteFile: NoteFile
-        var onTap: ((TouchData, NoteFile?) -> Void)?
-        var onTouchMove: ((TouchData, NoteFile?) -> Void)?
-        var onTouchEnd: ((TouchData, NoteFile?) -> Void)?
+
+        var onTap: ((TouchData) -> Void)?
+        var onTouchBegin: ((TouchData) -> Void)?
+        var onTouchMove: ((TouchData) -> Void)?
+        var onTouchEnd: ((TouchData) -> Void)?
+        var onTouchCancel: (() -> Void)?
 
         private var startTouchLocation: CGPoint = .zero
         private var isTap: Bool = true
-        
-        init(noteFile: NoteFile, onTap: ((TouchData, NoteFile?) -> Void)? = nil, onTouchMove: ((TouchData, NoteFile?) -> Void)? = nil, onTouchEnd: ((TouchData, NoteFile?) -> Void)? = nil) {
-            self.noteFile = noteFile
+
+        init(
+            onTap: ((TouchData) -> Void)? = nil,
+            onTouchBegin: ((TouchData) -> Void)? = nil,
+            onTouchMove: ((TouchData) -> Void)? = nil,
+            onTouchEnd: ((TouchData) -> Void)? = nil,
+            onTouchCancel: (() -> Void)? = nil
+        ) {
+            super.init(frame: .zero)
+
             self.onTap = onTap
+            self.onTouchBegin = onTouchBegin
             self.onTouchMove = onTouchMove
             self.onTouchEnd = onTouchEnd
-            
-          
-            super.init(frame: .zero)
+            self.onTouchCancel = onTouchCancel
         }
-        
+
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
         }
-        
-        
-        override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-            print("touches.count1 \(touches.count)")
-            
-            
-            if(touches.count > 1) { return }
+
+        override func touchesBegan(
+            _ touches: Set<UITouch>,
+            with event: UIEvent?
+        ) {
+            if touches.count > 1 { return }
             guard let touch = touches.first else { return }
+
             let location = touch.location(in: self)
             startTouchLocation = location
-            isTap = true // Assume it's a tap until movement is detected
-            
+
             let touchData = TouchData(
                 type: touch.type,
                 location: location,
@@ -71,23 +79,21 @@ struct PencilDetectionView: UIViewRepresentable {
                 predictedEndTranslation: .zero,
                 time: Date()
             )
-            onTap?(touchData, noteFile) // Optionally handle the tap in touchesBegan
+            onTouchBegin?(touchData)  // Optionally handle the tap in touchesBegan
         }
 
-        override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-            print("touches.count2 \(touches.count)")
-            if(touches.count > 1) { return }
+        override func touchesMoved(
+            _ touches: Set<UITouch>,
+            with event: UIEvent?
+        ) {
+            if touches.count > 1 { return }
             guard let touch = touches.first else { return }
+
             let location = touch.location(in: self)
             let translation = CGSize(
                 width: location.x - startTouchLocation.x,
                 height: location.y - startTouchLocation.y
             )
-
-            // Detect significant movement, making it not a tap
-            if abs(translation.width) > 10 || abs(translation.height) > 10 {
-                isTap = false
-            }
 
             let touchData = TouchData(
                 type: touch.type,
@@ -98,46 +104,68 @@ struct PencilDetectionView: UIViewRepresentable {
                 predictedEndTranslation: .zero,
                 time: Date()
             )
-            onTouchMove?(touchData, noteFile)
+            onTouchMove?(touchData)
         }
 
-        override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-            print("touches.count3 \(touches.count)")
-            if(touches.count > 1) { return }
+        override func touchesEnded(
+            _ touches: Set<UITouch>,
+            with event: UIEvent?
+        ) {
+            if touches.count > 1 { return }
             guard let touch = touches.first else { return }
+
             let location = touch.location(in: self)
+            let translation = CGSize(
+                width: location.x - startTouchLocation.x,
+                height: location.y - startTouchLocation.y
+            )
 
             let touchData = TouchData(
                 type: touch.type,
                 location: location,
                 startLocation: startTouchLocation,
-                translation: .zero,
+                translation: translation,
                 predictedEndLocation: location,
                 predictedEndTranslation: .zero,
                 time: Date()
             )
 
+            // Detect significant movement, making it not a tap
+            isTap =
+                !(abs(translation.width) > 10 || abs(translation.height) > 10)
+
             if isTap {
-                onTap?(touchData, noteFile)
+                onTap?(touchData)
             } else {
-                onTouchEnd?(touchData, noteFile)
+                onTouchEnd?(touchData)
             }
         }
-        
+
+        override func touchesCancelled(
+            _ touches: Set<UITouch>?,
+            with event: UIEvent?
+        ) {
+            onTouchCancel?()
+        }
+
         override func didMoveToSuperview() {
-               super.didMoveToSuperview()
+            super.didMoveToSuperview()
 
-               // Add gesture recognizers for the parent view
-               if let superview = self.superview {
-                   for recognizer in superview.gestureRecognizers ?? [] {
-                       recognizer.delegate = self // Set the delegate to allow simultaneous recognition
-                   }
-               }
-           }
+            // Add gesture recognizers for the parent view
+            if let superview = self.superview {
+                for recognizer in superview.gestureRecognizers ?? [] {
+                    recognizer.delegate = self  // Set the delegate to allow simultaneous recognition
+                }
+            }
+        }
 
-           func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-               return true // Allow child and parent gestures to work simultaneously
-           }
+        func gestureRecognizer(
+            _ gestureRecognizer: UIGestureRecognizer,
+            shouldRecognizeSimultaneouslyWith otherGestureRecognizer:
+                UIGestureRecognizer
+        ) -> Bool {
+            return true  // Allow child and parent gestures to work simultaneously
+        }
     }
 }
 
