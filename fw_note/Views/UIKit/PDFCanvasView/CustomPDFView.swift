@@ -27,7 +27,7 @@ class CustomPDFView: PDFView {
         gestureRecognizer.delegate = gestureRecognizer
 
         gestureRecognizer.multiTouchHandler = { [weak self] isMultiTouch in
-            guard let self = self else { return }
+            //guard let self = self else { return }
 
             // Parent-specific action for multi-touch handling
             print("Parent is handling multi-touch: \(isMultiTouch)")

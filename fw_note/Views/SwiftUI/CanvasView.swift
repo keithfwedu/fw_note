@@ -311,12 +311,12 @@ struct CanvasView: View {
                  UIImageWriteToSavedPhotosAlbum(combinedImage, nil, nil, nil)
              }*/
 
-            HStack {
+            /* HStack {
                 Text("init: \(noteUndoManager.initCanvasStack.count)")
                 Text("Undo: \(noteUndoManager.undoStack.count)")
                 Text("Redo: \(noteUndoManager.redoStack.count)")
                 Text("currentIndex: \(canvasState.currentPageIndex)")
-            }
+            }*/
 
             ZStack {
                 //For force refresh UI

@@ -19,7 +19,7 @@ struct PDFCanvasView: UIViewRepresentable {
     @Binding var displayDirection: PDFDisplayDirection  // Bindable property to change display direction
 
     func makeUIView(context: Context) -> CustomPDFView {
-
+       
         pdfView.document = pdfDocument
         pdfView.autoScales = false
         pdfView.displayMode = .singlePageContinuous
@@ -33,7 +33,6 @@ struct PDFCanvasView: UIViewRepresentable {
             bottom: 50,
             right: 0
         )
-       // pdfView.setupGestureHandling()
 
         // Access the internal UIScrollView and configure two-finger scrolling
         if let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }
@@ -44,28 +43,21 @@ struct PDFCanvasView: UIViewRepresentable {
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
         }
 
-        // Add observer for page changes
-        /*NotificationCenter.default.addObserver(
-            context.coordinator,
-            selector: #selector(context.coordinator.pageDidChange),
-            name: Notification.Name.PDFViewPageChanged,
-            object: pdfView
-        )*/
-
         context.coordinator.configure(
             pdfView: pdfView,
             displayDirection: displayDirection
         )  // Pass PDFView to the Coordinator
 
         // Add canvases as annotations to each page
-   context.coordinator.addCanvasesToPages(
+        context.coordinator.addCanvasesToPages(
             pdfView: pdfView,
-            displayDirection: displayDirection
+            displayDirection:displayDirection
         )
-        setPageBreakMargins(pdfView: pdfView)
+       
         // Add page information (Current Page / Total Pages)
         context.coordinator.addPageIndicator(to: pdfView)
-
+     
+        
         return pdfView
     }
 
@@ -74,18 +66,15 @@ struct PDFCanvasView: UIViewRepresentable {
         if uiView.displayDirection != displayDirection {
             uiView.displayDirection = displayDirection
             uiView.scaleFactor = 1.0
-       //     uiView.layoutDocumentView()
-
-         //   setPageBreakMargins(pdfView: uiView)
-
+            setPageBreakMargins(pdfView: uiView)
             context.coordinator.addCanvasesToPages(
                 pdfView: uiView,
-                displayDirection: displayDirection
+                displayDirection: pdfView.displayDirection
             )
-
-            //uiView.layoutDocumentView()
+           
         }
-
+        
+        uiView.layoutDocumentView()
     }
 
     func setPageBreakMargins(pdfView: CustomPDFView) {
@@ -176,7 +165,7 @@ struct PDFCanvasView: UIViewRepresentable {
             self.displayDirection = displayDirection
         }
 
-       func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+        func viewForZooming(in scrollView: UIScrollView) -> UIView? {
             return scrollView.subviews.first  // Assume first subview is the content
         }
 
@@ -238,12 +227,30 @@ struct PDFCanvasView: UIViewRepresentable {
                 // Scroll to center of the tapped page
                 let offset = CGPoint(
                     x: frame.minX - pdfView.pageBreakMargins.left,
-                    y: frame.minY - pdfView.pageBreakMargins.top
+                    y: frame.minY
+                        + (pdfView.displayDirection == .vertical
+                            ? pdfView.pageBreakMargins.top
+                                + pdfView.pageBreakMargins.bottom
+                            : pdfView.pageBreakMargins.top)
                 )
-                let pdfPoint = pdfView.convert(offset, from: scrollView)
+
+                let pdfPoint = scrollView.convert(offset, to: pdfView)
+
                 if let newPage = pdfView.page(for: pdfPoint, nearest: true) {
+                    // Adjust content offset based on display direction
+
                     scrollView.setContentOffset(offset, animated: true)
+
                     pdfView.go(to: newPage)
+
+                    let currentPageIndex =
+                        pdfView.document?.index(for: newPage) ?? 0
+                    print("Current page index: \(currentPageIndex)")
+
+                    updatePageIndicator(
+                        for: pdfView,
+                        currentPageIndex: currentPageIndex
+                    )
                 }
 
             }
@@ -382,19 +389,11 @@ struct PDFCanvasView: UIViewRepresentable {
 
         }
 
-        /* @objc func pageDidChange(notification: Notification) {
-             print("page did change")
-             guard let pdfView = notification.object as? PDFView else { return }
-             updatePageIndicator(for: pdfView, currentPageIndex: nil)
-        
-         }
-
         func scrollViewDidZoom(_ scrollView: UIScrollView) {
             guard let pdfView = pdfView else { return }
-           
-
-           
-        }*/
+            let newScaleFactor = pdfView.scaleFactor
+            self.togglePageIndicatorLabel(newScaleFactor > 0.8)
+        }
 
         func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
             guard let pdfView = pdfView else { return }
@@ -417,7 +416,7 @@ struct PDFCanvasView: UIViewRepresentable {
             ) {
                 let currentPageIndex =
                     pdfView.document?.index(for: currentPage) ?? 0
-               // print("Current page index: \(currentPageIndex)")
+                print("Current page index: \(currentPageIndex)")
 
                 updatePageIndicator(
                     for: pdfView,
