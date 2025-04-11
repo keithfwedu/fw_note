@@ -58,7 +58,7 @@ struct PDFCanvasView: UIViewRepresentable {
         )  // Pass PDFView to the Coordinator
 
         // Add canvases as annotations to each page
-        context.coordinator.addCanvasesToPages(
+   context.coordinator.addCanvasesToPages(
             pdfView: pdfView,
             displayDirection: displayDirection
         )
@@ -74,16 +74,16 @@ struct PDFCanvasView: UIViewRepresentable {
         if uiView.displayDirection != displayDirection {
             uiView.displayDirection = displayDirection
             uiView.scaleFactor = 1.0
-            uiView.layoutDocumentView()
+       //     uiView.layoutDocumentView()
 
-            setPageBreakMargins(pdfView: uiView)
+         //   setPageBreakMargins(pdfView: uiView)
 
             context.coordinator.addCanvasesToPages(
                 pdfView: uiView,
                 displayDirection: displayDirection
             )
 
-            uiView.layoutDocumentView()
+            //uiView.layoutDocumentView()
         }
 
     }
@@ -176,7 +176,7 @@ struct PDFCanvasView: UIViewRepresentable {
             self.displayDirection = displayDirection
         }
 
-        func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+       func viewForZooming(in scrollView: UIScrollView) -> UIView? {
             return scrollView.subviews.first  // Assume first subview is the content
         }
 
@@ -279,7 +279,7 @@ struct PDFCanvasView: UIViewRepresentable {
                     "Adjusted Page Frame for First Page: \(pageIndex) - \(normalizedPageFrame)"
                 )
 
-                pdfView.layoutDocumentView()
+                // pdfView.layoutDocumentView()
 
                 let canvasViewWrapper = CanvasViewWrapper(
                     frame: normalizedPageFrame,
@@ -387,18 +387,19 @@ struct PDFCanvasView: UIViewRepresentable {
              guard let pdfView = notification.object as? PDFView else { return }
              updatePageIndicator(for: pdfView, currentPageIndex: nil)
         
-         }*/
+         }
 
         func scrollViewDidZoom(_ scrollView: UIScrollView) {
             guard let pdfView = pdfView else { return }
-            let newScaleFactor = pdfView.scaleFactor
+           
 
-            self.togglePageIndicatorLabel(newScaleFactor > 0.8)
-        }
+           
+        }*/
 
-        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
             guard let pdfView = pdfView else { return }
-
+            let newScaleFactor = pdfView.scaleFactor
+            self.togglePageIndicatorLabel(newScaleFactor > 0.8)
             // Convert the visible center point to PDFView's coordinate space
             let visibleCenter = CGPoint(
                 x: scrollView.contentOffset.x + scrollView.bounds.width / 2,

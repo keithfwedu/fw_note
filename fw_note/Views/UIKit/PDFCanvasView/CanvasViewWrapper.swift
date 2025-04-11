@@ -38,7 +38,7 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
                 self.handleGesture(scale: scale, translation: translation)
             },
             imageState: imageState,
-            gestureState: gestureState,
+            //gestureState: gestureState,
             canvasState: canvasState,
             noteFile: noteFile,
             noteUndoManager: noteUndoManager,

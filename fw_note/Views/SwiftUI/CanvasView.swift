@@ -12,7 +12,7 @@ struct CanvasView: View {
     let pageIndex: Int
     var onGesture: ((CGFloat, CGSize) -> Void)?
     @ObservedObject var imageState: ImageState
-    @ObservedObject var gestureState: GestureState
+  
     @ObservedObject var canvasState: CanvasState
     @ObservedObject var noteFile: NoteFile
     @ObservedObject var noteUndoManager: NoteUndoManager
@@ -55,12 +55,12 @@ struct CanvasView: View {
     }
 
     var canvas: some View {
-        GeometryReader { geometry in
+      
             ScrollView(axes, showsIndicators: false) {
-                VStack {
+             
                     Canvas { context, size in
 
-                        for canvasObj in notePage.canvasStack {
+                       for canvasObj in notePage.canvasStack {
                             if let imageObj = canvasObj.imageObj {
                                 if !imageObj.isAnimatedGIF,
                                     let cgImage = imageObj.cgImage
@@ -68,7 +68,6 @@ struct CanvasView: View {
 
                                     // Existing logic for static images
                                     context.withCGContext { cgContext in
-
                                         cgContext.saveGState()
 
                                         cgContext.translateBy(
@@ -98,7 +97,6 @@ struct CanvasView: View {
 
                             // Handle LineObj
                             if let line = canvasObj.lineObj {
-
                                 let path = PathHelper.createStableCurvedPath(
                                     points: line.points,
                                     maxOffsetForAverage: 4.5
@@ -160,10 +158,61 @@ struct CanvasView: View {
                                 style: StrokeStyle(lineWidth: 2, dash: [5, 5])
                             )
                         }
+                        
+                        for laser in laserStack {
+                            // Create the path for the laser points
+                            var path = PathHelper.createStableCurvedPath(
+                                points: laser.points,
+                                maxOffsetForAverage: 4.5
+                            )
+
+                            // Smooth the path (if needed)
+                            path = path.strokedPath(
+                                StrokeStyle(
+                                    lineWidth: 1,
+                                    lineCap: .round,
+                                    lineJoin: .round
+                                )
+                            )
+
+                            // Simulate the blur effect by layering strokes with varying opacities and line widths
+                            let blurLevels = [
+                                (opacity: 0.1, lineWidth: 15),
+                                (opacity: 0.2, lineWidth: 12),
+                                (opacity: 0.4, lineWidth: 9),
+                                (opacity: 0.6, lineWidth: 6),
+                            ]
+
+                            for blur in blurLevels {
+                                context.stroke(
+                                    path,
+                                    with: .color(
+                                        Color.red.opacity(
+                                            laserOpacity > blur.opacity
+                                                ? blur.opacity : laserOpacity
+                                        )
+                                    ),  // Fading outwards
+                                    style: StrokeStyle(
+                                        lineWidth: CGFloat(blur.lineWidth),
+                                        lineCap: .round,
+                                        lineJoin: .round
+                                    )
+                                )
+                            }
+
+                            // Render the core white laser beam
+                            context.stroke(
+                                path,
+                                with: .color(.white.opacity(laserOpacity)),
+                                style: StrokeStyle(
+                                    lineWidth: 3,
+                                    lineCap: .round,
+                                    lineJoin: .round
+                                )
+                            )
+                        }
 
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-
                     .drawingGroup()
                     /* .simultaneousGesture(
                          gestureState.areGesturesEnabled
@@ -205,11 +254,7 @@ struct CanvasView: View {
                                      handleDragEnded()  // Finalize drag action
                                  } : nil
                      )*/
-                }.frame(
-                    width: geometry.size.width,
-                    height: geometry.size.height
-                )
-            }.frame(width: geometry.size.width, height: geometry.size.height)
+
         }
     }
 
@@ -293,12 +338,8 @@ struct CanvasView: View {
                 GeometryReader { geometry in
 
                     canvas
-                        .frame(
-                            width: geometry.size.width,
-                            height: geometry.size.height
-                        )
-                        .border(.red, width: 1)
-                        .onAppear {
+                    // .border(.red, width: 1)
+                      .onAppear {
                             currentProjectId = noteFile.id
                             pageSize = geometry.size
                             redrawTrigger.toggle()
@@ -315,17 +356,8 @@ struct CanvasView: View {
                             isDraggingOver = false
                             exportSnapShot()
                         }
-                        .allowsHitTesting(gestureState.areGesturesEnabled)  // Toggle interaction
-                        .onChange(of: canvasState.canvasMode) {
-                            newMode in
-                            handleModeChange(mode: newMode)
-                        }
-                        .onChange(of: notePage.canvasStack) { newStack in
-                            imageStack = newStack.compactMap { $0.imageObj }
-                            focusedID = nil
-                            isDraggingOver = false
-                            exportSnapShot()
-                        }
+                        .allowsHitTesting(false)  // Toggle interaction
+                       
                     // Pencil Detection View as overlay
                     PencilDetectionView(
                         noteFile: noteFile,
@@ -377,7 +409,7 @@ struct CanvasView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(.clear)
                    
-                    ZStack {
+                 
                         ForEach($imageStack) { imageObj in
                             InteractiveImageView(
                                 imageObj: imageObj,
@@ -392,7 +424,7 @@ struct CanvasView: View {
                                 afterChanged: afterChangeImage
                             )
                         }.clipped()
-                    }
+                 
                 }
                 .onDrop(
                     of: ["public.image", "com.compuserve.gif"],
@@ -405,63 +437,7 @@ struct CanvasView: View {
                 if isDraggingOver {
                     DropZoneView(isDraggingOver: $isDraggingOver)
                 }
-                Canvas { context, size in
-                    for laser in laserStack {
-                        // Create the path for the laser points
-                        var path = PathHelper.createStableCurvedPath(
-                            points: laser.points,
-                            maxOffsetForAverage: 4.5
-                        )
-
-                        // Smooth the path (if needed)
-                        path = path.strokedPath(
-                            StrokeStyle(
-                                lineWidth: 1,
-                                lineCap: .round,
-                                lineJoin: .round
-                            )
-                        )
-
-                        // Simulate the blur effect by layering strokes with varying opacities and line widths
-                        let blurLevels = [
-                            (opacity: 0.1, lineWidth: 15),
-                            (opacity: 0.2, lineWidth: 12),
-                            (opacity: 0.4, lineWidth: 9),
-                            (opacity: 0.6, lineWidth: 6),
-                        ]
-
-                        for blur in blurLevels {
-                            context.stroke(
-                                path,
-                                with: .color(
-                                    Color.red.opacity(
-                                        laserOpacity > blur.opacity
-                                            ? blur.opacity : laserOpacity
-                                    )
-                                ),  // Fading outwards
-                                style: StrokeStyle(
-                                    lineWidth: CGFloat(blur.lineWidth),
-                                    lineCap: .round,
-                                    lineJoin: .round
-                                )
-                            )
-                        }
-
-                        // Render the core white laser beam
-                        context.stroke(
-                            path,
-                            with: .color(.white.opacity(laserOpacity)),
-                            style: StrokeStyle(
-                                lineWidth: 3,
-                                lineCap: .round,
-                                lineJoin: .round
-                            )
-                        )
-                    }
-                }
-                .drawingGroup()
-                .allowsHitTesting(false)
-
+              
             }
             .onTapGesture {
                 isDraggingOver = false
@@ -473,6 +449,16 @@ struct CanvasView: View {
                         onDoubleTap()  // Trigger the closure when double-tap is detected
                     }
             )
+            .onChange(of: canvasState.canvasMode) {
+                newMode in
+                handleModeChange(mode: newMode)
+            }
+            .onChange(of: notePage.canvasStack) { newStack in
+                imageStack = newStack.compactMap { $0.imageObj }
+                focusedID = nil
+                isDraggingOver = false
+                exportSnapShot()
+            }
             .onAppear {
                 canvasState.canvasPool[pageIndex] = AnyView(canvas)
                 noteUndoManager.addInitialCanvasStack(
