@@ -59,7 +59,6 @@ struct CanvasView: View {
             ScrollView(axes, showsIndicators: false) {
              
                     Canvas { context, size in
-
                        for canvasObj in notePage.canvasStack {
                             if let imageObj = canvasObj.imageObj {
                                 if !imageObj.isAnimatedGIF,
@@ -255,7 +254,7 @@ struct CanvasView: View {
                                  } : nil
                      )*/
 
-        }
+            }
     }
 
     var body: some View {

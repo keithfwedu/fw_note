@@ -23,7 +23,7 @@ struct PencilDetectionView: UIViewRepresentable {
             onTouchEnd: onTouchEnd,
             onTouchCancel: onTouchCancel
         )
-
+      
         return view
     }
 
@@ -54,16 +54,19 @@ struct PencilDetectionView: UIViewRepresentable {
             self.onTouchMove = onTouchMove
             self.onTouchEnd = onTouchEnd
             self.onTouchCancel = onTouchCancel
+            self.isMultipleTouchEnabled = true
         }
 
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
+            self.isMultipleTouchEnabled = true
         }
 
         override func touchesBegan(
             _ touches: Set<UITouch>,
             with event: UIEvent?
         ) {
+            print("touches.count \(touches.count)")
             if touches.count > 1 { return }
             guard let touch = touches.first else { return }
 

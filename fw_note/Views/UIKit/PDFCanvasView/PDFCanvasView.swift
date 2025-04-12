@@ -19,7 +19,7 @@ struct PDFCanvasView: UIViewRepresentable {
     @Binding var displayDirection: PDFDisplayDirection  // Bindable property to change display direction
 
     func makeUIView(context: Context) -> CustomPDFView {
-       
+
         pdfView.document = pdfDocument
         pdfView.autoScales = false
         pdfView.displayMode = .singlePageContinuous
@@ -27,7 +27,7 @@ struct PDFCanvasView: UIViewRepresentable {
         pdfView.displayDirection = displayDirection
         pdfView.backgroundColor = UIColor.systemGray4
         pdfView.usePageViewController(false)
-        
+
         pdfView.pageBreakMargins = UIEdgeInsets(
             top: 50,
             left: 0,
@@ -52,13 +52,12 @@ struct PDFCanvasView: UIViewRepresentable {
         // Add canvases as annotations to each page
         context.coordinator.addCanvasesToPages(
             pdfView: pdfView,
-            displayDirection:displayDirection
+            displayDirection: displayDirection
         )
-       
+
         // Add page information (Current Page / Total Pages)
         context.coordinator.addPageIndicator(to: pdfView)
-     
-        
+
         return pdfView
     }
 
@@ -72,9 +71,9 @@ struct PDFCanvasView: UIViewRepresentable {
                 pdfView: uiView,
                 displayDirection: pdfView.displayDirection
             )
-           
+
         }
-        
+
         uiView.layoutDocumentView()
     }
 
