@@ -634,7 +634,7 @@ struct CanvasView: View {
         }
     }
 
-    private func handleDragChange(dragValue: TouchData, callback: nil) {
+    private func handleDragChange(dragValue: TouchData, callback: (() -> Void)?) {
         self.isTouching = true
         self.isTapImage = false
         self.touchPoint = dragValue.location
@@ -649,6 +649,8 @@ struct CanvasView: View {
         case .laser:  // Laser Mode
             handleLaser(dragValue: dragValue)
         }
+        
+        callback?()
     }
 
     private func handleDragEnded() {
@@ -760,7 +762,7 @@ struct CanvasView: View {
         currentDrawingLineID = newLineObj.id
     }
 
-    private func handleDrawing(dragValue: TouchData, callback: (() -> Void)?) {
+    private func handleDrawing(dragValue: TouchData) {
         
             // Add points to the current stroke
             print("drag detected for a new stroke2")

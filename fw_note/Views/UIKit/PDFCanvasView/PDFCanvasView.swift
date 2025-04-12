@@ -27,6 +27,7 @@ struct PDFCanvasView: UIViewRepresentable {
         pdfView.displayDirection = displayDirection
         pdfView.backgroundColor = UIColor.systemGray4
         pdfView.usePageViewController(false)
+        
         pdfView.pageBreakMargins = UIEdgeInsets(
             top: 50,
             left: 0,
@@ -38,7 +39,7 @@ struct PDFCanvasView: UIViewRepresentable {
         if let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }
         ) as? UIScrollView {
             scrollView.delegate = context.coordinator
-            scrollView.delaysContentTouches = true
+            scrollView.delaysContentTouches = false
             scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
         }
