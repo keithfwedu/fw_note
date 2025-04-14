@@ -83,3 +83,6 @@ DerivedData/
 *.swp
 *.tmp
 *.log
+
+
+fw_note/Configs.swift
