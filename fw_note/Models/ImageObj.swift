@@ -84,6 +84,29 @@ struct ImageObj: Identifiable, Codable, Equatable {
             && lhs.position == rhs.position && lhs.size == rhs.size
             && lhs.angle == rhs.angle
     }
+    
+    func getAbsolutePath() -> String? {
+        guard let path = self.path else {
+            print("Error: Path is nil")
+            return nil
+        }
+        
+        guard let projectId = currentProjectId else {
+            print("Error: currentProjectId is nil")
+            return nil
+        }
+        
+        guard
+            let absolutePath = FileHelper.getProjectImageFilePath(
+                imageName: path,
+                projectId: projectId
+            ) else {
+            print("Error: absolutePath is nil")
+            return nil
+        }
+                
+            return absolutePath
+    }
 
     // Load the CGImage from the path
     mutating func loadImageFromPath() {

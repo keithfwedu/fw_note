@@ -170,7 +170,7 @@ struct InteractiveImageView: View {
 
                     //Bundle.main.path(forResource: "example", ofType: "png")
                     if imageObj.isAnimatedGIF,
-                        let imagePath = self.imageObj.path
+                        let imagePath = self.imageObj.getAbsolutePath()
                     {
                         /*MetalImageView(
                             imagePath: imagePath,

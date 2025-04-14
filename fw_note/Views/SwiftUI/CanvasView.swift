@@ -354,7 +354,6 @@ struct CanvasView: View {
                             }
                             focusedID = nil
                             isDraggingOver = false
-                            exportSnapShot()
                         }
                         .allowsHitTesting(false)  // Toggle interaction
 
@@ -406,7 +405,7 @@ struct CanvasView: View {
                     ForEach($imageStack) { imageObj in
                         
                       
-                        return InteractiveImageView(
+                        InteractiveImageView(
                             imageObj: imageObj,
                             selectMode: .constant(
                                 canvasState.canvasMode != CanvasMode.lasso
@@ -453,7 +452,7 @@ struct CanvasView: View {
                
                 focusedID = nil
                 isDraggingOver = false
-                exportSnapShot()
+               
             }
             .onAppear {
                 canvasState.canvasPool[pageIndex] = AnyView(canvas)
@@ -578,7 +577,7 @@ struct CanvasView: View {
                 pageIndex: self.pageIndex,
                 canvasStack: notePage.canvasStack
             )
-            exportSnapShot()
+            
         }
 
     }
@@ -722,7 +721,6 @@ struct CanvasView: View {
             })
         }
 
-        exportSnapShot()
     }
 
     private func fadeOutLasers() {
@@ -1084,91 +1082,37 @@ struct CanvasView: View {
     }
 
     private func addImageToStack(image: OriginalImageObj) {
+        print("image.path \(image.path)")
+        let projectImagePath = FileHelper.copyImageToProject(imagePath: image.path, projectId: noteFile.id)
+      
         // Calculate base position
         let pageIndex = canvasState.currentPageIndex
-        let basePosition = notePage.pageCenterPoint
+        let page = noteFile.notePages[pageIndex]
+
+        let basePosition = page.pageCenterPoint
         let newPosition = CGPoint(x: basePosition.x, y: basePosition.y)
 
         // Create the ImageObj with the filtered and adjusted position
         let newImageObj = ImageObj(
-            path: image.absolutePath,
+            path: projectImagePath,
             position: newPosition,
             size: image.size
         )
+
+        print(newImageObj)
 
         // Create a new CanvasObj containing the ImageObj
         let newCanvasObj = CanvasObj(lineObj: nil, imageObj: newImageObj)
 
         // Add the new CanvasObj to the canvas stack
-        notePage.canvasStack.append(
-            newCanvasObj
-        )
+        page.canvasStack.append(
+            newCanvasObj)
 
         // Add the operation to the undo stack
         noteUndoManager.addToUndo(
             pageIndex: pageIndex,
-            canvasStack: notePage.canvasStack
+            canvasStack: page.canvasStack
         )
-    }
-
-    func exportSnapShot() {
-        /* guard let relativePath = noteFile.pdfFilePath else {
-             print("Error: PDF file path is nil")
-             return
-         }
-        
-         let pdfFileUrl = FileHelper.getAbsoluteProjectPath(
-             userId: "guest",
-             relativePath: relativePath
-         )
-         guard let pdfFileUrl = pdfFileUrl else {
-             print("Error: Could not get absolute project path")
-             return
-         }
-        
-         print("Press \(pdfFileUrl)")
-         guard let pdfDocument = PDFDocument(url: pdfFileUrl) else {
-             print("Error opening PDF file")
-             return
-         }
-        
-         guard
-             let page = pdfDocument.page(
-                 at: canvasState.currentPageIndex
-             )
-         else {
-             print(
-                 "Error: Could not get page at index \(canvasState.currentPageIndex)"
-             )
-             return
-         }
-        
-         let canvasSnapshot = canvas.frame(
-             width: pageSize.width,
-             height: pageSize.height
-         ).snapshot()
-         let pdfImage = page.thumbnail(of: pageSize, for: .mediaBox)
-        
-        
-         let imageName = "drawing_\(pageIndex).png"  // Start index from 1 for readability
-        
-         guard
-             let noteThumbnailDirectory = FileHelper.getNoteThumbnailDirectory(
-                 userId: "guest",
-                 noteId: noteFile.id.uuidString
-             )
-         else {
-             print("Error get note thumbnail directory")
-             return
-         }
-         do {
-             let imageURL = noteThumbnailDirectory.appendingPathComponent(imageName)
-             try canvasSnapshot.pngData()?.write(to: imageURL)
-             print("image saved successfully to \(imageURL)")
-         } catch {
-             print("image saved error \(error)")
-         }
-        */
     }
 
 }
