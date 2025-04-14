@@ -53,7 +53,25 @@ struct CanvasView: View {
         //return shouldScroll ? .horizontal : []
         return []
     }
-
+    
+    var gifs: some View {
+        GeometryReader { geometry in
+            ForEach($imageStack) { imageObj in
+                InteractiveImageView(
+                    imageObj: imageObj,
+                    selectMode: .constant(
+                        canvasState.canvasMode != CanvasMode.lasso
+                    ),  // Avoid binding if it's derived
+                    isFocused: .constant(focusedID == imageObj.id),
+                    frameSize: geometry.size,
+                    onTap: onTapImage,
+                    onRemove: onRemoveImage,
+                    onChanged: onChangeImage,
+                    afterChanged: afterChangeImage
+                )
+            }
+        }
+    }
     var canvas: some View {
 
         ScrollView(axes, showsIndicators: false) {
@@ -260,57 +278,6 @@ struct CanvasView: View {
 
     var body: some View {
         VStack {
-            /* Button("Save") {
-                 guard let relativePath = noteFile.pdfFilePath else {
-                     print("Error: PDF file path is nil")
-                     return
-                 }
-            
-                 let pdfFileUrl = FileHelper.getAbsoluteProjectPath(
-                     userId: "guest",
-                     relativePath: relativePath
-                 )
-                 guard let pdfFileUrl = pdfFileUrl else {
-                     print("Error: Could not get absolute project path")
-                     return
-                 }
-            
-                 print("Press \(pdfFileUrl)")
-                 guard let pdfDocument = PDFDocument(url: pdfFileUrl) else {
-                     print("Error opening PDF file")
-                     return
-                 }
-            
-                 guard
-                     let page = pdfDocument.page(
-                         at: canvasState.currentPageIndex
-                     )
-                 else {
-                     print(
-                         "Error: Could not get page at index \(canvasState.currentPageIndex)"
-                     )
-                     return
-                 }
-            
-                 let canvasSnapshot = canvas.frame(
-                     width: pageSize.width,
-                     height: pageSize.height
-                 ).snapshot()
-                 let pdfImage = page.thumbnail(of: pageSize, for: .mediaBox)
-            
-                 guard
-                     let combinedImage = combineImages(
-                         baseImage: pdfImage,
-                         overlayImage: canvasSnapshot
-                     )
-                 else {
-                     print("Error combining images")
-                     return
-                 }
-            
-                 UIImageWriteToSavedPhotosAlbum(combinedImage, nil, nil, nil)
-             }*/
-
             /* HStack {
                 Text("init: \(noteUndoManager.initCanvasStack.count)")
                 Text("Undo: \(noteUndoManager.undoStack.count)")
@@ -402,22 +369,7 @@ struct CanvasView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(.clear)
 
-                    ForEach($imageStack) { imageObj in
-                        
-                      
-                        InteractiveImageView(
-                            imageObj: imageObj,
-                            selectMode: .constant(
-                                canvasState.canvasMode != CanvasMode.lasso
-                            ),  // Avoid binding if it's derived
-                            isFocused: .constant(focusedID == imageObj.id),
-                            frameSize: geometry.size,
-                            onTap: onTapImage,
-                            onRemove: onRemoveImage,
-                            onChanged: onChangeImage,
-                            afterChanged: afterChangeImage
-                        )
-                    }.clipped()
+                    gifs.clipped()
 
                 }
                 .onDrop(
@@ -518,12 +470,15 @@ struct CanvasView: View {
             }
 
             // Check if any other image objects contain the same path
-            let isUniquePath = !notePage.canvasStack.contains(where: {
-                $0.imageObj?.path == pathToRemove && $0.imageObj?.id != id
-            })
-
+            let isUniquePath = !noteFile.notePages.contains { notePage in
+                notePage.canvasStack.contains { canvas in
+                    canvas.imageObj?.path == pathToRemove && canvas.imageObj?.id != id
+                }
+            }
+            print("isUniquePath \(isUniquePath) - \(pathToRemove)")
             // If this path is unique (only one image object has it), remove the file
             if isUniquePath {
+               
                 removeFile(at: pathToRemove)
             }
 
@@ -1098,8 +1053,6 @@ struct CanvasView: View {
             position: newPosition,
             size: image.size
         )
-
-        print(newImageObj)
 
         // Create a new CanvasObj containing the ImageObj
         let newCanvasObj = CanvasObj(lineObj: nil, imageObj: newImageObj)

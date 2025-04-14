@@ -13,7 +13,7 @@ struct PdfNoteScreen: View {
     @StateObject var imageState = ImageState()
     @State var noteFile: NoteFile
     @State var noteUndoManager: NoteUndoManager
-    @Environment(\.presentationMode) var presentationMode // Allows manual dismissal
+    @Environment(\.presentationMode) var presentationMode  // Allows manual dismissal
 
     init(noteFile: NoteFile) {
         currentProjectId = noteFile.id
@@ -69,37 +69,38 @@ struct PdfNoteScreen: View {
         .navigationTitle(noteFile.title)  // Set the navigation title
         .navigationBarTitleDisplayMode(.inline)  // Optional: inline style for the title
         .navigationBarBackButtonHidden(false)  // Ensure the default back button is visible
-        .navigationBarBackButtonHidden(true) // Hide default back button
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button(action: {
-                            Task {
-                             await savePDF() // Wait for savePDF to complete
-                                
-                            }
-                        }) {
-                            Image(systemName: "chevron.backward")
-                            Text("Back")
-                        }
+        .navigationBarBackButtonHidden(true)  // Hide default back button
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {
+                    Task {
+                        await savePDF()  // Wait for savePDF to complete
+
                     }
+                }) {
+                    Image(systemName: "chevron.backward")
+                    Text("Back")
                 }
+            }
+        }
     }
 
     // Mock functions
     func savePDF() {
         print("Save PDF")
         FileHelper.saveProject(noteFile: noteFile)
-       // print("draw2 \(canvasState.canvasPool[0])")
+        // print("draw2 \(canvasState.canvasPool[0])")
         let pageSize = CGSize(
-            width:  noteFile.notePages[0].canvasWidth,
-            height:  noteFile.notePages[0].canvasHeight
-            )
-      let canvasSnapshot = canvasState.canvasPool[0].frame(
+            width: noteFile.notePages[0].canvasWidth,
+            height: noteFile.notePages[0].canvasHeight
+        )
+        let canvasSnapshot = canvasState.canvasPool[0].frame(
             width: pageSize.width,
-            height:pageSize.height
+            height: pageSize.height
         ).snapshot()
        
-        let pdfFilePath = FileHelper.getPDFPath(projectId:  noteFile.id)
+      
+        let pdfFilePath = FileHelper.getPDFPath(projectId: noteFile.id)
         if let pdfDocument = PDFDocument(url: URL(fileURLWithPath: pdfFilePath))
         {
             guard
@@ -112,22 +113,22 @@ struct PdfNoteScreen: View {
                 )
                 return
             }
-            
-            
+
             let pdfImage = page.thumbnail(of: pageSize, for: .mediaBox)
-            
+
             guard
                 let combinedImage = combineImages(
                     baseImage: pdfImage,
                     overlayImage: canvasSnapshot
-                ) else {
+                )
+            else {
                 print("Error combining images")
                 return
             }
-            
-            let currentUserId = FileHelper.getCurrentUserId() // Fetch the current user ID
-            let baseDirectory = FileHelper.getBaseDirectory() // Base directory of your app
-            
+
+            let currentUserId = FileHelper.getCurrentUserId()  // Fetch the current user ID
+            let baseDirectory = FileHelper.getBaseDirectory()  // Base directory of your app
+
             // Define the project and images directories
             let projectDirectory = baseDirectory.appendingPathComponent(
                 "users/\(currentUserId)/projects/\(noteFile.id.uuidString)",
@@ -141,13 +142,16 @@ struct PdfNoteScreen: View {
             } catch {
                 print(error)
             }
-            
-            presentationMode.wrappedValue.dismiss() // Dismiss the view programmatically
+
+            presentationMode.wrappedValue.dismiss()  // Dismiss the view programmatically
         }
 
     }
-    
-    func combineImages(baseImage: UIImage, overlayImage: UIImage) -> UIImage? {
+
+    func combineImages(
+        baseImage: UIImage,
+        overlayImage: UIImage
+    ) -> UIImage? {
         let size = baseImage.size  // Use the size of the base image
         UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
 
@@ -156,7 +160,7 @@ struct PdfNoteScreen: View {
 
         // Draw the overlay image on top
         overlayImage.draw(in: CGRect(origin: .zero, size: size))
-
+        
         // Generate the combined image
         let combinedImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()

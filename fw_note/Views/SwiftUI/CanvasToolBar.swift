@@ -142,7 +142,7 @@ struct CanvasToolBar: View {
             width:  noteFile.notePages[0].canvasWidth,
             height:  noteFile.notePages[0].canvasHeight
             )
-      let canvasSnapshot = canvasState.canvasPool[0].frame(
+        let canvasSnapshot = canvasState.canvasPool[0].frame(
             width: pageSize.width,
             height:pageSize.height
         ).snapshot()
