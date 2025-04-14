@@ -63,7 +63,7 @@ fastlane/test_output
 
 # Resources
 fw_note/Resources/*
-
+fw_note/Configs.swift
 # CocoaPods dependencies
 Pods/
 Podfile.lock
@@ -83,6 +83,3 @@ DerivedData/
 *.swp
 *.tmp
 *.log
-
-
-fw_note/Configs.swift

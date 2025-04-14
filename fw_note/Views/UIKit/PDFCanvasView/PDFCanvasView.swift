@@ -69,9 +69,9 @@ struct PDFCanvasView: UIViewRepresentable {
             setPageBreakMargins(pdfView: uiView)
             context.coordinator.addCanvasesToPages(
                 pdfView: uiView,
-                displayDirection: pdfView.displayDirection
+                displayDirection: uiView.displayDirection
             )
-
+           
         }
 
         uiView.layoutDocumentView()
@@ -310,7 +310,7 @@ struct PDFCanvasView: UIViewRepresentable {
                 canvasViewWrapper.bounds = normalizedPageFrame
                 documentView.addSubview(canvasViewWrapper)
                 canvasViewWrapper.layer.zPosition = 1
-
+                pdfView.layoutDocumentView()
                 //searchText(pdfView: pdfView, searchText: "ap_")
             }
         }

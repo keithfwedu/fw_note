@@ -15,6 +15,4 @@ struct CustomDragValue {
     let translation: CGSize
     let predictedEndTranslation: CGSize
     let predictedEndLocation: CGPoint
-    
-   
 }

@@ -369,14 +369,12 @@ struct CanvasView: View {
                             }
                         },
                         onTouchCancel: {
-
                             handleDragEnded()
-
                         }
 
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(.clear)
+                    .background(.clear )
 
                     gifs.clipped()
 
