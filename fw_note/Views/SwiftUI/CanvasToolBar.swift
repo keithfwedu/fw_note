@@ -142,6 +142,8 @@ struct CanvasToolBar: View {
 
                             )
                         }
+
+                       
                         if canvasState.canvasMode == CanvasMode.eraser {
                             Picker(
                                 "Eraser Mode",
@@ -153,6 +155,17 @@ struct CanvasToolBar: View {
                             .pickerStyle(SegmentedPickerStyle())
                             .padding()
                         }
+                        
+                        Picker(
+                            "Input",
+                            selection: $canvasState.inputMode
+                        ) {
+                            Text("Pencil").tag(InputMode.pencil)
+                            Text("Finger").tag(InputMode.finger)
+                            Text("Both").tag(InputMode.both)
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                        .padding()
                     }
                 }
                 // Flexible Spacer

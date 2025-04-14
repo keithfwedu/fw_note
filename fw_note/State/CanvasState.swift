@@ -18,6 +18,7 @@ class CanvasState: ObservableObject {
     @Published var timerManager = TimerManager()
     @Published var canvasMode: CanvasMode = CanvasMode.draw
     @Published var eraseMode: EraseMode = EraseMode.rubber
+    @Published var inputMode: InputMode = InputMode.both
     @Published var showImagePicker: Bool = false
     
     @Published var isDragging: Bool = false

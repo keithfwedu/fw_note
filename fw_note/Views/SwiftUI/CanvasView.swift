@@ -53,7 +53,7 @@ struct CanvasView: View {
         //return shouldScroll ? .horizontal : []
         return []
     }
-    
+
     var gifs: some View {
         GeometryReader { geometry in
             ForEach($imageStack) { imageObj in
@@ -327,42 +327,51 @@ struct CanvasView: View {
                     // Pencil Detection View as overlay
                     PencilDetectionView(
                         onTap: { value in
-
-                            focusedID = nil
-                            handleTap(
-                                at: value.startLocation,
-                                noteFile: noteFile
-                            )
+                            if isEnableTouch(inputType: value.type) {
+                                focusedID = nil
+                                handleTap(
+                                    at: value.startLocation,
+                                    noteFile: noteFile
+                                )
+                            }
                         },
                         onTouchBegin: { value in
-                            focusedID = nil
+                            if isEnableTouch(inputType: value.type) {
+                                focusedID = nil
 
-                            if value.type == .pencil {
-                                print("touch with pencil")
-                            } else {
-                                print("touch with fingers")
+                                if value.type == .pencil {
+                                    print("touch with pencil")
+                                } else {
+                                    print("touch with fingers")
+                                }
+
+                                handleDragBegin(
+                                    dragValue: value
+                                )
                             }
-
-                            handleDragBegin(
-                                dragValue: value
-                            )
                         },
                         onTouchMove: { value in
-                            handleDragChange(
-                                dragValue: value,
-                                callback: {}
-                            )
+                            if isEnableTouch(inputType: value.type) {
+                                handleDragChange(
+                                    dragValue: value,
+                                    callback: {}
+                                )
+                            }
                         },
                         onTouchEnd: { value in
-                            handleDragChange(
-                                dragValue: value,
-                                callback: {
-                                    handleDragEnded()
-                                }
-                            )
+                            if isEnableTouch(inputType: value.type) {
+                                handleDragChange(
+                                    dragValue: value,
+                                    callback: {
+                                        handleDragEnded()
+                                    }
+                                )
+                            }
                         },
                         onTouchCancel: {
+
                             handleDragEnded()
+
                         }
 
                     )
@@ -401,10 +410,10 @@ struct CanvasView: View {
             }
             .onChange(of: notePage.canvasStack) { newStack in
                 imageStack = newStack.compactMap { $0.imageObj }
-               
+
                 focusedID = nil
                 isDraggingOver = false
-               
+
             }
             .onAppear {
                 canvasState.canvasPool[pageIndex] = AnyView(canvas)
@@ -413,11 +422,22 @@ struct CanvasView: View {
                     canvasStack: self.notePage.canvasStack.last
                         ?? CanvasObj(id: UUID(), lineObj: nil, imageObj: nil)
                 )
-                
-               
+
                 print("imageStack \(imageStack)")
             }
 
+        }
+    }
+
+    func isEnableTouch(inputType: UITouch.TouchType) -> Bool {
+        print(inputType)
+        switch canvasState.inputMode {
+        case InputMode.both:
+            return true
+        case InputMode.pencil:
+            return inputType == .pencil
+        case InputMode.finger:
+            return inputType == .direct
         }
     }
 
@@ -472,10 +492,11 @@ struct CanvasView: View {
             // Check if any other image objects contain the same path
             let isUniquePath = !noteFile.notePages.contains { notePage in
                 notePage.canvasStack.contains { canvas in
-                    canvas.imageObj?.path == pathToRemove && canvas.imageObj?.id != id
+                    canvas.imageObj?.path == pathToRemove
+                        && canvas.imageObj?.id != id
                 }
             }
-            
+
             // If this path is unique (only one image object has it), remove the file
             if isUniquePath {
                 removeFile(at: pathToRemove)
@@ -531,7 +552,7 @@ struct CanvasView: View {
                 pageIndex: self.pageIndex,
                 canvasStack: notePage.canvasStack
             )
-            
+
         }
 
     }
@@ -1037,8 +1058,11 @@ struct CanvasView: View {
 
     private func addImageToStack(image: OriginalImageObj) {
         print("image.path \(image.path)")
-        let projectImagePath = FileHelper.copyImageToProject(imagePath: image.path, projectId: noteFile.id)
-      
+        let projectImagePath = FileHelper.copyImageToProject(
+            imagePath: image.path,
+            projectId: noteFile.id
+        )
+
         // Calculate base position
         let pageIndex = canvasState.currentPageIndex
         let page = noteFile.notePages[pageIndex]
@@ -1058,7 +1082,8 @@ struct CanvasView: View {
 
         // Add the new CanvasObj to the canvas stack
         page.canvasStack.append(
-            newCanvasObj)
+            newCanvasObj
+        )
 
         // Add the operation to the undo stack
         noteUndoManager.addToUndo(
