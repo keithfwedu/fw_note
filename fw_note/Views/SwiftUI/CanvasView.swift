@@ -475,10 +475,9 @@ struct CanvasView: View {
                     canvas.imageObj?.path == pathToRemove && canvas.imageObj?.id != id
                 }
             }
-            print("isUniquePath \(isUniquePath) - \(pathToRemove)")
+            
             // If this path is unique (only one image object has it), remove the file
             if isUniquePath {
-               
                 removeFile(at: pathToRemove)
             }
 
