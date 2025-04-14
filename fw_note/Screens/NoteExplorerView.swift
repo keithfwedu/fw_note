@@ -1,14 +1,20 @@
-import SwiftUI
 import PDFKit
+import SwiftUI
+
+
 
 struct NoteExplorerView: View {
-    @State private var userId: String = "guest"
-    @State private var noteFiles: [NoteFile] = []
+    //New Project
+    @State private var pickMode = FilePickMode.file
+    @State private var projectTitle: String = "Untitled"  // Default file name
+    @State private var fileUrl: URL? = nil
+
+    //Control
+    @State private var isNewProjectPopoverPresented: Bool = false
     @State private var isFilePickerPresented: Bool = false
-    @State private var freeSpaceRatio: Double = 0.0
-    let appSupportDirectory = FileManager.default.urls(
-        for: .applicationSupportDirectory, in: .userDomainMask
-    ).first!
+    @State private var isFileNameDialogPresented: Bool = false
+
+    @State private var noteFiles: [NoteFile] = []
     let gridColumns = [GridItem(.adaptive(minimum: 150))]
 
     var body: some View {
@@ -16,16 +22,34 @@ struct NoteExplorerView: View {
             VStack(alignment: .leading, spacing: 10) {
                 // Storage Usage Section
                 HStack(alignment: .bottom) {
-                    StorageUsageView(freeSpaceRatio: freeSpaceRatio)
-                    Spacer()
+                    StorageUsageView()
+                    Spacer().frame(width: 16)
                     // "Add" Button
                     Button(action: {
-                        isFilePickerPresented = true
+                        isNewProjectPopoverPresented = true
                     }) {
                         Image(systemName: "plus")
                             .resizable()
                             .frame(width: 24, height: 24)
                     }
+                    .popover(isPresented: $isNewProjectPopoverPresented) {
+                        VStack(spacing: 20) {
+                            Button("Import File") {
+                                pickMode = FilePickMode.file
+                                isNewProjectPopoverPresented = false
+                                isFilePickerPresented = true
+                            }
+                            Button("Create Blank Project") {
+                                pickMode = FilePickMode.blank
+                                isNewProjectPopoverPresented = false
+                                isFileNameDialogPresented = true
+                                projectTitle = "Untitled"
+                                fileUrl = nil
+                            }
+                        }
+                        .padding()
+                    }
+
                 }
                 .frame(height: 50)
                 .padding(.all, 8)
@@ -43,16 +67,21 @@ struct NoteExplorerView: View {
                         LazyVGrid(columns: gridColumns, spacing: 20) {
                             ForEach(noteFiles, id: \.id) { noteFile in
                                 NavigationLink(
-                                    destination: PdfNoteScreen(noteFile: noteFile)
+                                    destination: PdfNoteScreen(
+                                        noteFile: noteFile
+                                    )
                                 ) {
+                                  
                                     NoteItemView(
                                         noteFile: noteFile,
-                                        appSupportDirectory: appSupportDirectory
                                     )
                                 }
                                 .withDeleteContextMenu(
-                                    noteFile: noteFile, deleteAction: { noteFile in
-                                        deleteNoteProject(userId: userId, noteFile: noteFile)
+                                    noteFile: noteFile,
+                                    deleteAction: { noteFile in
+                                        deleteNoteProject(
+                                            noteFile: noteFile
+                                        )
                                     }
                                 )
                             }
@@ -60,46 +89,61 @@ struct NoteExplorerView: View {
                     }
                 }
 
-               
             }
             .padding()
-            .navigationTitle("Note Explorer") // Ensure the title is visible
-            .navigationBarTitleDisplayMode(.inline) // Optional for a smaller title
-            .navigationViewStyle(StackNavigationViewStyle()) // Force full-page layout, no sidebar
+            .background(Color(UIColor.systemGray6))
             .fileImporter(
                 isPresented: $isFilePickerPresented,
                 allowedContentTypes: [.pdf],
                 allowsMultipleSelection: false
             ) { result in
-                addFileToProject(userId: userId,result: result)
+                handleFilePicked(result: result)
             }
-            .onAppear {
-                updateFreeSpace()
+            .alert(
+                "Enter File Name",
+                isPresented: $isFileNameDialogPresented,
+                actions: {
+                    TextField("File Name", text: $projectTitle)
+                    Button(
+                        "Save",
+                        action: {
+                            createNewProject()
+                        }
+                    )
+                    Button("Cancel", role: .cancel, action: {})
+                },
+                message: {
+                    Text("Please input the name of the PDF file.")
+                }
+            ).onAppear {
+                print("onAppear");
                 noteFiles = FileHelper.listProjects()
             }
+
         }
-        .navigationViewStyle(StackNavigationViewStyle()) // Ensure it works even on iPad
+
+        .navigationTitle("Note Explorer")  // Ensure the title is visible
+        .navigationBarTitleDisplayMode(.inline)  // Optional for a smaller title
+        .navigationViewStyle(StackNavigationViewStyle())  // Force full-page layout, no sidebar
+        
+
     }
 
-    // MARK: - Update Free Space
-    private func updateFreeSpace() {
-        if let attributes = try? FileManager.default.attributesOfFileSystem(
-            forPath: NSHomeDirectory()),
-            let freeSpace = attributes[.systemFreeSize] as? Double,
-            let totalSpace = attributes[.systemSize] as? Double
-        {
-            freeSpaceRatio = freeSpace / totalSpace
-        }
+    private func createNewProject() {
+        FileHelper.createNewProject(
+            pdfPathUrl: fileUrl,
+            title: projectTitle
+        )
+        noteFiles = FileHelper.listProjects()
     }
 
-   
-    private func deleteNoteProject(userId: String, noteFile: NoteFile) {
+    private func deleteNoteProject(noteFile: NoteFile) {
         FileHelper.deleteProject(projectId: noteFile.id.uuidString)
         noteFiles = FileHelper.listProjects()
     }
 
     // MARK: - Handle File Selection
-    private func addFileToProject(userId:String, result: Result<[URL], Error>) {
+    private func handleFilePicked(result: Result<[URL], Error>) {
         do {
             // Get the first file URL from the result
             guard let selectedFileURL = try result.get().first else {
@@ -108,22 +152,28 @@ struct NoteExplorerView: View {
             }
 
             // Handle security-scoped resource if necessary
-            let fileAccessed = selectedFileURL.startAccessingSecurityScopedResource()
-            defer { if fileAccessed { selectedFileURL.stopAccessingSecurityScopedResource() } }
-            
-            FileHelper.createNewProject(pdfPathUrl: selectedFileURL)
-            // Update the list of notes
-            noteFiles = FileHelper.listProjects()
+            let fileAccessed =
+                selectedFileURL.startAccessingSecurityScopedResource()
+            defer {
+                if fileAccessed {
+                    selectedFileURL.stopAccessingSecurityScopedResource()
+                }
+            }
+            projectTitle =
+                selectedFileURL.deletingPathExtension().lastPathComponent
+            fileUrl = selectedFileURL
+            isFileNameDialogPresented = true
 
         } catch let fileError as NSError {
             // Specific error handling with descriptive logging
-            print("Error handling file selection: \(fileError.localizedDescription)")
+            print(
+                "Error handling file selection: \(fileError.localizedDescription)"
+            )
             print("Underlying error: \(fileError.userInfo)")
         } catch {
             // Catch any other unexpected errors
             print("An unexpected error occurred: \(error)")
         }
     }
-
 
 }

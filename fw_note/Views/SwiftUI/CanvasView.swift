@@ -12,7 +12,7 @@ struct CanvasView: View {
     let pageIndex: Int
     var onGesture: ((CGFloat, CGSize) -> Void)?
     @ObservedObject var imageState: ImageState
-  
+
     @ObservedObject var canvasState: CanvasState
     @ObservedObject var noteFile: NoteFile
     @ObservedObject var noteUndoManager: NoteUndoManager
@@ -55,206 +55,207 @@ struct CanvasView: View {
     }
 
     var canvas: some View {
-      
-            ScrollView(axes, showsIndicators: false) {
-             
-                    Canvas { context, size in
-                       for canvasObj in notePage.canvasStack {
-                            if let imageObj = canvasObj.imageObj {
-                                if !imageObj.isAnimatedGIF,
-                                    let cgImage = imageObj.cgImage
-                                {
 
-                                    // Existing logic for static images
-                                    context.withCGContext { cgContext in
-                                        cgContext.saveGState()
+        ScrollView(axes, showsIndicators: false) {
 
-                                        cgContext.translateBy(
-                                            x: imageObj.position.x,
-                                            y: imageObj.position.y
-                                        )
-                                        let radians =
-                                            CGFloat(imageObj.angle) * .pi / 180
-                                        cgContext.rotate(by: radians)
-                                        cgContext.scaleBy(x: 1.0, y: -1.0)
-
-                                        cgContext.draw(
-                                            cgImage,
-                                            in: CGRect(
-                                                origin: CGPoint(
-                                                    x: -imageObj.size.width / 2,
-                                                    y: -imageObj.size.height / 2
-                                                ),
-                                                size: imageObj.size
-                                            )
-                                        )
-
-                                        cgContext.restoreGState()
-                                    }
-                                }
-                            }
-
-                            // Handle LineObj
-                            if let line = canvasObj.lineObj {
-                                let path = PathHelper.createStableCurvedPath(
-                                    points: line.points,
-                                    maxOffsetForAverage: 4.5
-                                )
-                                if selectedLineStack.contains(where: {
-                                    $0.id == line.id
-                                }) {
-                                    context.stroke(
-                                        path,
-                                        with: .color(.blue),
-                                        style: StrokeStyle(
-                                            lineWidth: line.lineWidth
-                                        )
-                                    )
-                                } else {
-                                    if line.mode == .draw {
-                                        context.blendMode = .normal
-                                        context.stroke(
-                                            path,
-                                            with: .color(line.color),
-                                            style: StrokeStyle(
-                                                lineWidth: line.lineWidth,
-                                                lineCap: .round,
-                                                lineJoin: .round
-                                            )
-                                        )
-                                        context.blendMode = .normal
-
-                                    } else if line.mode == .eraser {
-                                        context.blendMode = .clear
-                                        context.stroke(
-                                            path,
-                                            with: .color(line.color),
-                                            style: StrokeStyle(
-                                                lineWidth: line.lineWidth,
-                                                lineCap: .round,
-                                                lineJoin: .round
-                                            )
-                                        )
-
-                                    }
-                                }
-                            }
-                        }
-
-                        // Draw selection path if in select mode
-                        if canvasState.canvasMode
-                            == .lasso
-                            && !selectionPaths.isEmpty
+            Canvas { context, size in
+                for canvasObj in notePage.canvasStack {
+                    if var imageObj = canvasObj.imageObj {
+                        imageObj.loadImageFromPath()
+                        if !imageObj.isAnimatedGIF,
+                            let cgImage = imageObj.cgImage
                         {
-                            var selectionDrawing = Path()
-                            selectionDrawing.addLines(
-                                selectionPaths
-                            )
-                            selectionDrawing.closeSubpath()
-                            context.stroke(
-                                selectionDrawing,
-                                with: .color(.green),
-                                style: StrokeStyle(lineWidth: 2, dash: [5, 5])
-                            )
-                        }
-                        
-                        for laser in laserStack {
-                            // Create the path for the laser points
-                            var path = PathHelper.createStableCurvedPath(
-                                points: laser.points,
-                                maxOffsetForAverage: 4.5
-                            )
 
-                            // Smooth the path (if needed)
-                            path = path.strokedPath(
-                                StrokeStyle(
-                                    lineWidth: 1,
-                                    lineCap: .round,
-                                    lineJoin: .round
+                            // Existing logic for static images
+                            context.withCGContext { cgContext in
+                                cgContext.saveGState()
+
+                                cgContext.translateBy(
+                                    x: imageObj.position.x,
+                                    y: imageObj.position.y
+                                )
+                                let radians =
+                                    CGFloat(imageObj.angle) * .pi / 180
+                                cgContext.rotate(by: radians)
+                                cgContext.scaleBy(x: 1.0, y: -1.0)
+
+                                cgContext.draw(
+                                    cgImage,
+                                    in: CGRect(
+                                        origin: CGPoint(
+                                            x: -imageObj.size.width / 2,
+                                            y: -imageObj.size.height / 2
+                                        ),
+                                        size: imageObj.size
+                                    )
+                                )
+
+                                cgContext.restoreGState()
+                            }
+                        }
+                    }
+
+                    // Handle LineObj
+                    if let line = canvasObj.lineObj {
+                        let path = PathHelper.createStableCurvedPath(
+                            points: line.points,
+                            maxOffsetForAverage: 4.5
+                        )
+                        if selectedLineStack.contains(where: {
+                            $0.id == line.id
+                        }) {
+                            context.stroke(
+                                path,
+                                with: .color(.blue),
+                                style: StrokeStyle(
+                                    lineWidth: line.lineWidth
                                 )
                             )
-
-                            // Simulate the blur effect by layering strokes with varying opacities and line widths
-                            let blurLevels = [
-                                (opacity: 0.1, lineWidth: 15),
-                                (opacity: 0.2, lineWidth: 12),
-                                (opacity: 0.4, lineWidth: 9),
-                                (opacity: 0.6, lineWidth: 6),
-                            ]
-
-                            for blur in blurLevels {
+                        } else {
+                            if line.mode == .draw {
+                                context.blendMode = .normal
                                 context.stroke(
                                     path,
-                                    with: .color(
-                                        Color.red.opacity(
-                                            laserOpacity > blur.opacity
-                                                ? blur.opacity : laserOpacity
-                                        )
-                                    ),  // Fading outwards
+                                    with: .color(line.color),
                                     style: StrokeStyle(
-                                        lineWidth: CGFloat(blur.lineWidth),
+                                        lineWidth: line.lineWidth,
                                         lineCap: .round,
                                         lineJoin: .round
                                     )
                                 )
-                            }
+                                context.blendMode = .normal
 
-                            // Render the core white laser beam
-                            context.stroke(
-                                path,
-                                with: .color(.white.opacity(laserOpacity)),
-                                style: StrokeStyle(
-                                    lineWidth: 3,
-                                    lineCap: .round,
-                                    lineJoin: .round
+                            } else if line.mode == .eraser {
+                                context.blendMode = .clear
+                                context.stroke(
+                                    path,
+                                    with: .color(line.color),
+                                    style: StrokeStyle(
+                                        lineWidth: line.lineWidth,
+                                        lineCap: .round,
+                                        lineJoin: .round
+                                    )
                                 )
-                            )
-                        }
 
+                            }
+                        }
                     }
-                    .drawingGroup()
-                    /* .simultaneousGesture(
-                         gestureState.areGesturesEnabled
-                             ? DragGesture(minimumDistance: 0)  // Handles both taps and drags
-                                 .onChanged { value in
-                                     focusedID = nil
-                                     print("touch1")
-                                     if value.translation == .zero {
-                                         print("touch1a")
-                                         // Handle as a tap gesture
-                                         handleTap(at: value.startLocation)
-                                     } else {
-                                         print("touch1b")
-                    
-                                         let customValue: CustomDragValue =
-                                             CustomDragValue(
-                                                 time: value.time,
-                                                 location: value.location,
-                                                 startLocation: value
-                                                     .startLocation,
-                                                 translation: value
-                                                     .translation,
-                                                 predictedEndTranslation:
-                                                     value
-                                                     .predictedEndTranslation,
-                                                 predictedEndLocation: value
-                                                     .predictedEndLocation
-                                             )
-                                         // Handle as a drag gesture
-                                         handleDragChange(
-                                             dragValue: customValue
-                                         )
-                                     }
-                    
-                                     //  handleDragChange(dragValue: value)
-                                 }
-                                 .onEnded { value in
-                                     print("onDrag ended")
-                                     handleDragEnded()  // Finalize drag action
-                                 } : nil
-                     )*/
+                }
+
+                // Draw selection path if in select mode
+                if canvasState.canvasMode
+                    == .lasso
+                    && !selectionPaths.isEmpty
+                {
+                    var selectionDrawing = Path()
+                    selectionDrawing.addLines(
+                        selectionPaths
+                    )
+                    selectionDrawing.closeSubpath()
+                    context.stroke(
+                        selectionDrawing,
+                        with: .color(.green),
+                        style: StrokeStyle(lineWidth: 2, dash: [5, 5])
+                    )
+                }
+
+                for laser in laserStack {
+                    // Create the path for the laser points
+                    var path = PathHelper.createStableCurvedPath(
+                        points: laser.points,
+                        maxOffsetForAverage: 4.5
+                    )
+
+                    // Smooth the path (if needed)
+                    path = path.strokedPath(
+                        StrokeStyle(
+                            lineWidth: 1,
+                            lineCap: .round,
+                            lineJoin: .round
+                        )
+                    )
+
+                    // Simulate the blur effect by layering strokes with varying opacities and line widths
+                    let blurLevels = [
+                        (opacity: 0.1, lineWidth: 15),
+                        (opacity: 0.2, lineWidth: 12),
+                        (opacity: 0.4, lineWidth: 9),
+                        (opacity: 0.6, lineWidth: 6),
+                    ]
+
+                    for blur in blurLevels {
+                        context.stroke(
+                            path,
+                            with: .color(
+                                Color.red.opacity(
+                                    laserOpacity > blur.opacity
+                                        ? blur.opacity : laserOpacity
+                                )
+                            ),  // Fading outwards
+                            style: StrokeStyle(
+                                lineWidth: CGFloat(blur.lineWidth),
+                                lineCap: .round,
+                                lineJoin: .round
+                            )
+                        )
+                    }
+
+                    // Render the core white laser beam
+                    context.stroke(
+                        path,
+                        with: .color(.white.opacity(laserOpacity)),
+                        style: StrokeStyle(
+                            lineWidth: 3,
+                            lineCap: .round,
+                            lineJoin: .round
+                        )
+                    )
+                }
 
             }
+            .drawingGroup()
+            /* .simultaneousGesture(
+                 gestureState.areGesturesEnabled
+                     ? DragGesture(minimumDistance: 0)  // Handles both taps and drags
+                         .onChanged { value in
+                             focusedID = nil
+                             print("touch1")
+                             if value.translation == .zero {
+                                 print("touch1a")
+                                 // Handle as a tap gesture
+                                 handleTap(at: value.startLocation)
+                             } else {
+                                 print("touch1b")
+            
+                                 let customValue: CustomDragValue =
+                                     CustomDragValue(
+                                         time: value.time,
+                                         location: value.location,
+                                         startLocation: value
+                                             .startLocation,
+                                         translation: value
+                                             .translation,
+                                         predictedEndTranslation:
+                                             value
+                                             .predictedEndTranslation,
+                                         predictedEndLocation: value
+                                             .predictedEndLocation
+                                     )
+                                 // Handle as a drag gesture
+                                 handleDragChange(
+                                     dragValue: customValue
+                                 )
+                             }
+            
+                             //  handleDragChange(dragValue: value)
+                         }
+                         .onEnded { value in
+                             print("onDrag ended")
+                             handleDragEnded()  // Finalize drag action
+                         } : nil
+             )*/
+
+        }
     }
 
     var body: some View {
@@ -337,8 +338,8 @@ struct CanvasView: View {
                 GeometryReader { geometry in
 
                     canvas
-                    // .border(.red, width: 1)
-                      .onAppear {
+                        // .border(.red, width: 1)
+                        .onAppear {
                             currentProjectId = noteFile.id
                             pageSize = geometry.size
                             redrawTrigger.toggle()
@@ -356,11 +357,11 @@ struct CanvasView: View {
                             exportSnapShot()
                         }
                         .allowsHitTesting(false)  // Toggle interaction
-                       
+
                     // Pencil Detection View as overlay
-                   PencilDetectionView(
+                    PencilDetectionView(
                         onTap: { value in
-                           
+
                             focusedID = nil
                             handleTap(
                                 at: value.startLocation,
@@ -369,25 +370,25 @@ struct CanvasView: View {
                         },
                         onTouchBegin: { value in
                             focusedID = nil
-                           
+
                             if value.type == .pencil {
                                 print("touch with pencil")
                             } else {
                                 print("touch with fingers")
                             }
-                            
+
                             handleDragBegin(
                                 dragValue: value
                             )
                         },
                         onTouchMove: { value in
-                           handleDragChange(
+                            handleDragChange(
                                 dragValue: value,
                                 callback: {}
                             )
                         },
                         onTouchEnd: { value in
-                          handleDragChange(
+                            handleDragChange(
                                 dragValue: value,
                                 callback: {
                                     handleDragEnded()
@@ -395,29 +396,30 @@ struct CanvasView: View {
                             )
                         },
                         onTouchCancel: {
-                           handleDragEnded()
+                            handleDragEnded()
                         }
 
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(.clear)
-                   
-                 
-                        ForEach($imageStack) { imageObj in
-                            InteractiveImageView(
-                                imageObj: imageObj,
-                                selectMode: .constant(
-                                    canvasState.canvasMode != CanvasMode.lasso
-                                ),  // Avoid binding if it's derived
-                                isFocused: .constant(focusedID == imageObj.id),
-                                frameSize: geometry.size,
-                                onTap: onTapImage,
-                                onRemove: onRemoveImage,
-                                onChanged: onChangeImage,
-                                afterChanged: afterChangeImage
-                            )
-                        }.clipped()
-                 
+
+                    ForEach($imageStack) { imageObj in
+                        
+                      
+                        return InteractiveImageView(
+                            imageObj: imageObj,
+                            selectMode: .constant(
+                                canvasState.canvasMode != CanvasMode.lasso
+                            ),  // Avoid binding if it's derived
+                            isFocused: .constant(focusedID == imageObj.id),
+                            frameSize: geometry.size,
+                            onTap: onTapImage,
+                            onRemove: onRemoveImage,
+                            onChanged: onChangeImage,
+                            afterChanged: afterChangeImage
+                        )
+                    }.clipped()
+
                 }
                 .onDrop(
                     of: ["public.image", "com.compuserve.gif"],
@@ -430,7 +432,7 @@ struct CanvasView: View {
                 if isDraggingOver {
                     DropZoneView(isDraggingOver: $isDraggingOver)
                 }
-              
+
             }
             .onTapGesture {
                 isDraggingOver = false
@@ -448,6 +450,7 @@ struct CanvasView: View {
             }
             .onChange(of: notePage.canvasStack) { newStack in
                 imageStack = newStack.compactMap { $0.imageObj }
+               
                 focusedID = nil
                 isDraggingOver = false
                 exportSnapShot()
@@ -459,6 +462,9 @@ struct CanvasView: View {
                     canvasStack: self.notePage.canvasStack.last
                         ?? CanvasObj(id: UUID(), lineObj: nil, imageObj: nil)
                 )
+                
+               
+                print("imageStack \(imageStack)")
             }
 
         }
@@ -615,7 +621,7 @@ struct CanvasView: View {
             resetSelection()
         }
     }
-    
+
     private func handleDragBegin(dragValue: TouchData) {
         self.isTouching = true
         self.isTapImage = false
@@ -633,7 +639,8 @@ struct CanvasView: View {
         }
     }
 
-    private func handleDragChange(dragValue: TouchData, callback: (() -> Void)?) {
+    private func handleDragChange(dragValue: TouchData, callback: (() -> Void)?)
+    {
         self.isTouching = true
         self.isTapImage = false
         self.touchPoint = dragValue.location
@@ -648,7 +655,7 @@ struct CanvasView: View {
         case .laser:  // Laser Mode
             handleLaser(dragValue: dragValue)
         }
-        
+
         callback?()
     }
 
@@ -744,7 +751,7 @@ struct CanvasView: View {
         let lineStack = notePage.canvasStack.compactMap { $0.lineObj }
         return lineStack.first(where: { $0.id == drawingLineID })
     }
-    
+
     private func handleBeginDrawing(dragValue: TouchData) {
         print("changed pageIndex: \(pageIndex)")
         canvasState.setPageIndex(pageIndex)
@@ -762,26 +769,26 @@ struct CanvasView: View {
     }
 
     private func handleDrawing(dragValue: TouchData) {
-        
-            // Add points to the current stroke
-            print("drag detected for a new stroke2")
-            if let lastCanvasWithLine = notePage.canvasStack.last(where: {
-                $0.lineObj != nil
-            }),
-                let lastLine = lastCanvasWithLine.lineObj
-            {
-                let interpolatedPoints = PointHelper.interpolatePoints(
-                    from: lastLine.points.last ?? dragValue.location,
-                    to: dragValue.location
+
+        // Add points to the current stroke
+        print("drag detected for a new stroke2")
+        if let lastCanvasWithLine = notePage.canvasStack.last(where: {
+            $0.lineObj != nil
+        }),
+            let lastLine = lastCanvasWithLine.lineObj
+        {
+            let interpolatedPoints = PointHelper.interpolatePoints(
+                from: lastLine.points.last ?? dragValue.location,
+                to: dragValue.location
+            )
+            if let lastIndex = notePage.canvasStack.lastIndex(where: {
+                $0.id == lastCanvasWithLine.id
+            }) {
+                notePage.canvasStack[lastIndex].lineObj?.points.append(
+                    contentsOf: interpolatedPoints
                 )
-                if let lastIndex = notePage.canvasStack.lastIndex(where: {
-                    $0.id == lastCanvasWithLine.id
-                }) {
-                    notePage.canvasStack[lastIndex].lineObj?.points.append(
-                        contentsOf: interpolatedPoints
-                    )
-                }
-          
+            }
+
         }
 
         // Update hold detection logic for the latest position
@@ -806,8 +813,7 @@ struct CanvasView: View {
         } else {
             lastDrawPosition = dragValue.location
         }
-        
-       
+
     }
 
     private func processLineForTransformation(_ line: LineObj) {

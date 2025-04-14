@@ -9,11 +9,7 @@ import UIKit
 
 struct ImageObj: Identifiable, Codable, Equatable {
     let id: UUID
-    var path: String? {
-        didSet {
-            loadImageFromPath()
-        }
-    }
+    var path: String?
     var position: CGPoint
     var size: CGSize
     var angle: CGFloat
@@ -33,6 +29,7 @@ struct ImageObj: Identifiable, Codable, Equatable {
         )
     }
 
+
     // Initializer
     init(
         id: UUID = UUID(),
@@ -47,9 +44,6 @@ struct ImageObj: Identifiable, Codable, Equatable {
         self.size = size
         self.angle = angle
         self.cgImage = nil
-
-        // Load the CGImage during initialization
-        loadImageFromPath()
     }
 
     var isAnimatedGIF: Bool {
@@ -93,38 +87,42 @@ struct ImageObj: Identifiable, Codable, Equatable {
 
     // Load the CGImage from the path
     mutating func loadImageFromPath() {
-        guard let path = path else {
-            print("Error: Path is nil")
-            return
-        }
-        guard let projectId = currentProjectId else {
-            print("Error: currentProjectId is nil")
-            return
-        }
-
-        guard
-            let absolutePath = FileHelper.getProjectImageFilePath(
-                imageName: path,
-                projectId: projectId
-            )
-        else {
-            print("Error: absolutePath is nil")
-            return
-        }
-
-        if isAnimatedGIF,
-            (try? Data(contentsOf: URL(fileURLWithPath: absolutePath))) != nil
-        {
-            // Load animated GIF as UIImage
-            //  animatedImage = UIImage.animatedImage(withAnimatedGIFData: data)
-            // cgImage = animatedImage?.cgImage
-        } else if let uiImage = UIImage(contentsOfFile: absolutePath) {
-            // Load static image as CGImage
-            animatedImage = nil
-            cgImage = uiImage.cgImage
-        } else {
-            print("Error: Unable to load image at path \(absolutePath)")
-            cgImage = nil
+        
+        if(self.cgImage == nil) {
+            guard let path = path else {
+                print("Error: Path is nil")
+                return
+            }
+            
+            guard let projectId = currentProjectId else {
+                print("Error: currentProjectId is nil")
+                return
+            }
+            
+            guard
+                let absolutePath = FileHelper.getProjectImageFilePath(
+                    imageName: path,
+                    projectId: projectId
+                )
+            else {
+                print("Error: absolutePath is nil")
+                return
+            }
+            
+            if isAnimatedGIF,
+               (try? Data(contentsOf: URL(fileURLWithPath: absolutePath))) != nil
+            {
+                // Load animated GIF as UIImage
+                //  animatedImage = UIImage.animatedImage(withAnimatedGIFData: data)
+                // cgImage = animatedImage?.cgImage
+            } else if let uiImage = UIImage(contentsOfFile: absolutePath) {
+                // Load static image as CGImage
+                animatedImage = nil
+                cgImage = uiImage.cgImage
+            } else {
+                print("Error: Unable to load image at path \(absolutePath)")
+                cgImage = UIImage(systemName: "photo")!.cgImage!
+            }
         }
 
     }
@@ -158,6 +156,6 @@ struct ImageObj: Identifiable, Codable, Equatable {
 
         // Load the CGImage during decoding
         self.cgImage = nil
-        loadImageFromPath()
+     
     }
 }

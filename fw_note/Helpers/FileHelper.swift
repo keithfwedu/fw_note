@@ -10,46 +10,60 @@ import PDFKit
 import SwiftUI
 
 class FileHelper {
+
+    static func updateFreeSpace() -> Double {
+        if let attributes = try? FileManager.default.attributesOfFileSystem(
+            forPath: NSHomeDirectory()
+        ),
+            let freeSpace = attributes[.systemFreeSize] as? Double,
+            let totalSpace = attributes[.systemSize] as? Double
+        {
+            return freeSpace / totalSpace
+        }
+
+        return 0.0
+    }
+
     static func getBaseDirectory() -> URL {
         FileManager.default.urls(
             for: .applicationSupportDirectory,
             in: .userDomainMask
         ).first!
     }
-    
+
     static func getPDFPath(projectId: UUID) -> String {
         let currentUserId = getCurrentUserId()
 
         // Get the path to the Documents directory
         let baseDirectory = getBaseDirectory()
-      
+
         let projectDirectory = baseDirectory.appendingPathComponent(
             "users/\(currentUserId)/projects/\(projectId.uuidString)",
             isDirectory: true
         )
-        
+
         let pdfPath = projectDirectory.appendingPathComponent(
             "source.pdf"
         )
-      
+
         return pdfPath.path
     }
-    
+
     static func getThumbnailData(projectId: UUID) -> UIImage? {
         let currentUserId = getCurrentUserId()
 
         // Get the path to the Documents directory
         let baseDirectory = getBaseDirectory()
-      
+
         let projectDirectory = baseDirectory.appendingPathComponent(
             "users/\(currentUserId)/projects/\(projectId.uuidString)",
             isDirectory: true
         )
-        
+
         let thumbnailPath = projectDirectory.appendingPathComponent(
             "thumbnail.jpg"
         )
-        
+
         //read image from path
         if FileManager.default.fileExists(atPath: thumbnailPath.path) {
             let data = try! Data(contentsOf: thumbnailPath)
@@ -57,7 +71,7 @@ class FileHelper {
         } else {
             return nil
         }
-        
+
     }
 
     static func getCurrentUserId() -> String {
@@ -121,19 +135,9 @@ class FileHelper {
         }
     }
 
-    static func createNewProject(pdfPathUrl: URL) {
+    static func createNewProject(pdfPathUrl: URL? = nil, title: String) {
         let projectId = UUID()
-        // Extract the file name without the extension from the provided path
-        let fileName = pdfPathUrl.deletingPathExtension().lastPathComponent
 
-        // Get the current timestamp in the format "YYYY-MM-DD_HH_MM"
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd_HH_mm"
-        let currentTime = dateFormatter.string(from: Date())
-
-        // Combine the file name and timestamp to create a unique project title
-        let projectTitle = "\(fileName)_\(currentTime)"
-       
         let currentUserId = getCurrentUserId()
         let baseDirectory = getBaseDirectory()
 
@@ -162,7 +166,6 @@ class FileHelper {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
 
-
         let directories = [projectDirectory, imagesDirectory]
         for directory in directories {
             if !FileManager.default.fileExists(atPath: directory.path) {
@@ -181,18 +184,24 @@ class FileHelper {
                 }
             }
         }
-        
-        // Step 1: Copy PDF to the project directory
-        do {
-            try FileManager.default.copyItem(at: pdfPathUrl, to: sourcePdfPath)
-            print("PDF copied to: \(sourcePdfPath.path)")
-        } catch {
-            print("Failed to copy PDF: \(error)")
-            return
+        if pdfPathUrl != nil {
+            // Step 1: Copy PDF to the project directory
+            do {
+                try FileManager.default.copyItem(
+                    at: pdfPathUrl!,
+                    to: sourcePdfPath
+                )
+                print("PDF copied to: \(sourcePdfPath.path)")
+            } catch {
+                print("Failed to copy PDF: \(error)")
+                return
+            }
+        } else {
+            createPDF(pdfPath: sourcePdfPath)
         }
-        
+
         do {
-            let noteFile = NoteFile(id: projectId, title: projectTitle)
+            let noteFile = NoteFile(id: projectId, title: title)
             // Encode the NoteFile object to JSON data
             let jsonData = try encoder.encode(noteFile)
 
@@ -205,19 +214,15 @@ class FileHelper {
             print("Error saving metadata to \(dataPath): \(error)")
 
         }
-        
-       
 
         // Step 2: Generate thumbnail from the first page of the PDF
         generateThumbnail(from: sourcePdfPath, saveTo: thumbnailPath)
     }
-    
-
 
     // Function to save NoteFile to data.json
     static func saveProject(noteFile: NoteFile) {
-        let currentUserId = getCurrentUserId() // Fetch the current user ID
-        let baseDirectory = getBaseDirectory() // Base directory of your app
+        let currentUserId = getCurrentUserId()  // Fetch the current user ID
+        let baseDirectory = getBaseDirectory()  // Base directory of your app
         let projectId = noteFile.id
         // Define the project and images directories
         let projectDirectory = baseDirectory.appendingPathComponent(
@@ -242,25 +247,26 @@ class FileHelper {
             print("Error saving NoteFile to \(dataPath.path): \(error)")
         }
     }
-    
+
     static func getImageDirectory() -> URL? {
-        let currentUserId = getCurrentUserId() // Fetch the current user ID
+        let currentUserId = getCurrentUserId()  // Fetch the current user ID
         let baseDirectory = getBaseDirectory()
         let imagesDirectory = baseDirectory.appendingPathComponent(
             "users/\(currentUserId)/images",
             isDirectory: true
         )
 
-        guard FileManager.default.fileExists(atPath: imagesDirectory.path) else {
+        guard FileManager.default.fileExists(atPath: imagesDirectory.path)
+        else {
             print("data.json file not found at path: \(imagesDirectory.path)")
             return nil
         }
         return imagesDirectory
     }
-    
+
     static func getNoteFile(projectId: UUID) -> NoteFile? {
-        let currentUserId = getCurrentUserId() // Fetch the current user ID
-        let baseDirectory = getBaseDirectory() // Base directory of your app
+        let currentUserId = getCurrentUserId()  // Fetch the current user ID
+        let baseDirectory = getBaseDirectory()  // Base directory of your app
 
         // Define the path to the data.json file within the project directory
         let dataPath = baseDirectory.appendingPathComponent(
@@ -272,8 +278,6 @@ class FileHelper {
             print("data.json file not found at path: \(dataPath.path)")
             return nil
         }
-        
-       
 
         do {
             // Read the JSON data from the file
@@ -290,23 +294,27 @@ class FileHelper {
             return nil
         }
     }
-    
-    static func getUserImageFilePath(imageName: String, projectId: UUID) -> String? {
-        let currentUserId = getCurrentUserId() // Fetch the current user ID
-        let baseDirectory = getBaseDirectory() // Base directory of your app
+
+    static func getUserImageFilePath(imageName: String, projectId: UUID)
+        -> String?
+    {
+        let currentUserId = getCurrentUserId()  // Fetch the current user ID
+        let baseDirectory = getBaseDirectory()  // Base directory of your app
         // Define the project and images directories
-      
+
         let imagesDirectory = baseDirectory.appendingPathComponent(
             "users/\(currentUserId)/images",
             isDirectory: true
         )
-        
+
         return imagesDirectory.appendingPathComponent(imageName).path
     }
-    
-    static func getProjectImageFilePath(imageName: String, projectId: UUID) -> String? {
-        let currentUserId = getCurrentUserId() // Fetch the current user ID
-        let baseDirectory = getBaseDirectory() // Base directory of your app
+
+    static func getProjectImageFilePath(imageName: String, projectId: UUID)
+        -> String?
+    {
+        let currentUserId = getCurrentUserId()  // Fetch the current user ID
+        let baseDirectory = getBaseDirectory()  // Base directory of your app
         // Define the project and images directories
         let projectDirectory = baseDirectory.appendingPathComponent(
             "users/\(currentUserId)/projects/\(projectId.uuidString)",
@@ -316,14 +324,16 @@ class FileHelper {
             "images",
             isDirectory: true
         )
-        
+
         return imagesDirectory.appendingPathComponent(imageName).path
     }
 
-    static func copyImageToProject(imagePath: String, projectId: UUID) -> String? {
-        let currentUserId = getCurrentUserId() // Fetch the current user ID
-        let baseDirectory = getBaseDirectory() // Base directory of your app
-        
+    static func copyImageToProject(imagePath: String, projectId: UUID)
+        -> String?
+    {
+        let currentUserId = getCurrentUserId()  // Fetch the current user ID
+        let baseDirectory = getBaseDirectory()  // Base directory of your app
+
         let userDirectory = baseDirectory.appendingPathComponent(
             "users/\(currentUserId)",
             isDirectory: true
@@ -332,7 +342,7 @@ class FileHelper {
             "images",
             isDirectory: true
         )
-        
+
         // Define the project and images directories
         let projectDirectory = baseDirectory.appendingPathComponent(
             "users/\(currentUserId)/projects/\(projectId.uuidString)",
@@ -342,36 +352,46 @@ class FileHelper {
             "images",
             isDirectory: true
         )
-        
+
         // Ensure the images directory exists
         do {
             if !FileManager.default.fileExists(atPath: imagesDirectory.path) {
-                try FileManager.default.createDirectory(at: imagesDirectory, withIntermediateDirectories: true)
+                try FileManager.default.createDirectory(
+                    at: imagesDirectory,
+                    withIntermediateDirectories: true
+                )
                 print("Images directory created at: \(imagesDirectory.path)")
             }
         } catch {
             print("Failed to create images directory: \(error)")
             return nil
         }
-        
-        let absoluteImagePath = userImagesDirectory.appendingPathComponent(imagePath)
+
+        let absoluteImagePath = userImagesDirectory.appendingPathComponent(
+            imagePath
+        )
         // Define the destination path for the image
-        let imageFileName = absoluteImagePath.lastPathComponent // Extract file name from the source path
-        
-        let destinationPath = imagesDirectory.appendingPathComponent(imageFileName)
-        
+        let imageFileName = absoluteImagePath.lastPathComponent  // Extract file name from the source path
+
+        let destinationPath = imagesDirectory.appendingPathComponent(
+            imageFileName
+        )
+
         print("Source URL: \(absoluteImagePath)")
         print("Destination URL: \(destinationPath)")
-        
+
         // Check if the image already exists at the destination path
         if FileManager.default.fileExists(atPath: destinationPath.path) {
             print("Image already exists at: \(destinationPath.path)")
-            return imageFileName // Return existing file name
+            return imageFileName  // Return existing file name
         }
-        
+
         // Copy the image to the destination path
         do {
-            try FileManager.default.copyItem(at: absoluteImagePath, to: destinationPath)
+            try FileManager.default.copyItem(
+                at: absoluteImagePath,
+                to: destinationPath
+            )
             print("Image copied to: \(destinationPath.path)")
             return imageFileName
         } catch {
@@ -379,7 +399,6 @@ class FileHelper {
             return nil
         }
     }
-
 
     private static func generateThumbnail(
         from pdfUrl: URL,
@@ -458,8 +477,6 @@ class FileHelper {
 
         return noteFiles
     }
-    
-   
 
     static func deleteProject(projectId: String) {
         let currentUserId = getCurrentUserId()
@@ -513,6 +530,28 @@ class FileHelper {
         let baseDirectory = getBaseDirectory()
         return baseDirectory.appendingPathComponent(relativePath)
         //.deletingLastPathComponent()
+    }
+
+    static func createPDF(pdfPath: URL) {
+        let dpi: CGFloat = 72
+        let a4WidthInInches: CGFloat = 8.27  // A4 width in inches
+        let a4HeightInInches: CGFloat = 11.69  // A4 height in inches
+        let pdfPageSize = CGSize(
+            width: a4WidthInInches * dpi,
+            height: a4HeightInInches * dpi
+        )
+
+        // Create a new PDF context
+        UIGraphicsBeginPDFContextToFile(
+            pdfPath.path,
+            CGRect(origin: .zero, size: pdfPageSize),
+            nil
+        )
+        // Start a new page
+        UIGraphicsBeginPDFPage()
+
+        // Close the PDF context
+        UIGraphicsEndPDFContext()
     }
 
 }

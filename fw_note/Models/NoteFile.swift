@@ -5,9 +5,9 @@ import UIKit
 class NoteFile: ObservableObject, Identifiable, Codable {
     var id: UUID
     var title: String
-    
-    @Published var notePages: [NotePage] = []
+    var createdAt: Date
 
+    @Published var notePages: [NotePage] = []
 
     // Initializer for NoteFile with default title and optional PDF file path
     init(id: UUID, title: String? = nil) {
@@ -15,14 +15,13 @@ class NoteFile: ObservableObject, Identifiable, Codable {
         if let providedTitle = title {
             self.title = providedTitle
         } else {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyyMMdd_HHmmss"
-            self.title = "untitled_\(formatter.string(from: Date()))"
+            self.title = "untitled"
         }
+
+        self.createdAt = Date()
 
         // Load and reconcile notePages with the PDF file if provided
         let pdfFilePath = FileHelper.getPDFPath(projectId: id)
-        print(pdfFilePath);
         if let pdfDocument = PDFDocument(url: URL(fileURLWithPath: pdfFilePath))
         {
             reconcileNotePages(with: pdfDocument)
@@ -31,23 +30,25 @@ class NoteFile: ObservableObject, Identifiable, Codable {
         }
 
     }
+    
+  
 
     // MARK: - Codable Compliance
     enum CodingKeys: String, CodingKey {
         case id
         case title
+        case createdAt
         case notePages
-      
     }
 
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         title = try container.decode(String.self, forKey: .title)
-
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
         // Decoding Published properties
         notePages = try container.decode([NotePage].self, forKey: .notePages)
-      
+
         // Load and reconcile notePages with the PDF file if provided
         let pdfFilePath = FileHelper.getPDFPath(projectId: id)
 
@@ -63,10 +64,10 @@ class NoteFile: ObservableObject, Identifiable, Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(title, forKey: .title)
-
+        try container.encode(createdAt, forKey: .createdAt)
         // Encoding Published properties
         try container.encode(notePages, forKey: .notePages)
-       
+
     }
 
     // Reconcile notePages with PDF pages
@@ -86,7 +87,5 @@ class NoteFile: ObservableObject, Identifiable, Codable {
             notePages = newNotePages
         }
     }
-
-   
 
 }

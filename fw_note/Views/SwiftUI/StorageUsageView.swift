@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct StorageUsageView: View {
-    let freeSpaceRatio: Double
+    @State private var freeSpaceRatio: Double = 0.0
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -33,8 +33,12 @@ struct StorageUsageView: View {
                     .foregroundColor(.black)
                     .padding(.horizontal)
             )
-            .padding(.horizontal)
+           
+        }.onAppear{
+            freeSpaceRatio = FileHelper.updateFreeSpace()
         }
     
     }
+    
+   
 }

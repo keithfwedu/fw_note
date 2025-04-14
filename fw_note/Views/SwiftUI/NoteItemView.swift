@@ -5,18 +5,17 @@
 //  Created by Fung Wing on 21/3/2025.
 //
 
-
-import SwiftUI
 import PDFKit
+import SwiftUI
 
 struct NoteItemView: View {
     let noteFile: NoteFile
-    let appSupportDirectory: URL
 
     var body: some View {
         VStack {
-            if
-                let thumbnail = FileHelper.getThumbnailData(projectId: noteFile.id) {
+            if let thumbnail = FileHelper.getThumbnailData(
+                projectId: noteFile.id
+            ) {
                 Image(uiImage: thumbnail)
                     .resizable()
                     .scaledToFit()
@@ -40,5 +39,4 @@ struct NoteItemView: View {
         }
     }
 
-  
 }
