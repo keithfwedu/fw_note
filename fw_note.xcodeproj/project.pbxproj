@@ -567,9 +567,10 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "fw-note-Info.plist";
-				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "This app needs access to the Documents Folder for export pdf";
-				INFOPLIST_KEY_NSFileProviderDomainUsageDescription = "This app needs access to the File Provider for add images on the pdf";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to the Photo Library for add images on the pdf";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to the camera to enable adding photos to PDFs.";
+				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "This app requires access to the Documents Folder to facilitate exporting PDFs.";
+				INFOPLIST_KEY_NSFileProviderDomainUsageDescription = "This app requires access to the File Provider to allow adding images to PDFs.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app requires access to the Photo Library to support adding images to PDFs.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -604,9 +605,10 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "fw-note-Info.plist";
-				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "This app needs access to the Documents Folder for export pdf";
-				INFOPLIST_KEY_NSFileProviderDomainUsageDescription = "This app needs access to the File Provider for add images on the pdf";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to the Photo Library for add images on the pdf";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to the camera to enable adding photos to PDFs.";
+				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "This app requires access to the Documents Folder to facilitate exporting PDFs.";
+				INFOPLIST_KEY_NSFileProviderDomainUsageDescription = "This app requires access to the File Provider to allow adding images to PDFs.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app requires access to the Photo Library to support adding images to PDFs.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

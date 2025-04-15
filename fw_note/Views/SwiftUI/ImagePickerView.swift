@@ -168,7 +168,7 @@ struct ImagePickerView: View {
         .background(Color(UIColor.systemGray5))
         .sheet(isPresented: $isShowingImagePicker) {
             MediaPicker(
-                mediaType: .photoLibrary,
+                mediaType: selectedSourceType,
                 onMediaSelected: { data, isGIF in
                     // process your data
 
@@ -228,6 +228,7 @@ struct ImagePickerView: View {
         page.canvasStack.append(
             newCanvasObj)
 
+        canvasState.canvasMode = CanvasMode.draw
         // Add the operation to the undo stack
         noteUndoManager.addToUndo(
             pageIndex: pageIndex,

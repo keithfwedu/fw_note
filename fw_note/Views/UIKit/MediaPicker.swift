@@ -21,6 +21,7 @@ public struct MediaPicker: UIViewControllerRepresentable {
 
     public func makeUIViewController(context: Context) -> UIImagePickerController {
         let mediaPicker = UIImagePickerController()
+
         mediaPicker.sourceType = mediaType
         mediaPicker.mediaTypes = ["public.image", "com.compuserve.gif"] // Supporting images and GIFs
         mediaPicker.delegate = context.coordinator

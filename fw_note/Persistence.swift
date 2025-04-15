@@ -18,7 +18,10 @@ class PersistenceController {
         // Add sample AppState data for preview
         let appState = AppState(context: viewContext)
         appState.currentUserId = "guest"
-
+        appState.displayDirection = "horizontal"
+        appState.penColor = "#000000"
+        appState.penSize = 3
+        
         do {
             try viewContext.save()
         } catch {

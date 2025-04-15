@@ -12,6 +12,7 @@ import SwiftUI
 class CanvasState: ObservableObject {
     //PDF State
     @Published var currentPageIndex: Int = 0
+    @Published var currentProjectId: String? = nil
     @Published var displayDirection: PDFDisplayDirection = .vertical
     
     //State
@@ -19,11 +20,12 @@ class CanvasState: ObservableObject {
     @Published var canvasMode: CanvasMode = CanvasMode.draw
     @Published var eraseMode: EraseMode = EraseMode.rubber
     @Published var inputMode: InputMode = InputMode.both
-    @Published var showImagePicker: Bool = false
     
+    @Published var showImagePicker: Bool = false
     @Published var isDragging: Bool = false
+    
     @Published var canvasPool: [Int: AnyView] = [:]
-    @Published var currentProjectId: String? = nil
+    
     
     //Configs
     @Published var penSize: CGFloat = 0.5

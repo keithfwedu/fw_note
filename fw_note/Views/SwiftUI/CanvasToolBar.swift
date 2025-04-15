@@ -258,8 +258,11 @@ struct CanvasToolBar: View {
                 showAlert = true  // Show the alert for renaming
             }
         )
-        UIApplication.shared.windows.first?.rootViewController?
-            .present(UIHostingController(rootView: picker), animated: true)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.rootViewController?
+                .present(UIHostingController(rootView: picker), animated: true)
+        }
     }
 
     func exportFile(to directoryURL: URL) {
@@ -331,11 +334,10 @@ struct CanvasToolBar: View {
 
             // Save the new PDFDocument
             do {
-                try newPDFDocument.write(to: destinationURL)
+                newPDFDocument.write(to: destinationURL)
                 print("New PDF exported successfully to \(destinationURL.path)")
-            } catch {
-                print("Failed to save the new PDF: \(error)")
             }
+
         } else {
             print("Failed to load the original PDF document.")
         }

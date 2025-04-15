@@ -86,7 +86,7 @@ struct PdfNoteScreen: View {
     }
 
     // Mock functions
-    func savePDF() {
+    func savePDF() async {
         print("Save PDF")
         FileHelper.saveProject(noteFile: noteFile)
         // print("draw2 \(canvasState.canvasPool[0])")
