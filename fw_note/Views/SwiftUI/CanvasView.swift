@@ -788,7 +788,7 @@ struct CanvasView: View {
         isLaserCreated = true
         if lastDrawLaserPosition == nil {
             // Start a new stroke when drag begins
-            print("First drag detected for a new Laser")
+            print("First drag detected for a new Laser \(canvasState.penSize)")
             let newLine = LineObj(
                 color: Color.white,
                 points: [dragValue.location],

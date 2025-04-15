@@ -13,13 +13,12 @@ class CanvasState: ObservableObject {
     //PDF State
     @Published var currentPageIndex: Int = 0
     @Published var currentProjectId: String? = nil
-    @Published var displayDirection: PDFDisplayDirection = .vertical
-    
+
     //State
     @Published var timerManager = TimerManager()
     @Published var canvasMode: CanvasMode = CanvasMode.draw
     @Published var eraseMode: EraseMode = EraseMode.rubber
-    @Published var inputMode: InputMode = InputMode.both
+    
     
     @Published var showImagePicker: Bool = false
     @Published var isDragging: Bool = false
@@ -28,8 +27,10 @@ class CanvasState: ObservableObject {
     
     
     //Configs
+    @Published var displayDirection: PDFDisplayDirection = .vertical
     @Published var penSize: CGFloat = 0.5
     @Published var penColor: Color = .black
+    @Published var inputMode: InputMode = InputMode.both
     @Published var recentColors: [Color] = [Color.black, Color.blue, Color.red, Color.yellow, Color.green];
 
     func setPageIndex(_ index: Int) {

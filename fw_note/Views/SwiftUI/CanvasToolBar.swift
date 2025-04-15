@@ -121,7 +121,7 @@ struct CanvasToolBar: View {
                         )
                         .cornerRadius(8)
 
-                        if canvasState.canvasMode != CanvasMode.laser {
+                      
                             Slider(
                                 value: $canvasState.penSize,
                                 in: 1...10,
@@ -130,7 +130,7 @@ struct CanvasToolBar: View {
                                 Text("Tool Size")
                             }
                             .frame(width: 100)
-                        }
+                       
 
                         // Conditional Color Picker
                         if canvasState.canvasMode == CanvasMode.draw {
