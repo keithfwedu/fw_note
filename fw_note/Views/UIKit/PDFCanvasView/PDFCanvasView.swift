@@ -27,7 +27,7 @@ struct PDFCanvasView: UIViewRepresentable {
         pdfView.displayDirection = displayDirection
         pdfView.backgroundColor = UIColor.systemGray4
         pdfView.usePageViewController(false)
-
+        
         pdfView.pageBreakMargins = UIEdgeInsets(
             top: 50,
             left: 0,
@@ -48,7 +48,7 @@ struct PDFCanvasView: UIViewRepresentable {
             pdfView: pdfView,
             displayDirection: displayDirection
         )  // Pass PDFView to the Coordinator
-
+        setPageBreakMargins(pdfView: pdfView)
         // Add canvases as annotations to each page
         context.coordinator.addCanvasesToPages(
             pdfView: pdfView,

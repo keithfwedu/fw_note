@@ -98,6 +98,7 @@ class CanvasState: ObservableObject {
     }
 
     init() {
+        ensurePdfStateExists()
         let context = PersistenceController.shared.pdfStateContainer.viewContext
         let fetchRequest: NSFetchRequest<PdfState> = PdfState.fetchRequest()
 
@@ -150,4 +151,32 @@ class CanvasState: ObservableObject {
         }
 
     }
+    
+    
+    func ensurePdfStateExists() {
+        let context = PersistenceController.shared.pdfStateContainer.viewContext
+        let fetchRequest: NSFetchRequest<PdfState> = PdfState.fetchRequest()
+        
+        do {
+            if try context.fetch(fetchRequest).isEmpty {
+                // Create a default PdfState
+                let newPdfState = PdfState(context: context)
+                newPdfState.displayDirection = "vertical"
+                newPdfState.inputMode = "both"
+                newPdfState.penSize = 1.0
+                newPdfState.penColor = "#000000"
+                newPdfState.colorHistory1 = "#000000"
+                newPdfState.colorHistory2 = "#0000FF"
+                newPdfState.colorHistory3 = "#FF0000"
+                newPdfState.colorHistory4 = "#FFFF00"
+                newPdfState.colorHistory5 = "#00FF00"
+                
+                try context.save()
+                print("Default PdfState created.")
+            }
+        } catch {
+            print("Failed to ensure PdfState exists: \(error)")
+        }
+    }
+
 }

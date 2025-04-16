@@ -239,9 +239,9 @@ struct CanvasView: View {
 
     var body: some View {
         VStack {
-            Button("save") {
+          /*  Button("save") {
                 saveTest()
-            }
+            }*/
       
         ZStack {
            /* HStack {
