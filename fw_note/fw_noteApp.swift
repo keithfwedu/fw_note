@@ -21,7 +21,9 @@ struct fw_noteApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .environment(\.managedObjectContext, persistenceController.appStateContainer.viewContext)
+                .environment(\.managedObjectContext, persistenceController.pdfStateContainer.viewContext)
+         
         }
         
     }

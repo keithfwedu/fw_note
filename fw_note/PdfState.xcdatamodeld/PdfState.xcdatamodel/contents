@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23788" systemVersion="24E248" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
+    <entity name="PdfState" representedClassName="PdfState" syncable="YES" codeGenerationType="class">
+        <attribute name="colorHistory1" optional="YES" attributeType="String"/>
+        <attribute name="colorHistory2" optional="YES" attributeType="String"/>
+        <attribute name="colorHistory3" optional="YES" attributeType="String"/>
+        <attribute name="colorHistory4" optional="YES" attributeType="String"/>
+        <attribute name="colorHistory5" optional="YES" attributeType="String"/>
+        <attribute name="displayDirection" optional="YES" attributeType="String"/>
+        <attribute name="inputMode" optional="YES" attributeType="String"/>
+        <attribute name="penColor" optional="YES" attributeType="String"/>
+        <attribute name="penSize" optional="YES" attributeType="Float" defaultValueString="0.0" usesScalarValueType="YES"/>
+    </entity>
+</model>

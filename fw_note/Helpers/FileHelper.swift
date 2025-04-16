@@ -75,7 +75,7 @@ class FileHelper {
     }
 
     static func getCurrentUserId() -> String {
-        let context = PersistenceController.shared.container.viewContext
+        let context = PersistenceController.shared.appStateContainer.viewContext
         let fetchRequest: NSFetchRequest<AppState> = AppState.fetchRequest()
 
         do {

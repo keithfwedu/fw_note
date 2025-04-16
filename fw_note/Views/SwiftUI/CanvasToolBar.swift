@@ -135,6 +135,7 @@ struct CanvasToolBar: View {
                         // Conditional Color Picker
                         if canvasState.canvasMode == CanvasMode.draw {
                             ColorPickerView(
+                                selectedColor: $canvasState.penColor,
                                 initialColors: $canvasState.recentColors,  // Input five colors from another view
                                 onChanged: { selectedColor in
                                     canvasState.penColor = selectedColor

@@ -62,24 +62,43 @@ class EraseHelper {
                 continue
             }
 
+            // Check if the eraser touches the line (optimize logic)
+            let isTouchingLine = lineObj.points.contains { point in
+                PointHelper.distance(point, adjustedLocation) <= eraserRadius
+            }
+
+            // If no touch detected, skip interpolation and keep the line unchanged
+            if !isTouchingLine {
+                updatedCanvasStack.append(canvasObj)
+                continue
+            }
+
             // Interpolate points to ensure there are no large gaps
             let interpolatedPoints = interpolatePoints(
                 points: lineObj.points, maxDistance: eraserRadius / 2
             )
-            var newSegments: [[CGPoint]] = [[]]
+            var newSegments: [[CGPoint]] = []
+            var currentSegment: [CGPoint] = []
 
+            // Split the points into segments based on eraser radius
             for point in interpolatedPoints {
                 let currentDistance = PointHelper.distance(point, adjustedLocation)
 
                 if currentDistance > eraserRadius {
                     // Point is outside the eraser radius, add it to the current segment
-                    newSegments[newSegments.count - 1].append(point)
+                    currentSegment.append(point)
                 } else {
                     // Point is within the eraser radius, split the line
-                    if !newSegments[newSegments.count - 1].isEmpty {
-                        newSegments.append([]) // Start a new segment
+                    if !currentSegment.isEmpty {
+                        newSegments.append(currentSegment) // Save the current segment
+                        currentSegment = [] // Start a new segment
                     }
                 }
+            }
+
+            // Append the final segment if it exists
+            if !currentSegment.isEmpty {
+                newSegments.append(currentSegment)
             }
 
             // Reassemble segments into new CanvasObj objects
@@ -96,6 +115,7 @@ class EraseHelper {
 
         return updatedCanvasStack
     }
+
 
     static func interpolatePoints(points: [CGPoint], maxDistance: CGFloat)
             -> [CGPoint]

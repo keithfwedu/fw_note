@@ -8,13 +8,28 @@ import SwiftUI
 import UIKit
 
 struct ColorPickerView: View {
+    @Binding var selectedColor: Color
     @Binding var initialColors: [Color] // Input five colors from another view
     var onChanged: (Color) -> Void // Callback to return selected color
 
     @State private var showColorPicker = [false, false, false, false, false] // Toggles for each picker
-    @State private var selectedColor: Color = .clear // Updated when color is picked
+   // @State private var selectedColor: Color = .clear // Updated when color is picked
     @State private var selectedIndex: Int? = nil // Track the currently selected index
     @State private var scaleEffects: [CGFloat] = [1.0, 1.0, 1.0, 1.0, 1.0] // Scale effect for each circle
+    
+    // Custom initializer to calculate `selectedIndex` during init
+        init(selectedColor: Binding<Color>, initialColors: Binding<[Color]>, onChanged: @escaping (Color) -> Void) {
+            self._selectedColor = selectedColor
+            self._initialColors = initialColors
+            self.onChanged = onChanged
+
+            // Find the index of the selectedColor in initialColors
+            if let index = initialColors.wrappedValue.firstIndex(of: selectedColor.wrappedValue) {
+                self._selectedIndex = State(initialValue: index)
+            } else {
+                self._selectedIndex = State(initialValue: nil) // No match found
+            }
+        }
 
     var body: some View {
         HStack {

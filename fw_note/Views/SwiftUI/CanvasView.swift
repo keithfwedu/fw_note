@@ -142,7 +142,7 @@ struct CanvasView: View {
                                 )
                                 context.blendMode = .normal
 
-                            } else if line.mode == .eraser {
+                            } /*else if line.mode == .eraser {
                                 context.blendMode = .clear
                                 context.stroke(
                                     path,
@@ -154,7 +154,7 @@ struct CanvasView: View {
                                     )
                                 )
 
-                            }
+                            }*/
                         }
                     }
                 }
