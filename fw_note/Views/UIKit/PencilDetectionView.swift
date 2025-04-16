@@ -172,12 +172,4 @@ struct PencilDetectionView: UIViewRepresentable {
     }
 }
 
-struct TouchData {
-    var type: UITouch.TouchType
-    var location: CGPoint
-    var startLocation: CGPoint
-    var translation: CGSize
-    var predictedEndLocation: CGPoint
-    var predictedEndTranslation: CGSize
-    var time: Date
-}
+
