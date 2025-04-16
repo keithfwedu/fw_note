@@ -22,11 +22,11 @@ class NoteUndoManager: ObservableObject {
         self.noteFile = noteFile
     }
     
-    func addInitialCanvasStack(pageIndex: Int, canvasStack: CanvasObj) {
-        let clonedCanvasStack = canvasStack.clone()
+    func addInitialCanvasStack(pageIndex: Int, canvasStack: [CanvasObj]) {
+        let clonedCanvasStack = canvasStack.map{$0.clone()}
         let action = ActionStack(
             pageIndex: pageIndex,
-            canvasStack: [clonedCanvasStack]
+            canvasStack: clonedCanvasStack
         )
         initCanvasStack.append(action)
     }
@@ -83,9 +83,13 @@ class NoteUndoManager: ObservableObject {
         } else {
           
             if undoStack.isEmpty {
-                initCanvasStack.forEach { (initCanvas) in
+                print("undoStack.isEmpty");
+                let filteredActionStacks = initCanvasStack.filter { $0.pageIndex == 0 }
+
+                updateStacks(for: filteredActionStacks.first!)
+                /*initCanvasStack.forEach { (initCanvas) in
                     updateStacks(for: initCanvas)
-                }
+                }*/
             }
         }
 

@@ -381,8 +381,7 @@ struct CanvasView: View {
             canvasState.canvasPool[pageIndex] = AnyView(canvas)
             noteUndoManager.addInitialCanvasStack(
                 pageIndex: pageIndex,
-                canvasStack: self.notePage.canvasStack.last
-                    ?? CanvasObj(id: UUID(), lineObj: nil, imageObj: nil)
+                canvasStack: self.notePage.canvasStack
             )
 
             print("imageStack \(imageStack)")
