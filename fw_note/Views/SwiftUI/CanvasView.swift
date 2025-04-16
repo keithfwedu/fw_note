@@ -144,7 +144,7 @@ struct CanvasView: View {
                                 )
                                 context.blendMode = .normal
 
-                            } /*else if line.mode == .eraser {
+                            } else if line.mode == .eraser {
                                 context.blendMode = .clear
                                 context.stroke(
                                     path,
@@ -156,7 +156,7 @@ struct CanvasView: View {
                                     )
                                 )
 
-                            }*/
+                            }
                         }
                     }
                 }
@@ -238,14 +238,20 @@ struct CanvasView: View {
     }
 
     var body: some View {
-
+        VStack {
+            Button("save") {
+                saveTest()
+            }
+      
         ZStack {
-            HStack {
+           /* HStack {
                 Text("init: \(noteUndoManager.initCanvasStack.count)")
                 Text("Undo: \(noteUndoManager.undoStack.count)")
                 Text("Redo: \(noteUndoManager.redoStack.count)")
                 Text("currentIndex: \(canvasState.currentPageIndex)")
-            }.position(x: 0, y: 0)
+            }.position(x: 0, y: 0)*/
+            
+           
             //For force refresh UI
             if redrawTrigger {
                 VStack {}
@@ -386,7 +392,7 @@ struct CanvasView: View {
 
             print("imageStack \(imageStack)")
         }
-
+        }
     }
 
     func isEnableTouch(inputType: UITouch.TouchType) -> Bool {
@@ -515,6 +521,90 @@ struct CanvasView: View {
 
         }
 
+    }
+    
+    func saveTest() {
+        let canvas2 = Canvas { context, size in
+            for canvasObj in notePage.canvasStack {
+                if var imageObj = canvasObj.imageObj {
+                    imageObj.loadImageFromPath()
+                    if
+                        let cgImage = imageObj.cgImage
+                    {
+
+                        // Existing logic for static images
+                        context.withCGContext { cgContext in
+                            cgContext.saveGState()
+
+                            cgContext.translateBy(
+                                x: imageObj.position.x,
+                                y: imageObj.position.y
+                            )
+                            let radians =
+                                CGFloat(imageObj.angle) * .pi / 180
+                            cgContext.rotate(by: radians)
+                            cgContext.scaleBy(x: 1.0, y: -1.0)
+
+                            cgContext.draw(
+                                cgImage,
+                                in: CGRect(
+                                    origin: CGPoint(
+                                        x: -imageObj.size.width / 2,
+                                        y: -imageObj.size.height / 2
+                                    ),
+                                    size: imageObj.size
+                                )
+                            )
+
+                            cgContext.restoreGState()
+                        }
+                    }
+                }
+
+                // Handle LineObj
+                if let line = canvasObj.lineObj {
+                    let path = PathHelper.createStableCurvedPath(
+                        points: line.points,
+                        maxOffsetForAverage: 3.5
+                    )
+                    if selectedLineStack.contains(where: {
+                        $0.id == line.id
+                    }) {
+                        context.stroke(
+                            path,
+                            with: .color(.blue),
+                            style: StrokeStyle(
+                                lineWidth: line.lineWidth
+                            )
+                        )
+                    } else {
+                        if line.mode == .draw {
+                            context.blendMode = .normal
+                            context.stroke(
+                                path,
+                                with: .color(line.color),
+                                style: StrokeStyle(
+                                    lineWidth: line.lineWidth,
+                                    lineCap: .round,
+                                    lineJoin: .round
+                                )
+                            )
+                            context.blendMode = .normal
+
+                        }
+                    }
+                }
+            }
+        }.frame(width: 200, height: 200)
+            .drawingGroup()
+        
+        // Capture snapshot as UIImage
+            let image = canvas2.snapshot()
+
+                UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                print("Image saved to photo album successfully!")
+           
+   
     }
 
     // Modularized Tap Handling Function

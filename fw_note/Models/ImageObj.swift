@@ -132,13 +132,13 @@ struct ImageObj: Identifiable, Codable, Equatable {
                 return
             }
             
-            if isAnimatedGIF,
+           /* if isAnimatedGIF,
                (try? Data(contentsOf: URL(fileURLWithPath: absolutePath))) != nil
             {
                 // Load animated GIF as UIImage
-                //  animatedImage = UIImage.animatedImage(withAnimatedGIFData: data)
-                // cgImage = animatedImage?.cgImage
-            } else if let uiImage = UIImage(contentsOfFile: absolutePath) {
+                 //animatedImage = UIImage.animatedImage(withAnimatedGIFData: data)
+                 //cgImage = animatedImage?.cgImage
+            } else*/ if let uiImage = UIImage(contentsOfFile: absolutePath) {
                 // Load static image as CGImage
                 animatedImage = nil
                 cgImage = uiImage.cgImage
