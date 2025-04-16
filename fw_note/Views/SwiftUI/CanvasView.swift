@@ -476,6 +476,7 @@ struct CanvasView: View {
                 pageIndex: pageIndex,
                 canvasStack: notePage.canvasStack
             )
+            canvasState.isEdited = true
         }
     }
 
@@ -518,7 +519,7 @@ struct CanvasView: View {
                 pageIndex: self.pageIndex,
                 canvasStack: notePage.canvasStack
             )
-
+            canvasState.isEdited = true
         }
 
     }
@@ -698,7 +699,7 @@ struct CanvasView: View {
                     pageIndex: pageIndex,
                     canvasStack: self.notePage.canvasStack
                 )
-
+               canvasState.isEdited = true
             } else {
                 self.isTapImage = false
             }
@@ -708,6 +709,7 @@ struct CanvasView: View {
                 pageIndex: pageIndex,
                 canvasStack: self.notePage.canvasStack
             )
+            canvasState.isEdited = true
         case .lasso:  // Select Mode
             if !selectionPaths.isEmpty
                 && isLassoCreated == false
@@ -741,6 +743,7 @@ struct CanvasView: View {
                 pageIndex: pageIndex,
                 canvasStack: notePage.canvasStack
             )
+            canvasState.isEdited = true
         case .laser:  // Laser Mode
 
             laserTimerManager.setLaserTimer(onFadout: {
@@ -1153,6 +1156,8 @@ struct CanvasView: View {
             pageIndex: pageIndex,
             canvasStack: page.canvasStack
         )
+        
+        canvasState.isEdited = true
     }
 
 }

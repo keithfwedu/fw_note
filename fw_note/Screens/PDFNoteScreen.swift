@@ -78,7 +78,11 @@ struct PdfNoteScreen: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
                         // Show the confirmation dialog before saving
-                        showSaveConfirmation = true
+                        if(canvasState.isEdited) {
+                            showSaveConfirmation = true
+                        } else {
+                            presentationMode.wrappedValue.dismiss() // Dismiss the view
+                        }
                     }) {
                         Image(systemName: "chevron.backward")
                         Text("Back")

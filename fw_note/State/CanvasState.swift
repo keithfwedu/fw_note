@@ -12,6 +12,8 @@ import SwiftUI
 
 class CanvasState: ObservableObject {
     private var isInitialized = false
+    
+    @Published var isEdited: Bool = false
     //PDF State
     @Published var currentPageIndex: Int = 0
     @Published var currentProjectId: String? = nil
