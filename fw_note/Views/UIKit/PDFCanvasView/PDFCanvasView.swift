@@ -9,7 +9,7 @@ import PDFKit
 import SwiftUI
 
 struct PDFCanvasView: UIViewRepresentable {
-    let pdfDocument: PDFDocument
+    @Binding var pdfDocument: PDFDocument?  // Make it bindable
     var imageState: ImageState
     var canvasState: CanvasState
     var noteFile: NoteFile
@@ -18,7 +18,7 @@ struct PDFCanvasView: UIViewRepresentable {
     @Binding var searchText: String
 
     @Binding var displayDirection: PDFDisplayDirection  // Bindable property to change display direction
-
+  
     func makeUIView(context: Context) -> CustomPDFView {
 
         pdfView.document = pdfDocument
@@ -58,7 +58,7 @@ struct PDFCanvasView: UIViewRepresentable {
 
         // Add page information (Current Page / Total Pages)
         context.coordinator.addPageIndicator(to: pdfView)
-
+       
         return pdfView
     }
 
@@ -75,8 +75,25 @@ struct PDFCanvasView: UIViewRepresentable {
 
         }
 
+        if uiView.document !== pdfDocument {
+             uiView.document = pdfDocument
+            context.coordinator.pdfDocument = pdfDocument!
+            context.coordinator.configure(
+                pdfView: uiView,
+                displayDirection: displayDirection
+            )  // Pass PDFView to the Coordinator
+            
+            context.coordinator.addCanvasesToPages(
+                pdfView: uiView,
+                displayDirection: displayDirection
+            )
+
+            // Add page information (Current Page / Total Pages)
+            context.coordinator.addPageIndicator(to: uiView)
+        }
+
         uiView.layoutDocumentView()
-        
+
         context.coordinator.handleSearchTextChange(searchText)
     }
 
@@ -112,7 +129,7 @@ struct PDFCanvasView: UIViewRepresentable {
     func makeCoordinator() -> Coordinator {
         Coordinator(
             pdfView: pdfView,
-            pdfDocument: pdfDocument,
+            pdfDocument: pdfDocument!,
             noteFile: noteFile,
             noteUndoManager: noteUndoManager,
             imageState: imageState,
@@ -124,7 +141,7 @@ struct PDFCanvasView: UIViewRepresentable {
     class Coordinator: NSObject, UIScrollViewDelegate {
         weak var pdfView: CustomPDFView?  // Weak reference to avoid retain cycles
 
-        let pdfDocument: PDFDocument
+        var pdfDocument: PDFDocument
         private var imageState: ImageState
         private var canvasState: CanvasState
         var noteFile: NoteFile
@@ -323,11 +340,11 @@ struct PDFCanvasView: UIViewRepresentable {
         func handleSearchTextChange(_ searchText: String) {
             if let pdfView = self.pdfView {
                 guard let document = pdfView.document else { return }
-                
+
                 // Clear previous highlights
                 document.cancelFindString()
                 pdfView.highlightedSelections = nil
-                
+
                 // Perform search
                 let matches = document.findString(
                     searchText,

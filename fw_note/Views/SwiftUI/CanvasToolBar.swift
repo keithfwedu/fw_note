@@ -52,6 +52,7 @@ struct FilePicker: UIViewControllerRepresentable {
 }
 
 struct CanvasToolBar: View {
+    @Binding var pdfDocument: PDFDocument?
     @StateObject var noteFile: NoteFile
     @StateObject var canvasState: CanvasState
     @ObservedObject var noteUndoManager: NoteUndoManager
@@ -79,7 +80,10 @@ struct CanvasToolBar: View {
                         .background(Color.gray.opacity(0.2))
                         .cornerRadius(8)
                         .accessibilityLabel("Change Scroll Direction")
-
+                        Button(action: addPdfPage) {
+                            Image(systemName: "text.page")
+                        }
+                        .frame(width: 40, height: 40)
                         // Tool Buttons
                         Button(action: selectPenTool) {
                             Image(systemName: "pencil")
@@ -121,16 +125,14 @@ struct CanvasToolBar: View {
                         )
                         .cornerRadius(8)
 
-                      
-                            Slider(
-                                value: $canvasState.penSize,
-                                in: 1...10,
-                                step: 0.1
-                            ) {
-                                Text("Tool Size")
-                            }
-                            .frame(width: 100)
-                       
+                        Slider(
+                            value: $canvasState.penSize,
+                            in: 1...10,
+                            step: 0.1
+                        ) {
+                            Text("Tool Size")
+                        }
+                        .frame(width: 100)
 
                         // Conditional Color Picker
                         if canvasState.canvasMode == CanvasMode.draw {
@@ -144,7 +146,6 @@ struct CanvasToolBar: View {
                             )
                         }
 
-                       
                         if canvasState.canvasMode == CanvasMode.eraser {
                             Picker(
                                 "Eraser Mode",
@@ -156,7 +157,7 @@ struct CanvasToolBar: View {
                             .pickerStyle(SegmentedPickerStyle())
                             .padding()
                         }
-                        
+
                         Picker(
                             "Input",
                             selection: $canvasState.inputMode
@@ -239,6 +240,73 @@ struct CanvasToolBar: View {
         print("redoAction")
         noteUndoManager.redo()
     }
+    
+    func clonePdfDocument(originalDocument: PDFDocument?) -> PDFDocument? {
+        guard let originalDocument = originalDocument,
+              let documentData = originalDocument.dataRepresentation(),
+              let clonedDocument = PDFDocument(data: documentData) else {
+            print("Failed to clone the PDFDocument.")
+            return nil
+        }
+        
+        print("Successfully cloned PDFDocument!")
+        return clonedDocument
+    }
+
+    func addPdfPage() {
+
+        guard let pdfDocument = clonePdfDocument(originalDocument: pdfDocument) else {
+            print("No document found to add pages.")
+            return
+        }
+
+        // Get the size of the first page
+
+        let pageRect = CGRect(
+            x: 0,
+            y: 0,
+            width: 595,
+            height: 842
+        )
+
+        // Create a blank UIImage
+        UIGraphicsBeginImageContext(pageRect.size)
+        guard let context = UIGraphicsGetCurrentContext() else {
+            print("Failed to initialize graphics context.")
+            return
+        }
+        context.setFillColor(UIColor.white.cgColor)
+        context.fill(pageRect)
+        let blankImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        // Create a PDFPage from the blank image
+        if let blankImage = blankImage,
+            let blankPage = PDFPage(image: blankImage)
+        {
+            // Add the blank page to the PDFDocument
+            pdfDocument.insert(blankPage, at: pdfDocument.pageCount)
+            print(
+                "Blank page added successfully! Total Pages: \(pdfDocument.pageCount)"
+            )
+
+            // Update SwiftUI binding
+            if let updatedData = pdfDocument.dataRepresentation(),
+                let updatedDocument = PDFDocument(data: updatedData)
+            {
+                self.pdfDocument = updatedDocument
+                noteFile.notePages.append(NotePage(pageIndex: noteFile.notePages.count))
+                print(
+                    "SwiftUI binding updated successfully. Current Page Count: \(self.pdfDocument?.pageCount ?? 0)"
+                )
+            } else {
+                print("Failed to refresh the document with new data.")
+            }
+        } else {
+            print("Failed to create a blank PDF page.")
+        }
+
+    }
 
     func toggleDisplayDirection() {
 
@@ -259,8 +327,10 @@ struct CanvasToolBar: View {
                 showAlert = true  // Show the alert for renaming
             }
         )
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first {
+        if let windowScene = UIApplication.shared.connectedScenes.first
+            as? UIWindowScene,
+            let window = windowScene.windows.first
+        {
             window.rootViewController?
                 .present(UIHostingController(rootView: picker), animated: true)
         }
@@ -272,7 +342,9 @@ struct CanvasToolBar: View {
 
         let pdfFilePath = FileHelper.getPDFPath(projectId: noteFile.id)
 
-        if let originalPDFDocument = PDFDocument(url: URL(fileURLWithPath: pdfFilePath)) {
+        if let originalPDFDocument = PDFDocument(
+            url: URL(fileURLWithPath: pdfFilePath)
+        ) {
             // Create a new PDFDocument
             let newPDFDocument = PDFDocument()
 
@@ -288,7 +360,11 @@ struct CanvasToolBar: View {
 
                     // Add screenshot to the page
                     let pageBounds = page.bounds(for: .mediaBox)
-                    UIGraphicsBeginImageContextWithOptions(pageBounds.size, false, UIScreen.main.scale)
+                    UIGraphicsBeginImageContextWithOptions(
+                        pageBounds.size,
+                        false,
+                        UIScreen.main.scale
+                    )
 
                     if let context = UIGraphicsGetCurrentContext() {
                         // Flip the context vertically for PDF content
@@ -302,7 +378,7 @@ struct CanvasToolBar: View {
                         )
 
                         // Reset the transformation for the screenshot
-                        context.saveGState() // Save the current state
+                        context.saveGState()  // Save the current state
                         context.translateBy(x: 0, y: pageBounds.size.height)
                         context.scaleBy(x: 1.0, y: -1.0)
 
@@ -315,15 +391,18 @@ struct CanvasToolBar: View {
                                 height: pageBounds.height
                             )
                         )
-                        context.restoreGState() // Restore the saved state
+                        context.restoreGState()  // Restore the saved state
                     }
 
                     // Get the updated page content
-                    if let updatedPageImage = UIGraphicsGetImageFromCurrentImageContext() {
+                    if let updatedPageImage =
+                        UIGraphicsGetImageFromCurrentImageContext()
+                    {
                         UIGraphicsEndImageContext()
 
                         // Create a new PDFPage with the updated image
-                        if let updatedPDFPage = PDFPage(image: updatedPageImage) {
+                        if let updatedPDFPage = PDFPage(image: updatedPageImage)
+                        {
                             newPDFDocument.insert(updatedPDFPage, at: pageIndex)
                         }
                     } else {
@@ -343,7 +422,5 @@ struct CanvasToolBar: View {
             print("Failed to load the original PDF document.")
         }
     }
-
-
 
 }

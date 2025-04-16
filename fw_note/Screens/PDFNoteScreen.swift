@@ -13,6 +13,8 @@ struct PdfNoteScreen: View {
     @StateObject var imageState = ImageState()
     @State var noteFile: NoteFile
     @State var noteUndoManager: NoteUndoManager
+  
+    @State private var pdfDocument: PDFDocument?
     @State private var showSaveConfirmation = false // State for save confirmation dialog
     @State private var isLoading = false // State to track loading
     @State private var searchText = ""
@@ -26,6 +28,13 @@ struct PdfNoteScreen: View {
         self._noteUndoManager = State(
             initialValue: NoteUndoManager(noteFile: noteFile)
         )
+        
+        let pdfFilePath = FileHelper.getPDFPath(projectId: noteFile.id)
+        self._pdfDocument = State(
+            initialValue: PDFDocument(url: URL(fileURLWithPath: pdfFilePath))
+        )
+           
+      
     }
 
     var body: some View {
@@ -33,18 +42,17 @@ struct PdfNoteScreen: View {
             VStack {
                 
                 CanvasToolBar(
+                    pdfDocument: $pdfDocument,
                     noteFile: noteFile,
                     canvasState: canvasState,
                     noteUndoManager: noteUndoManager
                 )
                 ZStack {
-                    let pdfFilePath = FileHelper.getPDFPath(projectId: noteFile.id)
-                    if let pdfDocument = PDFDocument(
-                        url: URL(fileURLWithPath: pdfFilePath)
-                    ) {
+                  
+                    if self.pdfDocument != nil {
                         // Embedding the PDFView
                         PDFCanvasView(
-                            pdfDocument: pdfDocument,
+                            pdfDocument: $pdfDocument,
                             imageState: imageState,
                             canvasState: canvasState,
                             noteFile: noteFile,
@@ -53,9 +61,11 @@ struct PdfNoteScreen: View {
                             displayDirection: $canvasState.displayDirection
                         )
                     } else {
-                        Text("Unable to load PDF")
-                            .foregroundColor(.red)
-                            .font(.headline)
+                        VStack {
+                            Text("Unable to load PDF")
+                                .foregroundColor(.red)
+                                .font(.headline)
+                        }.frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                     
                     ImageSideMenu(
@@ -138,8 +148,8 @@ struct PdfNoteScreen: View {
         ).snapshot()
        
       
-        let pdfFilePath = FileHelper.getPDFPath(projectId: noteFile.id)
-        if let pdfDocument = PDFDocument(url: URL(fileURLWithPath: pdfFilePath))
+       
+        if let pdfDocument = pdfDocument
         {
             guard
                 let page = pdfDocument.page(
