@@ -15,6 +15,7 @@ struct PdfNoteScreen: View {
     @State var noteUndoManager: NoteUndoManager
     @State private var showSaveConfirmation = false // State for save confirmation dialog
     @State private var isLoading = false // State to track loading
+    @State private var searchText = ""
     @Environment(\.presentationMode) var presentationMode // Allows manual dismissal
 
     init(noteFile: NoteFile) {
@@ -48,6 +49,7 @@ struct PdfNoteScreen: View {
                             canvasState: canvasState,
                             noteFile: noteFile,
                             noteUndoManager: noteUndoManager,
+                            searchText: $searchText,
                             displayDirection: $canvasState.displayDirection
                         )
                     } else {
@@ -88,6 +90,16 @@ struct PdfNoteScreen: View {
                         Text("Back")
                     }
                 }
+                
+                // Search text box in the top-right corner
+                                ToolbarItem(placement: .navigationBarTrailing) {
+                                    HStack {
+                                        TextField("Search", text: $searchText)
+                                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                                            .frame(width: 200)
+                                       
+                                    }
+                                }
             }
             .alert("Do you want to save before leaving?", isPresented: $showSaveConfirmation) {
                 Button("Save") {

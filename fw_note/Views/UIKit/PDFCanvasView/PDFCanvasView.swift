@@ -15,6 +15,7 @@ struct PDFCanvasView: UIViewRepresentable {
     var noteFile: NoteFile
     var noteUndoManager: NoteUndoManager
     var pdfView: CustomPDFView = CustomPDFView()
+    @Binding var searchText: String
 
     @Binding var displayDirection: PDFDisplayDirection  // Bindable property to change display direction
 
@@ -27,7 +28,7 @@ struct PDFCanvasView: UIViewRepresentable {
         pdfView.displayDirection = displayDirection
         pdfView.backgroundColor = UIColor.systemGray4
         pdfView.usePageViewController(false)
-        
+
         pdfView.pageBreakMargins = UIEdgeInsets(
             top: 50,
             left: 0,
@@ -71,10 +72,12 @@ struct PDFCanvasView: UIViewRepresentable {
                 pdfView: uiView,
                 displayDirection: uiView.displayDirection
             )
-           
+
         }
 
         uiView.layoutDocumentView()
+        
+        context.coordinator.handleSearchTextChange(searchText)
     }
 
     func setPageBreakMargins(pdfView: CustomPDFView) {
@@ -113,8 +116,8 @@ struct PDFCanvasView: UIViewRepresentable {
             noteFile: noteFile,
             noteUndoManager: noteUndoManager,
             imageState: imageState,
-            canvasState: canvasState
-
+            canvasState: canvasState,
+            searchText: $searchText
         )
     }
 
@@ -130,6 +133,7 @@ struct PDFCanvasView: UIViewRepresentable {
         var scaleFactor: CGFloat = 1.0
         var displayDirection: PDFDisplayDirection = .vertical
         var rawPageFrames: [CGRect] = []
+        @Binding private var searchText: String
 
         init(
             pdfView: CustomPDFView,
@@ -137,7 +141,8 @@ struct PDFCanvasView: UIViewRepresentable {
             noteFile: NoteFile,
             noteUndoManager: NoteUndoManager,
             imageState: ImageState,
-            canvasState: CanvasState
+            canvasState: CanvasState,
+            searchText: Binding<String>
         ) {
             self.pdfDocument = pdfDocument
             self.noteFile = noteFile
@@ -145,7 +150,7 @@ struct PDFCanvasView: UIViewRepresentable {
             self.imageState = imageState
             self.canvasState = canvasState
             self.pdfView = pdfView
-
+            self._searchText = searchText
         }
 
         func configure(
@@ -311,27 +316,28 @@ struct PDFCanvasView: UIViewRepresentable {
                 documentView.addSubview(canvasViewWrapper)
                 canvasViewWrapper.layer.zPosition = 1
                 pdfView.layoutDocumentView()
-                //searchText(pdfView: pdfView, searchText: "ap_")
+
             }
         }
 
-        private func searchText(pdfView: PDFView, searchText: String) {
-
-            guard let document = pdfView.document else { return }
-
-            // Clear previous highlights
-            document.cancelFindString()
-            pdfView.highlightedSelections = nil
-
-            // Perform search
-            let matches = document.findString(
-                searchText,
-                withOptions: .caseInsensitive
-            )
-            for match in matches {
-                match.color = UIColor.yellow.withAlphaComponent(0.5)  // Highlight color
+        func handleSearchTextChange(_ searchText: String) {
+            if let pdfView = self.pdfView {
+                guard let document = pdfView.document else { return }
+                
+                // Clear previous highlights
+                document.cancelFindString()
+                pdfView.highlightedSelections = nil
+                
+                // Perform search
+                let matches = document.findString(
+                    searchText,
+                    withOptions: .caseInsensitive
+                )
+                for match in matches {
+                    match.color = UIColor.yellow.withAlphaComponent(0.5)  // Highlight color
+                }
+                pdfView.highlightedSelections = matches
             }
-            pdfView.highlightedSelections = matches
         }
 
         func addPageIndicator(to pdfView: PDFView) {
