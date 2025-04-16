@@ -80,10 +80,10 @@ struct CanvasToolBar: View {
                         .background(Color.gray.opacity(0.2))
                         .cornerRadius(8)
                         .accessibilityLabel("Change Scroll Direction")
-                        Button(action: addPdfPage) {
+                        /*Button(action: addPdfPage) {
                             Image(systemName: "text.page")
                         }
-                        .frame(width: 40, height: 40)
+                        .frame(width: 40, height: 40)*/
                         // Tool Buttons
                         Button(action: selectPenTool) {
                             Image(systemName: "pencil")
