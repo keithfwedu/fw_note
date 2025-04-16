@@ -13,7 +13,9 @@ struct PdfNoteScreen: View {
     @StateObject var imageState = ImageState()
     @State var noteFile: NoteFile
     @State var noteUndoManager: NoteUndoManager
-    @Environment(\.presentationMode) var presentationMode  // Allows manual dismissal
+    @State private var showSaveConfirmation = false // State for save confirmation dialog
+    @State private var isLoading = false // State to track loading
+    @Environment(\.presentationMode) var presentationMode // Allows manual dismissal
 
     init(noteFile: NoteFile) {
         currentProjectId = noteFile.id
@@ -26,64 +28,84 @@ struct PdfNoteScreen: View {
     }
 
     var body: some View {
-        VStack {
-            CanvasToolBar(
-                noteFile: noteFile,
-                canvasState: canvasState,
-                noteUndoManager: noteUndoManager
-            )
-            ZStack {
-                let pdfFilePath = FileHelper.getPDFPath(projectId: noteFile.id)
-                if let pdfDocument = PDFDocument(
-                    url: URL(fileURLWithPath: pdfFilePath)
-                ) {
-                    // Embedding the PDFView
-                    PDFCanvasView(
-                        pdfDocument: pdfDocument,
+        ZStack {
+            VStack {
+                
+                CanvasToolBar(
+                    noteFile: noteFile,
+                    canvasState: canvasState,
+                    noteUndoManager: noteUndoManager
+                )
+                ZStack {
+                    let pdfFilePath = FileHelper.getPDFPath(projectId: noteFile.id)
+                    if let pdfDocument = PDFDocument(
+                        url: URL(fileURLWithPath: pdfFilePath)
+                    ) {
+                        // Embedding the PDFView
+                        PDFCanvasView(
+                            pdfDocument: pdfDocument,
+                            imageState: imageState,
+                            canvasState: canvasState,
+                            noteFile: noteFile,
+                            noteUndoManager: noteUndoManager,
+                            displayDirection: $canvasState.displayDirection
+                        )
+                    } else {
+                        Text("Unable to load PDF")
+                            .foregroundColor(.red)
+                            .font(.headline)
+                    }
+                    
+                    ImageSideMenu(
+                        width: 280,
+                        isOpen: canvasState.showImagePicker,
+                        menuClose: {
+                            canvasState.showImagePicker = false
+                        },
                         imageState: imageState,
                         canvasState: canvasState,
-                        noteFile: noteFile,
                         noteUndoManager: noteUndoManager,
-                        displayDirection: $canvasState.displayDirection
+                        noteFile: noteFile
                     )
-                } else {
-                    Text("Unable to load PDF")
-                        .foregroundColor(.red)
-                        .font(.headline)
                 }
-
-                ImageSideMenu(
-                    width: 280,
-                    isOpen: canvasState.showImagePicker,
-                    menuClose: {
-                        canvasState.showImagePicker = false
-                    },
-                    imageState: imageState,
-                    canvasState: canvasState,
-                    noteUndoManager: noteUndoManager,
-                    noteFile: noteFile
-                )
+                
+            }
+            .background(Color(UIColor.systemGray6))
+            .navigationTitle(noteFile.title) // Set the navigation title
+            .navigationBarTitleDisplayMode(.inline) // Optional: inline style for the title
+            .navigationBarBackButtonHidden(true) // Hide the default back button
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        // Show the confirmation dialog before saving
+                        showSaveConfirmation = true
+                    }) {
+                        Image(systemName: "chevron.backward")
+                        Text("Back")
+                    }
+                }
+            }
+            .alert("Do you want to save before leaving?", isPresented: $showSaveConfirmation) {
+                Button("Save") {
+                    Task {
+                        isLoading = true // Show loading indicator
+                        await savePDF() // Wait for savePDF to complete
+                        isLoading = false // Hide loading indicator
+                        presentationMode.wrappedValue.dismiss() // Dismiss the view
+                    }
+                }
+                Button("Don't Save") {
+                    presentationMode.wrappedValue.dismiss() // Dismiss the view
+                }
+                Button("Cancel", role: .cancel) { }
             }
         }
-        .background(Color(UIColor.systemGray6))
-        .navigationTitle(noteFile.title)  // Set the navigation title
-        .navigationBarTitleDisplayMode(.inline)  // Optional: inline style for the title
-        .navigationBarBackButtonHidden(false)  // Ensure the default back button is visible
-        .navigationBarBackButtonHidden(true)  // Hide default back button
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: {
-                    Task {
-                        await savePDF()  // Wait for savePDF to complete
-
-                    }
-                }) {
-                    Image(systemName: "chevron.backward")
-                    Text("Back")
-                }
-            }
+        if isLoading {
+            // Show a loading view while saving
+            LoadingView()
         }
     }
+
 
     // Mock functions
     func savePDF() async {

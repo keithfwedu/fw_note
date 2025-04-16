@@ -45,6 +45,8 @@ struct CanvasView: View {
     @State var lastDrawPosition: CGPoint? = nil
     @State var lastDragPosition: CGPoint? = nil
 
+    @State private var isLoading = false // State to track loading
+    
     @State var imageStack: [ImageObj] = []
     @State private var pageSize: CGSize = .zero
     let onDoubleTap: () -> Void
@@ -349,6 +351,10 @@ struct CanvasView: View {
                 DropZoneView(isDraggingOver: $isDraggingOver)
             }
 
+            if isLoading {
+                // Show a loading view while saving
+                LoadingView()
+            }
         }
         .onTapGesture {
             isDraggingOver = false
@@ -926,6 +932,7 @@ struct CanvasView: View {
 
     private func handleDrop(providers: [NSItemProvider]) -> Bool {
         for provider in providers {
+            isLoading = true
             print("Checking provider...")
 
             // Check if the provider has an item conforming to "public.image"
@@ -965,9 +972,11 @@ struct CanvasView: View {
                                             addImageToStack(
                                                 image: originalImageObj
                                             )
+                                            isLoading = false
                                         }
                                     } else {
                                         print("Failed to save GIF.")
+                                        isLoading = false
                                     }
                                 }
                             )
@@ -975,6 +984,7 @@ struct CanvasView: View {
                             print(
                                 "Failed to load GIF: \(String(describing: error))"
                             )
+                            isLoading = false
                         }
                     }
 
@@ -986,6 +996,7 @@ struct CanvasView: View {
                             print(
                                 "Failed to load image: \(String(describing: error))"
                             )
+                            isLoading = false
                             return
                         }
 
@@ -1001,11 +1012,12 @@ struct CanvasView: View {
                                 )
                             {
                                 addImageToStack(image: originalImageObj)
+                                isLoading = false
                             }
 
                         } else {
                             print("Failed to convert UIImage to PNG data.")
-
+                            isLoading = false
                         }
 
                     }
