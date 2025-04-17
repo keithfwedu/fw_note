@@ -7,6 +7,9 @@
         <attribute name="colorHistory4" optional="YES" attributeType="String"/>
         <attribute name="colorHistory5" optional="YES" attributeType="String"/>
         <attribute name="displayDirection" optional="YES" attributeType="String"/>
+        <attribute name="eraserSize" optional="YES" attributeType="Float" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="highlighterColor" optional="YES" attributeType="String"/>
+        <attribute name="highlighterSize" optional="YES" attributeType="Float" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="inputMode" optional="YES" attributeType="String"/>
         <attribute name="penColor" optional="YES" attributeType="String"/>
         <attribute name="penSize" optional="YES" attributeType="Float" defaultValueString="0.0" usesScalarValueType="YES"/>

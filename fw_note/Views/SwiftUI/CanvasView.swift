@@ -45,8 +45,14 @@ struct CanvasView: View {
     @State var lastDrawPosition: CGPoint? = nil
     @State var lastDragPosition: CGPoint? = nil
 
-    @State private var isLoading = false // State to track loading
-    
+    @State var drawSize: CGFloat = 10
+    @State var drawColor: Color = .blue
+
+    @State private var showToast = false
+    @State private var toastMessage = ""
+
+    @State private var isLoading = false  // State to track loading
+
     @State var imageStack: [ImageObj] = []
     @State private var pageSize: CGSize = .zero
     let onDoubleTap: () -> Void
@@ -168,7 +174,7 @@ struct CanvasView: View {
                 {
                     var selectionDrawing = Path()
                     selectionDrawing.addLines(
-                        selectionPaths.map{ CGPoint(x: $0.x, y: $0.y) }
+                        selectionPaths.map { CGPoint(x: $0.x, y: $0.y) }
                     )
                     selectionDrawing.closeSubpath()
                     context.stroke(
@@ -239,164 +245,224 @@ struct CanvasView: View {
 
     var body: some View {
         VStack {
-          /*  Button("save") {
-                saveTest()
-            }*/
-      
-        ZStack {
-           /* HStack {
-                Text("init: \(noteUndoManager.initCanvasStack.count)")
-                Text("Undo: \(noteUndoManager.undoStack.count)")
-                Text("Redo: \(noteUndoManager.redoStack.count)")
-                Text("currentIndex: \(canvasState.currentPageIndex)")
-            }.position(x: 0, y: 0)*/
-            
-           
-            //For force refresh UI
-            if redrawTrigger {
-                VStack {}
-            }
+            /*  Button("save") {
+                  saveTest()
+              }*/
 
-            // Add a dynamic circle that syncs with the touch position
-            if self.touchPoint != nil && isTouching {
-                Circle()
-                    .stroke(Color.gray, lineWidth: 1)  // Thin border with red color
-                    .background(Circle().fill(Color.clear))  // Optional: Make the circle transparent insid
-                    .frame(
-                        width: canvasState.penSize + 2,
-                        height: canvasState.penSize + 2
-                    )  // Circle size
-                    .position(self.touchPoint!)  // Dynamically update circle position
-            }
-            GeometryReader { geometry in
+            ZStack {
+                /* HStack {
+                     Text("init: \(noteUndoManager.initCanvasStack.count)")
+                     Text("Undo: \(noteUndoManager.undoStack.count)")
+                     Text("Redo: \(noteUndoManager.redoStack.count)")
+                     Text("currentIndex: \(canvasState.currentPageIndex)")
+                 }.position(x: 0, y: 0)*/
 
-                canvas
-                    // .border(.red, width: 1)
-                    .onAppear {
-                        currentProjectId = noteFile.id
-                        pageSize = geometry.size
-                        redrawTrigger.toggle()
-                        notePage.pageCenterPoint = CGPoint(
-                            x: geometry.size.width / 2,
-                            y: geometry.size.height / 2
-                        )
-                        notePage.canvasWidth = geometry.size.width
-                        notePage.canvasHeight = geometry.size.height
-                        imageStack = notePage.canvasStack.compactMap {
-                            $0.imageObj
-                        }
-                        focusedID = nil
-                        isDraggingOver = false
-                    }
-                    .allowsHitTesting(false)  // Toggle interaction
-
-                // Pencil Detection View as overlay
-                PencilDetectionView(
-                    onTap: { value in
-                        if isEnableTouch(inputType: value.type) {
-                            focusedID = nil
-                            handleTap(
-                                at: value.startLocation,
-                                noteFile: noteFile
-                            )
-                        }
-                    },
-                    onTouchBegin: { value in
-                        if isEnableTouch(inputType: value.type) {
-                            focusedID = nil
-
-                            if value.type == .pencil {
-                                print("touch with pencil")
-                            } else {
-                                print("touch with fingers")
-                            }
-
-                            handleDragBegin(
-                                dragValue: value
-                            )
-                        }
-                    },
-                    onTouchMove: { value in
-                        if isEnableTouch(inputType: value.type) {
-                            handleDragChange(
-                                dragValue: value,
-                                callback: {}
-                            )
-                        }
-                    },
-                    onTouchEnd: { value in
-                        if isEnableTouch(inputType: value.type) {
-                            handleDragChange(
-                                dragValue: value,
-                                callback: {
-                                    handleDragEnded()
-                                }
-                            )
-                        }
-                    },
-                    onTouchCancel: {
-                        handleDragEnded()
-                    }
-
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(.clear)
-
-                gifs.clipped()
-
-            }
-            .onDrop(
-                of: ["public.image", "com.compuserve.gif"],
-                isTargeted: $isDraggingOver
-            ) { providers in
-                print("providers")
-                return handleDrop(providers: providers)
-            }
-
-            if isDraggingOver {
-                DropZoneView(isDraggingOver: $isDraggingOver)
-            }
-
-            if isLoading {
-                // Show a loading view while saving
-                LoadingView()
-            }
-        }
-        .onTapGesture {
-            isDraggingOver = false
-
-        }
-        .gesture(
-            TapGesture(count: 2)  // Double-tap gesture
-                .onEnded {
-                    onDoubleTap()  // Trigger the closure when double-tap is detected
+                //For force refresh UI
+                if redrawTrigger {
+                    VStack {}
                 }
-        )
-        .onChange(of: canvasState.canvasMode) {
-            newMode in
-            handleModeChange(mode: newMode)
-        }
-        .onChange(of: notePage.canvasStack) { newStack in
-            imageStack = newStack.compactMap { $0.imageObj }
 
-            focusedID = nil
-            isDraggingOver = false
+                // Add a dynamic circle that syncs with the touch position
+                if self.touchPoint != nil && isTouching {
+                    Circle()
+                        .stroke(Color.gray, lineWidth: 1)  // Thin border with red color
+                        .background(Circle().fill(Color.clear))  // Optional: Make the circle transparent insid
+                        .frame(
+                            width: drawSize + 2,
+                            height: drawSize + 2
+                        )  // Circle size
+                        .position(self.touchPoint!)  // Dynamically update circle position
+                }
+                GeometryReader { geometry in
 
-        }
-        .onAppear {
-            canvasState.canvasPool[pageIndex] = AnyView(canvas)
-            noteUndoManager.addInitialCanvasStack(
-                pageId: self.notePage.id,
-                canvasStack: self.notePage.canvasStack
+                    canvas
+                        // .border(.red, width: 1)
+                        .onAppear {
+                            currentProjectId = noteFile.id
+                            pageSize = geometry.size
+                            redrawTrigger.toggle()
+                            notePage.pageCenterPoint = CGPoint(
+                                x: geometry.size.width / 2,
+                                y: geometry.size.height / 2
+                            )
+                            notePage.canvasWidth = geometry.size.width
+                            notePage.canvasHeight = geometry.size.height
+                            imageStack = notePage.canvasStack.compactMap {
+                                $0.imageObj
+                            }
+                            focusedID = nil
+                            isDraggingOver = false
+                        }
+                        .allowsHitTesting(false)  // Toggle interaction
+
+                    // Pencil Detection View as overlay
+                    PencilDetectionView(
+                        onTap: { value in
+                            if isEnableTouch(inputType: value.type) {
+                                focusedID = nil
+                                handleTap(
+                                    at: value.startLocation,
+                                    noteFile: noteFile
+                                )
+                            }
+                        },
+                        onTouchBegin: { value in
+                            if isEnableTouch(inputType: value.type) {
+                                focusedID = nil
+
+                                if value.type == .pencil {
+                                    print("touch with pencil")
+                                } else {
+                                    print("touch with fingers")
+                                }
+
+                                handleDragBegin(
+                                    dragValue: value
+                                )
+                            } else {
+                              
+                                
+                                toastMessage =
+                                "Not enabled to draw By \(value.type == .pencil ? "pencil" : "fingers")"
+                                showToast = true
+                                DispatchQueue.main.asyncAfter(
+                                    deadline: .now() + 2
+                                ) {
+                                    showToast = false
+                                }
+                            }
+                        },
+                        onTouchMove: { value in
+                            if isEnableTouch(inputType: value.type) {
+                                handleDragChange(
+                                    dragValue: value,
+                                    callback: {}
+                                )
+                            }
+                        },
+                        onTouchEnd: { value in
+                            if isEnableTouch(inputType: value.type) {
+                                handleDragChange(
+                                    dragValue: value,
+                                    callback: {
+                                        handleDragEnded()
+                                    }
+                                )
+                            }
+                        },
+                        onTouchCancel: {
+                            handleDragEnded()
+                        }
+
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(.clear)
+
+                    gifs.clipped()
+
+                }
+                .onDrop(
+                    of: ["public.image", "com.compuserve.gif"],
+                    isTargeted: $isDraggingOver
+                ) { providers in
+                    print("providers")
+                    return handleDrop(providers: providers)
+                }
+
+                if isDraggingOver {
+                    DropZoneView(isDraggingOver: $isDraggingOver)
+                }
+
+                if showToast {
+                    ToastView(message: toastMessage)
+                        .transition(.opacity)
+                        .animation(.easeInOut)
+                        .zIndex(1)  // Ensure it stays above other views
+                }
+
+                if isLoading {
+                    // Show a loading view while saving
+                    LoadingView()
+                }
+
+            }
+            .onTapGesture {
+                isDraggingOver = false
+
+            }
+            .gesture(
+                TapGesture(count: 2)  // Double-tap gesture
+                    .onEnded {
+                        onDoubleTap()  // Trigger the closure when double-tap is detected
+                    }
             )
+            .onChange(of: canvasState.canvasMode) {
+                newMode in
+                handleModeChange(mode: newMode)
+            }
+            .onChange(of: notePage.canvasStack) { newStack in
+                imageStack = newStack.compactMap { $0.imageObj }
 
-            print("imageStack \(imageStack)")
+                focusedID = nil
+                isDraggingOver = false
+
+            }
+            .onChange(of: canvasState.canvasTool) { newCanvasTool in
+                handleDrawSetting(canvasTool: newCanvasTool)
+            }
+            .onChange(of: canvasState.penSize) { newPenSize in
+                handleDrawSetting(canvasTool: canvasState.canvasTool)
+            }
+            .onChange(of: canvasState.penColor) { newPenColor in
+                handleDrawSetting(canvasTool: canvasState.canvasTool)
+            }
+            .onChange(of: canvasState.highlighterSize) { newHighlighterSize in
+                handleDrawSetting(canvasTool: canvasState.canvasTool)
+            }
+            .onChange(of: canvasState.highlighterColor) { newHighlighterColor in
+                handleDrawSetting(canvasTool: canvasState.canvasTool)
+            }
+            .onChange(of: canvasState.eraserSize) { newEraserSize in
+                handleDrawSetting(canvasTool: canvasState.canvasTool)
+            }
+            .onAppear {
+                canvasState.canvasPool[pageIndex] = AnyView(canvas)
+                handleDrawSetting(canvasTool: canvasState.canvasTool)
+                noteUndoManager.addInitialCanvasStack(
+                    pageId: self.notePage.id,
+                    canvasStack: self.notePage.canvasStack
+                )
+
+                print("imageStack \(imageStack)")
+            }
         }
+    }
+
+    func handleDrawSetting(canvasTool: CanvasTool) {
+
+        switch canvasTool {
+        case CanvasTool.eraser:
+            print("handleDrawSetting1")
+            self.drawSize = canvasState.eraserSize
+        case CanvasTool.pen:
+            print("handleDrawSetting3")
+            self.drawSize = canvasState.penSize
+            self.drawColor = canvasState.penColor
+        case CanvasTool.highlighter:
+            print(
+                "handleDrawSetting3 \(canvasState.highlighterSize) - \(canvasState.highlighterColor)"
+            )
+            self.drawSize = canvasState.highlighterSize
+            self.drawColor = canvasState.highlighterColor.opacity(0.3)
+        default:
+            self.drawSize = canvasState.penSize
+            self.drawColor = canvasState.penColor
+            break
         }
     }
 
     func isEnableTouch(inputType: UITouch.TouchType) -> Bool {
-        print(inputType)
+
         switch canvasState.inputMode {
         case InputMode.both:
             return true
@@ -523,15 +589,13 @@ struct CanvasView: View {
         }
 
     }
-    
+
     func saveTest() {
         let canvas2 = Canvas { context, size in
             for canvasObj in notePage.canvasStack {
                 if var imageObj = canvasObj.imageObj {
                     imageObj.loadImageFromPath()
-                    if
-                        let cgImage = imageObj.cgImage
-                    {
+                    if let cgImage = imageObj.cgImage {
 
                         // Existing logic for static images
                         context.withCGContext { cgContext in
@@ -598,14 +662,13 @@ struct CanvasView: View {
             }
         }.frame(width: 200, height: 200)
             .drawingGroup()
-        
-        // Capture snapshot as UIImage
-            let image = canvas2.snapshot()
 
-                UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                print("Image saved to photo album successfully!")
-           
-   
+        // Capture snapshot as UIImage
+        let image = canvas2.snapshot()
+
+        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+        print("Image saved to photo album successfully!")
+
     }
 
     // Modularized Tap Handling Function
@@ -699,7 +762,7 @@ struct CanvasView: View {
                     pageId: self.notePage.id,
                     canvasStack: self.notePage.canvasStack
                 )
-               canvasState.isEdited = true
+                canvasState.isEdited = true
             } else {
                 self.isTapImage = false
             }
@@ -738,7 +801,7 @@ struct CanvasView: View {
                         selectedImages: selectedImageObjIds
                     )
             }
-            
+
             noteUndoManager.addToUndo(
                 pageId: notePage.id,
                 canvasStack: notePage.canvasStack
@@ -788,9 +851,11 @@ struct CanvasView: View {
         canvasState.setPageIndex(pageIndex)
         print("First drag detected for a new stroke")
         let newLineObj = LineObj(
-            color: canvasState.penColor,
-            points: [DrawPoint(x: dragValue.location.x, y: dragValue.location.y)],
-            lineWidth: canvasState.penSize,
+            color: drawColor,
+            points: [
+                DrawPoint(x: dragValue.location.x, y: dragValue.location.y)
+            ],
+            lineWidth: drawSize,
             mode: .draw
         )
 
@@ -808,9 +873,17 @@ struct CanvasView: View {
         }),
             let lastLine = lastCanvasWithLine.lineObj
         {
-            let lastPoint = DrawPoint(x: lastLine.points.last?.x ?? 0, y: lastLine.points.last?.y ?? 0)
+            let lastPoint = DrawPoint(
+                x: lastLine.points.last?.x ?? 0,
+                y: lastLine.points.last?.y ?? 0
+            )
             let interpolatedPoints = PointHelper.interpolatePoints(
-                from: (lastLine.points.last != nil) ? lastPoint : DrawPoint(x: dragValue.location.x, y: dragValue.location.y),
+                from: (lastLine.points.last != nil)
+                    ? lastPoint
+                    : DrawPoint(
+                        x: dragValue.location.x,
+                        y: dragValue.location.y
+                    ),
                 to: DrawPoint(x: dragValue.location.x, y: dragValue.location.y)
             )
             if let lastIndex = notePage.canvasStack.lastIndex(where: {
@@ -887,11 +960,13 @@ struct CanvasView: View {
         isLaserCreated = true
         if lastDrawLaserPosition == nil {
             // Start a new stroke when drag begins
-            print("First drag detected for a new Laser \(canvasState.penSize)")
+            print("First drag detected for a new Laser \(drawSize)")
             let newLine = LineObj(
                 color: Color.white,
-                points: [DrawPoint(x: dragValue.location.x, y: dragValue.location.y)],
-                lineWidth: canvasState.penSize,
+                points: [
+                    DrawPoint(x: dragValue.location.x, y: dragValue.location.y)
+                ],
+                lineWidth: drawSize,
                 mode: .draw
             )
             laserStack.append(newLine)  // Add a new line
@@ -900,10 +975,21 @@ struct CanvasView: View {
             // Add points to the current stroke
             print("drag detected for a new Laser")
             if let lastLine = laserStack.last {
-                let lastPoint = DrawPoint(x: lastLine.points.last?.x ?? 0, y: lastLine.points.last?.y ?? 0)
+                let lastPoint = DrawPoint(
+                    x: lastLine.points.last?.x ?? 0,
+                    y: lastLine.points.last?.y ?? 0
+                )
                 let interpolatedPoints = PointHelper.interpolatePoints(
-                    from: (lastLine.points.last != nil) ? lastPoint : DrawPoint(x:dragValue.location.x, y: dragValue.location.y),
-                    to: DrawPoint(x:dragValue.location.x, y: dragValue.location.y)
+                    from: (lastLine.points.last != nil)
+                        ? lastPoint
+                        : DrawPoint(
+                            x: dragValue.location.x,
+                            y: dragValue.location.y
+                        ),
+                    to: DrawPoint(
+                        x: dragValue.location.x,
+                        y: dragValue.location.y
+                    )
                 )
                 let lastIndex: Int = laserStack.count - 1
                 laserStack[lastIndex].points.append(
@@ -920,14 +1006,14 @@ struct CanvasView: View {
             notePage.canvasStack = EraseHelper.eraseLineObjs(
                 canvasStack: notePage.canvasStack,
                 dragValue: dragValue,
-                eraserRadius: canvasState.penSize
+                eraserRadius: drawSize
             )
         } else {
             // Partial erasing: Update CanvasObj to remove specific points in lineObj
             notePage.canvasStack = EraseHelper.eraseLines(
                 canvasStack: notePage.canvasStack,
                 dragValue: dragValue,
-                eraserRadius: canvasState.penSize
+                eraserRadius: drawSize
             )
         }
     }
@@ -940,7 +1026,9 @@ struct CanvasView: View {
         if lastDragPosition == nil {
             print("First drag detected")
             resetSelection()  // Ensure there's no existing selection
-            self.selectionPaths = [DrawPoint(x: dragValue.location.x, y: dragValue.location.y)]  // Initialize selection path
+            self.selectionPaths = [
+                DrawPoint(x: dragValue.location.x, y: dragValue.location.y)
+            ]  // Initialize selection path
             lastDragPosition = dragValue.location
             return  // Exit early as this is the first touch point
         }
@@ -1000,7 +1088,7 @@ struct CanvasView: View {
                     }
                 }
             }
-          
+
         } else {
             // Case 3: Dragging outside the selection area
             print("Dragging outside selection")
@@ -1009,7 +1097,9 @@ struct CanvasView: View {
                 isLassoCreated = false
             }
             if !isLassoCreated {
-                self.selectionPaths.append(DrawPoint(x: dragValue.location.x, y: dragValue.location.y))
+                self.selectionPaths.append(
+                    DrawPoint(x: dragValue.location.x, y: dragValue.location.y)
+                )
             }  // Extend the selection path
 
         }
@@ -1158,7 +1248,7 @@ struct CanvasView: View {
             pageId: page.id,
             canvasStack: page.canvasStack
         )
-        
+
         canvasState.isEdited = true
     }
 

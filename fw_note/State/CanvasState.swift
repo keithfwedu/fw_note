@@ -21,13 +21,15 @@ class CanvasState: ObservableObject {
     //State
     @Published var timerManager = TimerManager()
     @Published var canvasMode: CanvasMode = CanvasMode.draw
+    @Published var canvasTool: CanvasTool = CanvasTool.pen
     @Published var eraseMode: EraseMode = EraseMode.rubber
 
     @Published var showImagePicker: Bool = false
     @Published var isDragging: Bool = false
 
     @Published var canvasPool: [Int: AnyView] = [:]
-
+ 
+    
     //Configs
     @Published var displayDirection: PDFDisplayDirection = .vertical {
         didSet {
@@ -44,6 +46,29 @@ class CanvasState: ObservableObject {
         }
     }
     @Published var penColor: Color = .black {
+        didSet {
+            if isInitialized {
+                updatePdfState()
+            }
+        }
+    }
+    
+    @Published var eraserSize: CGFloat = 3.0 {
+        didSet {
+            if isInitialized {
+                updatePdfState()
+            }
+        }
+    }
+   
+    @Published var highlighterSize: CGFloat = 10.0 {
+        didSet {
+            if isInitialized {
+                updatePdfState()
+            }
+        }
+    }
+    @Published var highlighterColor: Color = .yellow {
         didSet {
             if isInitialized {
                 updatePdfState()
@@ -79,12 +104,14 @@ class CanvasState: ObservableObject {
         do {
             if let pdfState = try context.fetch(fetchRequest).first {
 
-                pdfState.penSize = Float(penSize)
+                pdfState.penSize = Float(self.penSize)
                 pdfState.displayDirection =
                     displayDirection == .horizontal ? "horizontal" : "vertical"
                 pdfState.inputMode = self.inputMode.stringValue
-
                 pdfState.penColor = self.penColor.toHex()
+                pdfState.highlighterColor = self.highlighterColor.toHex()
+                pdfState.highlighterSize = Float(self.highlighterSize)
+                pdfState.eraserSize = Float(self.eraserSize)
                 pdfState.colorHistory1 = self.recentColors[0].toHex()
                 pdfState.colorHistory2 = self.recentColors[1].toHex()
                 pdfState.colorHistory3 = self.recentColors[2].toHex()
@@ -131,6 +158,9 @@ class CanvasState: ObservableObject {
                 self.penColor =
                     Color(hex: pdfState.penColor ?? "#000000") ?? Color.black
 
+                self.highlighterColor = Color(hex: pdfState.highlighterColor ?? "#FFFFFF00") ?? Color.yellow
+                self.highlighterSize = CGFloat(pdfState.highlighterSize)
+                self.eraserSize = CGFloat(pdfState.eraserSize)
                 self.recentColors = [
                     Color(hex: pdfState.colorHistory1 ?? "#000000")
                         ?? Color.black,
@@ -167,6 +197,9 @@ class CanvasState: ObservableObject {
                 newPdfState.inputMode = "both"
                 newPdfState.penSize = 1.0
                 newPdfState.penColor = "#000000"
+                newPdfState.highlighterColor = "#FFFFFF00"
+                newPdfState.highlighterSize = 10.0
+                newPdfState.eraserSize = 3.0
                 newPdfState.colorHistory1 = "#000000"
                 newPdfState.colorHistory2 = "#0000FF"
                 newPdfState.colorHistory3 = "#FF0000"

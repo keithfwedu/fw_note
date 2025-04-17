@@ -29,6 +29,9 @@ class PersistenceController {
         pdfState.inputMode = "both"
         pdfState.penColor = "#000000"
         pdfState.penSize = 3.0
+        pdfState.highlighterColor = "#FFFF00"
+        pdfState.highlighterSize = 10.0
+        pdfState.eraserSize = 3.0
         pdfState.colorHistory1 = "#000000"
         pdfState.colorHistory2 = "#0000FF"
         pdfState.colorHistory3 = "#FF0000"

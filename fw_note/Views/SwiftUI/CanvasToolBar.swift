@@ -20,7 +20,27 @@ struct CanvasToolBar: View {
     @State private var errorMessage = ""
     @State private var showAlert = false
     @State private var showErrorAlert = false
-
+   
+    var drawSizeBinding: Binding<CGFloat> {
+            Binding(
+                get: {
+                    getDrawSize() // Get the current value using your custom method
+                },
+                set: { newValue in
+                    setDrawSize(size: newValue) // Update the value using your custom method
+                }
+            )
+        }
+    var drawColorBinding: Binding<Color> {
+        Binding(
+            get: {
+                getDrawColor()
+            },
+            set: { newColor in
+                setDrawColor(color: newColor) // Update the value using your custom method
+            }
+            )
+    }
     var body: some View {
         HStack {
 
@@ -50,7 +70,18 @@ struct CanvasToolBar: View {
                         }
                         .frame(width: 40, height: 40)
                         .background(
-                            canvasState.canvasMode == CanvasMode.draw
+                            canvasState.canvasMode == CanvasMode.draw && canvasState.canvasTool == CanvasTool.pen
+                                ? Color.blue.opacity(0.2) : Color.clear
+                        )
+                        .cornerRadius(8)
+                        
+                        
+                        Button(action: selectHighlighterTool) {
+                            Image(systemName: "highlighter")
+                        }
+                        .frame(width: 40, height: 40)
+                        .background(
+                            canvasState.canvasMode == CanvasMode.draw && canvasState.canvasTool == CanvasTool.highlighter
                                 ? Color.blue.opacity(0.2) : Color.clear
                         )
                         .cornerRadius(8)
@@ -70,7 +101,7 @@ struct CanvasToolBar: View {
                         }
                         .frame(width: 40, height: 40)
                         .background(
-                            canvasState.canvasMode == CanvasMode.eraser
+                            canvasState.canvasMode == CanvasMode.eraser && canvasState.canvasTool == CanvasTool.eraser
                                 ? Color.blue.opacity(0.2) : Color.clear
                         )
                         .cornerRadius(8)
@@ -86,8 +117,8 @@ struct CanvasToolBar: View {
                         .cornerRadius(8)
 
                         Slider(
-                            value: $canvasState.penSize,
-                            in: 1...10,
+                            value: drawSizeBinding,
+                            in: 1...30,
                             step: 0.1
                         ) {
                             Text("Tool Size")
@@ -97,12 +128,11 @@ struct CanvasToolBar: View {
                         // Conditional Color Picker
                         if canvasState.canvasMode == CanvasMode.draw {
                             ColorPickerView(
-                                selectedColor: $canvasState.penColor,
+                                selectedColor: drawColorBinding,
                                 initialColors: $canvasState.recentColors,  // Input five colors from another view
                                 onChanged: { selectedColor in
-                                    canvasState.penColor = selectedColor
+                                    setDrawColor(color: selectedColor)
                                 }
-
                             )
                         }
 
@@ -199,26 +229,85 @@ struct CanvasToolBar: View {
         } message: {
             Text(errorMessage)
         }
-
-
+    }
+    
+    func getDrawSize() -> CGFloat {
+        switch canvasState.canvasTool {
+        case CanvasTool.eraser:
+           return canvasState.eraserSize
+        case CanvasTool.pen:
+            return canvasState.penSize
+        case CanvasTool.highlighter:
+            return canvasState.highlighterSize
+        default:
+            return canvasState.penSize
+        }
+    }
+    
+    func getDrawColor() -> Color {
+        switch canvasState.canvasTool {
+        case CanvasTool.pen:
+            return canvasState.penColor
+        case CanvasTool.highlighter:
+            return canvasState.highlighterColor
+        default:
+            return canvasState.penColor
+        }
+    }
+    
+    func setDrawSize(size: CGFloat) {
+        switch canvasState.canvasTool {
+        case CanvasTool.eraser:
+           canvasState.eraserSize = size
+        case CanvasTool.pen:
+            canvasState.penSize = size
+        case CanvasTool.highlighter:
+            canvasState.highlighterSize = size
+        default:
+            canvasState.penSize = size
+        }
+    }
+    
+    func setDrawColor(color: Color) {
+        switch canvasState.canvasTool {
+        case CanvasTool.pen:
+            canvasState.penColor = color
+        case CanvasTool.highlighter:
+            canvasState.highlighterColor = color
+        default:
+            canvasState.penColor = color
+        }
     }
 
     func selectPenTool() {
         print("selectPenTool")
         canvasState.canvasMode = CanvasMode.draw
+        canvasState.canvasTool = CanvasTool.pen
     }
+    
+    func selectHighlighterTool() {
+        print("selectHighlighterTool")
+        canvasState.canvasMode = CanvasMode.draw
+        canvasState.canvasTool = CanvasTool.highlighter
+    }
+    
     func toggleLaserMode() {
         print("toggleLaserMode")
         canvasState.canvasMode = CanvasMode.laser
+        canvasState.canvasTool = CanvasTool.laser
     }
+    
     func selectEraserTool() {
         print("selectEraserTool")
         canvasState.canvasMode = CanvasMode.eraser
+        canvasState.canvasTool = CanvasTool.eraser
     }
-    func selectEraserFillTool() { print("selectEraserFillTool") }
+ 
+    
     func selectLassorTool() {
         print("selectLassorTool")
         canvasState.canvasMode = CanvasMode.lasso
+        canvasState.canvasTool = CanvasTool.lasso
     }
     func addImage() {
         print("addImage")
