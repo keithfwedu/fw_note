@@ -18,7 +18,8 @@ struct PDFCanvasView: UIViewRepresentable {
     @Binding var searchText: String
 
     @Binding var displayDirection: PDFDisplayDirection  // Bindable property to change display direction
-
+    var onUpdateDocument: ((_ document: PDFDocument) -> Void)?
+    
     func makeUIView(context: Context) -> CustomPDFView {
 
         pdfView.document = pdfDocument
@@ -152,14 +153,14 @@ struct PDFCanvasView: UIViewRepresentable {
                     print("Page found at index: \(index)")
                     clonedPdfDocument.removePage(at: index)
                   
-                    self.pdfDocument = clonedPdfDocument
+                    pdfDocument = clonedPdfDocument
                    
-                    self.noteFile.notePages.removeAll(where: {
+                    noteFile.notePages.removeAll(where: {
                         $0.id == pageId
                     })
                   
                     pdfView.layoutDocumentView()
-                    self.noteUndoManager.removeCanvasStack(pageId: pageId)
+                    noteUndoManager.removeCanvasStack(pageId: pageId)
                 } else {
                     print("Page with id \(pageId) not found.")
                 }

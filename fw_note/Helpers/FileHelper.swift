@@ -49,6 +49,25 @@ class FileHelper {
         return pdfPath.path
     }
 
+    
+    static func savePDF(projectId: UUID, pdfDocument: PDFDocument) {
+        let currentUserId = getCurrentUserId()
+
+        // Get the path to the Documents directory
+        let baseDirectory = getBaseDirectory()
+
+        let projectDirectory = baseDirectory.appendingPathComponent(
+            "users/\(currentUserId)/projects/\(projectId.uuidString)",
+            isDirectory: true
+        )
+
+        let pdfPath = projectDirectory.appendingPathComponent(
+            "source.pdf"
+        )
+        pdfDocument.write(to: pdfPath)
+       
+    }
+
     static func getThumbnailData(projectId: UUID) -> UIImage? {
         let currentUserId = getCurrentUserId()
 

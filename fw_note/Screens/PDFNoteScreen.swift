@@ -58,7 +58,11 @@ struct PdfNoteScreen: View {
                             noteFile: noteFile,
                             noteUndoManager: $noteUndoManager,
                             searchText: $searchText,
-                            displayDirection: $canvasState.displayDirection
+                            displayDirection: $canvasState.displayDirection,
+                            onUpdateDocument: { document in
+                                print("onUpdate")
+                                pdfDocument = document
+                            }
                         )
                     } else {
                         VStack {
@@ -185,6 +189,8 @@ struct PdfNoteScreen: View {
             let thumbnailPath = projectDirectory.appendingPathComponent(
                 "thumbnail.jpg"
             )
+            
+            FileHelper.savePDF(projectId: noteFile.id, pdfDocument: pdfDocument)
             do {
                 try combinedImage.pngData()?.write(to: thumbnailPath)
             } catch {

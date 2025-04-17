@@ -458,7 +458,7 @@ struct CanvasView: View {
                 ) {
                     Button("Yes") {
                         // Perform the close action
-                        removePdfPage(pageIndex: pageIndex)
+                        removePdfPage()
                     }
                     Button("Cancel", role: .cancel) {}
                 } message: {
@@ -470,9 +470,8 @@ struct CanvasView: View {
 
    
 
-    func removePdfPage(pageIndex: Int) {
+    func removePdfPage() {
         onRemovePdfPage!(notePage.id)
-        
     }
     
     
