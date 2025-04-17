@@ -125,7 +125,7 @@ struct CanvasView: View {
                     if let line = canvasObj.lineObj {
                         let path = PathHelper.createStableCurvedPath(
                             points: line.points,
-                            maxOffsetForAverage: 3.5
+                            maxOffsetForAverage: 2
                         )
                         if selectedLineStack.contains(where: {
                             $0.id == line.id
@@ -189,7 +189,7 @@ struct CanvasView: View {
                     // Create the path for the laser points
                     var path = PathHelper.createStableCurvedPath(
                         points: laser.points,
-                        maxOffsetForAverage: 4.5
+                        maxOffsetForAverage: 2
                     )
 
                     // Smooth the path (if needed)
@@ -203,10 +203,10 @@ struct CanvasView: View {
 
                     // Simulate the blur effect by layering strokes with varying opacities and line widths
                     let blurLevels = [
-                        (opacity: 0.1, lineWidth: 15),
-                        (opacity: 0.2, lineWidth: 12),
-                        (opacity: 0.4, lineWidth: 9),
-                        (opacity: 0.6, lineWidth: 6),
+                        (opacity: 0.05, lineWidth: 15),
+                        (opacity: 0.4, lineWidth: 12),
+                        (opacity: 0.6, lineWidth: 9),
+                        (opacity: 1.0, lineWidth: 6),
                     ]
 
                     for blur in blurLevels {
@@ -231,7 +231,7 @@ struct CanvasView: View {
                         path,
                         with: .color(.white.opacity(laserOpacity)),
                         style: StrokeStyle(
-                            lineWidth: 3,
+                            lineWidth: 1.5,
                             lineCap: .round,
                             lineJoin: .round
                         )
@@ -302,6 +302,7 @@ struct CanvasView: View {
                         onTap: { value in
                             if isEnableTouch(inputType: value.type) {
                                 focusedID = nil
+                                
                                 handleTap(
                                     at: value.startLocation,
                                     noteFile: noteFile
@@ -313,14 +314,15 @@ struct CanvasView: View {
                                 focusedID = nil
 
                                 if value.type == .pencil {
-                                    print("touch with pencil")
+                                    //print("touch with pencil")
                                 } else {
-                                    print("touch with fingers")
+                                    //print("touch with fingers")
                                 }
-
-                                handleDragBegin(
-                                    dragValue: value
-                                )
+                                if value.majorRadius < 20 {
+                                    handleDragBegin(
+                                        dragValue: value
+                                    )
+                                }
                             } else {
 
                                 toastMessage =
@@ -366,7 +368,7 @@ struct CanvasView: View {
                     of: ["public.image", "com.compuserve.gif"],
                     isTargeted: $isDraggingOver
                 ) { providers in
-                    print("providers")
+                    //print("providers")
                     return handleDrop(providers: providers)
                 }
 
@@ -394,7 +396,7 @@ struct CanvasView: View {
             .gesture(
                 TapGesture(count: 2)  // Double-tap gesture
                     .onEnded {
-                        onDoubleTap()  // Trigger the closure when double-tap is detected
+                       // onDoubleTap()  // Trigger the closure when double-tap is detected
                     }
             )
             .onChange(of: canvasState.canvasMode) {
@@ -434,7 +436,7 @@ struct CanvasView: View {
                     canvasStack: self.notePage.canvasStack
                 )
 
-                print("imageStack \(imageStack)")
+                //print("imageStack \(imageStack)")
             }
 
             if canvasState.scaleFactor < 0.9 {
@@ -479,10 +481,10 @@ struct CanvasView: View {
 
         switch canvasTool {
         case CanvasTool.eraser:
-            print("handleDrawSetting1")
+            //print("handleDrawSetting1")
             self.drawSize = canvasState.eraserSize
         case CanvasTool.pen:
-            print("handleDrawSetting3")
+            //print("handleDrawSetting3")
             self.drawSize = canvasState.penSize
             self.drawColor = canvasState.penColor
         case CanvasTool.highlighter:
@@ -554,7 +556,7 @@ struct CanvasView: View {
         }) {
             guard let pathToRemove = notePage.canvasStack[index].imageObj?.path
             else {
-                print("Path not found for the image object")
+                //print("Path not found for the image object")
                 return
             }
 
@@ -591,14 +593,14 @@ struct CanvasView: View {
                     projectId: currentProjectId!
                 )
             else {
-                print("Error: absolutePath is nil")
+                //print("Error: absolutePath is nil")
                 return
             }
 
             try FileManager.default.removeItem(atPath: absolutePath)
-            print("File removed at path: \(absolutePath)")
+            //print("File removed at path: \(absolutePath)")
         } catch {
-            print("Failed to remove file at path: \(path), error: \(error)")
+            //print("Failed to remove file at path: \(path), error: \(error)")
         }
     }
 
@@ -615,7 +617,7 @@ struct CanvasView: View {
         if let index = notePage.canvasStack.firstIndex(
             where: { $0.imageObj?.id == id })
         {
-            print("imageObj - \(imageObj.size)")
+            //print("imageObj - \(imageObj.size)")
             notePage.canvasStack[index].imageObj = imageObj
 
             noteUndoManager.addToUndo(
@@ -704,7 +706,7 @@ struct CanvasView: View {
         let image = canvas2.snapshot()
 
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-        print("Image saved to photo album successfully!")
+        //print("Image saved to photo album successfully!")
 
     }
 
@@ -721,7 +723,7 @@ struct CanvasView: View {
                 )
 
                 if rect.contains(location) {
-                    print("Tapped on image: \(imageObj)")
+                    //print("Tapped on image: \(imageObj)")
                     focusedID = imageObj.id
                     isTapImage = true
                     return
@@ -734,14 +736,16 @@ struct CanvasView: View {
     private func handleModeChange(
         mode: CanvasMode
     ) {
-        print("Mode changed to \(mode).")
+        //print("Mode changed to \(mode).")
         switch mode {
         case .draw:
             resetSelection()
         case .eraser:
             resetSelection()
         case .lasso:
-            print("Erase Mode")
+            //print("Erase Mode")
+            break
+           
         case .laser:
             resetSelection()
         }
@@ -785,7 +789,7 @@ struct CanvasView: View {
     }
 
     private func handleDragEnded() {
-        print("Gesture Ended")
+        //print("Gesture Ended")
         lastDrawPosition = nil
         lastDrawLaserPosition = nil
         isTouching = false
@@ -884,9 +888,9 @@ struct CanvasView: View {
     }
 
     private func handleBeginDrawing(dragValue: TouchData) {
-        print("changed pageIndex: \(pageIndex)")
+        //print("changed pageIndex: \(pageIndex)")
         canvasState.setPageIndex(pageIndex)
-        print("First drag detected for a new stroke")
+        //print("First drag detected for a new stroke")
         let newLineObj = LineObj(
             color: drawColor,
             points: [
@@ -904,7 +908,7 @@ struct CanvasView: View {
     private func handleDrawing(dragValue: TouchData) {
 
         // Add points to the current stroke
-        print("drag detected for a new stroke2")
+        //print("drag detected for a new stroke2")
         if let lastCanvasWithLine = notePage.canvasStack.last(where: {
             $0.lineObj != nil
         }),
@@ -939,7 +943,7 @@ struct CanvasView: View {
                 DrawPoint(x: lastDrawPosition!.x, y: lastDrawPosition!.y),
                 DrawPoint(x: dragValue.location.x, y: dragValue.location.y)
             ) > 5.0 {
-                print("set hold timer")
+                //print("set hold timer")
                 lastDrawPosition = dragValue.location
                 canvasState.timerManager.setHoldTimer(
                     currentPosition: dragValue.location
@@ -978,10 +982,10 @@ struct CanvasView: View {
         }
 
         let shapePoints = ShapeHelper.lineToShape(currentLineObj)
-        print("shapePoints \(shapePoints)")
+        //print("shapePoints \(shapePoints)")
         if !shapePoints.isEmpty {
             // Update the points of the lineObj in the canvasStack
-            print("changed")
+            //print("changed")
 
             notePage.canvasStack[index].lineObj?.points.removeAll()
             notePage.canvasStack[index].lineObj?.points.append(
@@ -997,7 +1001,7 @@ struct CanvasView: View {
         isLaserCreated = true
         if lastDrawLaserPosition == nil {
             // Start a new stroke when drag begins
-            print("First drag detected for a new Laser \(drawSize)")
+            //print("First drag detected for a new Laser \(drawSize)")
             let newLine = LineObj(
                 color: Color.white,
                 points: [
@@ -1010,7 +1014,7 @@ struct CanvasView: View {
 
         } else {
             // Add points to the current stroke
-            print("drag detected for a new Laser")
+            //print("drag detected for a new Laser")
             if let lastLine = laserStack.last {
                 let lastPoint = DrawPoint(
                     x: lastLine.points.last?.x ?? 0,
@@ -1061,7 +1065,7 @@ struct CanvasView: View {
             !selectedLineStack.isEmpty
             || !selectedImageObjIds.isEmpty
         if lastDragPosition == nil {
-            print("First drag detected")
+            //print("First drag detected")
             resetSelection()  // Ensure there's no existing selection
             self.selectionPaths = [
                 DrawPoint(x: dragValue.location.x, y: dragValue.location.y)
@@ -1076,7 +1080,7 @@ struct CanvasView: View {
         )
 
         if isCurrentlyInsideSelection {
-            print("Dragging inside selection")
+            //print("Dragging inside selection")
             if hasSelectedItems {
 
                 let centerTranslation = LassoToolHelper.getCenterTranslation(
@@ -1128,7 +1132,7 @@ struct CanvasView: View {
 
         } else {
             // Case 3: Dragging outside the selection area
-            print("Dragging outside selection")
+            //print("Dragging outside selection")
             if hasSelectedItems {
                 resetSelection()  // Ensure there's no existing selection
                 isLassoCreated = false
@@ -1154,7 +1158,7 @@ struct CanvasView: View {
     private func handleDrop(providers: [NSItemProvider]) -> Bool {
         for provider in providers {
             isLoading = true
-            print("Checking provider...")
+            //print("Checking provider...")
 
             // Check if the provider has an item conforming to "public.image"
             if provider.hasItemConformingToTypeIdentifier("public.image") {
@@ -1163,7 +1167,7 @@ struct CanvasView: View {
                 if provider.registeredTypeIdentifiers.contains(
                     "com.compuserve.gif"
                 ) {
-                    print("Detected GIF")
+                    //print("Detected GIF")
 
                     // Load the GIF using its type identifier
                     provider.loadItem(
@@ -1182,7 +1186,7 @@ struct CanvasView: View {
                                 addImageToStack(image: originalImageObj)
                             }
                         } else if let url = item as? URL {
-                            print("GIF URL received: \(url)")
+                            //print("GIF URL received: \(url)")
                             ImageHelper.handleGIFWithUUID(
                                 input: url.path,
                                 completion: { savedPath in
@@ -1196,7 +1200,7 @@ struct CanvasView: View {
                                             isLoading = false
                                         }
                                     } else {
-                                        print("Failed to save GIF.")
+                                        //print("Failed to save GIF.")
                                         isLoading = false
                                     }
                                 }
@@ -1237,7 +1241,7 @@ struct CanvasView: View {
                             }
 
                         } else {
-                            print("Failed to convert UIImage to PNG data.")
+                            //print("Failed to convert UIImage to PNG data.")
                             isLoading = false
                         }
 
@@ -1251,7 +1255,7 @@ struct CanvasView: View {
     }
 
     private func addImageToStack(image: OriginalImageObj) {
-        print("image.path \(image.path)")
+        //print("image.path \(image.path)")
         let projectImagePath = FileHelper.copyImageToProject(
             imagePath: image.path,
             projectId: noteFile.id

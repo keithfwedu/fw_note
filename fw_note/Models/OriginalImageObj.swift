@@ -16,7 +16,7 @@ struct OriginalImageObj: Identifiable, Codable, Equatable {
     // Computed property for absolutePath
     var absolutePath: String {
         guard let projectId = currentProjectId else {
-            print("Error: currentProjectId is nil")
+            //print("Error: currentProjectId is nil")
             return "" // Return an empty string or handle this scenario appropriately
         }
         return FileHelper.getUserImageFilePath(imageName: path, projectId: projectId) ?? ""
@@ -32,7 +32,7 @@ struct OriginalImageObj: Identifiable, Codable, Equatable {
     // Static method to compute image size
     private static func computeSize(for path: String) -> CGSize {
         guard let image = UIImage(contentsOfFile: FileHelper.getUserImageFilePath(imageName: path, projectId: currentProjectId!) ?? "") else {
-            print("Failed to load image from path: \(path)")
+            //print("Failed to load image from path: \(path)")
             return .zero
         }
         return image.size
@@ -41,7 +41,7 @@ struct OriginalImageObj: Identifiable, Codable, Equatable {
     // Static method to check if the image is a GIF
     private static func checkIsGIF(for path: String) -> Bool {
         guard let projectId = currentProjectId else {
-            print("Error: currentProjectId is nil")
+            //print("Error: currentProjectId is nil")
             return false
         }
         let absolutePath = FileHelper.getUserImageFilePath(imageName: path, projectId: projectId) ?? ""

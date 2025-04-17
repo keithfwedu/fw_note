@@ -66,7 +66,7 @@ struct PencilDetectionView: UIViewRepresentable {
             _ touches: Set<UITouch>,
             with event: UIEvent?
         ) {
-            print("touches.count \(touches.count)")
+            //print("touches.count \(touches.count)")
             if touches.count > 1 { return }
             guard let touch = touches.first else { return }
 
@@ -74,6 +74,7 @@ struct PencilDetectionView: UIViewRepresentable {
             startTouchLocation = location
 
             let touchData = TouchData(
+                majorRadius: touch.majorRadius,
                 type: touch.type,
                 location: location,
                 startLocation: location,
@@ -99,6 +100,7 @@ struct PencilDetectionView: UIViewRepresentable {
             )
 
             let touchData = TouchData(
+                majorRadius: touch.majorRadius,
                 type: touch.type,
                 location: location,
                 startLocation: startTouchLocation,
@@ -124,6 +126,7 @@ struct PencilDetectionView: UIViewRepresentable {
             )
 
             let touchData = TouchData(
+                majorRadius: touch.majorRadius,
                 type: touch.type,
                 location: location,
                 startLocation: startTouchLocation,

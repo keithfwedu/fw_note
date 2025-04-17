@@ -45,8 +45,8 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
             noteUndoManager: noteUndoManager,
             notePage: notePage,
             onDoubleTap: { [weak self] in
-                            self?.onDoubleTap?() // Call onDoubleTap from CanvasView
-           },
+              self?.onDoubleTap?() // Call onDoubleTap from CanvasView
+            },
             onRemovePdfPage: { pageId in
                 self.onRemovePdfPage?(pageId)
             }

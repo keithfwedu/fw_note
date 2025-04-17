@@ -26,7 +26,7 @@ class NoteFile: ObservableObject, Identifiable, Codable {
         {
             reconcileNotePages(with: pdfDocument)
         } else {
-            print("Failed to load PDF at path: \(pdfFilePath)")
+            //print("Failed to load PDF at path: \(pdfFilePath)")
         }
 
     }
@@ -56,7 +56,7 @@ class NoteFile: ObservableObject, Identifiable, Codable {
         {
             reconcileNotePages(with: pdfDocument)
         } else {
-            print("Failed to load PDF at path: \(pdfFilePath)")
+            //print("Failed to load PDF at path: \(pdfFilePath)")
         }
     }
 

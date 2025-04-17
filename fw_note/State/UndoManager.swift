@@ -32,12 +32,12 @@ class NoteUndoManager: ObservableObject {
     }
     
     func removeCanvasStack(pageId: UUID) {
-        print("remove undo stack \(pageId)")
+        //print("remove undo stack \(pageId)")
         self.undoStack.removeAll(where: { $0.pageId == pageId })
         self.redoStack.removeAll(where: { $0.pageId == pageId })
         self.initCanvasStack.removeAll(where: { $0.pageId == pageId })
         
-        print("remove undo stack2 \(undoStack.count)")
+        //print("remove undo stack2 \(undoStack.count)")
     }
 
     func addToUndo(pageId: UUID, canvasStack: [CanvasObj]?) {
@@ -76,20 +76,20 @@ class NoteUndoManager: ObservableObject {
         guard let currentAction = undoStack.popLast() else {
             return
         }
-        print("currentAction: \(currentAction.pageId)")
+        //print("currentAction: \(currentAction.pageId)")
         redoStack.append(currentAction)
         let remainActions = undoStack.filter({
             $0.pageId == currentAction.pageId
         })
-        print("remainActions: \(remainActions)")
+        //print("remainActions: \(remainActions)")
         // Check if there is a previous action
         if let lastAction = remainActions.last {
-            print("lastActioin: \(lastAction.pageId)")
+            //print("lastActioin: \(lastAction.pageId)")
             // Update stacks based on the last action
             updateStacks(for: lastAction)
 
         } else {
-            print("undoStack.isEmpty")
+            //print("undoStack.isEmpty")
             let filteredActionStacks = initCanvasStack.filter {
                 $0.pageId == currentAction.pageId
             }
@@ -100,7 +100,7 @@ class NoteUndoManager: ObservableObject {
 
     func redo() {
         guard let lastAction = redoStack.popLast() else {
-            print("Nothing to redo")
+            //print("Nothing to redo")
             return
         }
 
@@ -119,7 +119,7 @@ class NoteUndoManager: ObservableObject {
         )
 
         if action.canvasStack != nil {
-            print("undo canvasStack")
+            //print("undo canvasStack")
             noteFile.notePages.first(where: { $0.id == action.pageId })?.canvasStack = action.canvasStack!
         }
     }

@@ -12,7 +12,7 @@ class MultiTouchGestureRecognizer: UIGestureRecognizer, UIGestureRecognizerDeleg
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
         super.touchesBegan(touches, with: event)
-        print("Touches began: \(event.allTouches?.count ?? 0)")
+        //print("Touches began: \(event.allTouches?.count ?? 0)")
 
         // Notify whether it's a multi-touch or single-touch gesture
         if let allTouches = event.allTouches {

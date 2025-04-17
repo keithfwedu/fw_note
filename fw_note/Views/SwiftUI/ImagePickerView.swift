@@ -174,10 +174,10 @@ struct ImagePickerView: View {
 
                     ImageHelper.checkPhotoLibraryPermission { granted in
                         if granted {
-                            print("Photo Library access granted!")
+                            //print("Photo Library access granted!")
                             imageState.saveImageFromData(data, isGif: isGIF)
                         } else {
-                            print("Photo Library access denied.")
+                            //print("Photo Library access denied.")
                             // Handle denied access gracefully, e.g., show an alert
                         }
                     }
@@ -202,7 +202,7 @@ struct ImagePickerView: View {
     }
 
     private func addImageToStack(image: OriginalImageObj) {
-        print("image.path \(image.path)")
+        //print("image.path \(image.path)")
         let projectImagePath = FileHelper.copyImageToProject(imagePath: image.path, projectId: noteFile.id)
       
         // Calculate base position

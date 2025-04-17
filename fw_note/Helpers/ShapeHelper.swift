@@ -15,16 +15,16 @@ class ShapeHelper {
         // Proceed with transformation based on the identified shape
         switch shape {
         case "straight":
-            print("Modify to straight line")
+            //print("Modify to straight line")
             return lineToStraightLine(line)
         case "curve":
-            print("Modify to curve")
+            //print("Modify to curve")
             return lineToCurve(line)
         case "circle":
-            print("Modify to circle")
+            //print("Modify to circle")
             return lineToCircle(line)
         default:
-            print("Unknown shape. No transformation applied.")
+            //print("Unknown shape. No transformation applied.")
             return []
         }
     }
@@ -48,7 +48,7 @@ class ShapeHelper {
             return []
         }
         
-        print("Line \(line.id) converted to a refined straight line.")
+        //print("Line \(line.id) converted to a refined straight line.")
         print(line.points)
 
         // Calculate evenly spaced points along the straight line
@@ -62,13 +62,13 @@ class ShapeHelper {
             refinedPoints.append(interpolatedPoint)
         }
 
-        print("Line \(line.id) converted to refined straight line with \(refinedPoints.count) points.")
+        //print("Line \(line.id) converted to refined straight line with \(refinedPoints.count) points.")
         return refinedPoints
     }
 
 
     static func lineToCurve(_ line: LineObj) -> [DrawPoint] {
-        print("Line \(line.id) converted to a refined Bézier curve.")
+        //print("Line \(line.id) converted to a refined Bézier curve.")
         guard let firstPoint = line.points.first,
             let lastPoint = line.points.last
         else {
@@ -111,7 +111,7 @@ class ShapeHelper {
     }
 
     static func lineToCircle(_ line: LineObj) -> [DrawPoint] {
-        print("Line \(line.id) converted to a refined circlee.")
+        //print("Line \(line.id) converted to a refined circlee.")
         guard let (circleCenter, radius) = fitCircleToPoints(to: line.points)
         else {
             return []

@@ -115,7 +115,7 @@ struct NoteExplorerView: View {
                         Text("Please input the name of the PDF file.")
                     }
                 ).onAppear {
-                    print("onAppear")
+                    //print("onAppear")
                     noteFiles = FileHelper.listProjects()
                 }
 
@@ -155,7 +155,7 @@ struct NoteExplorerView: View {
         do {
             // Get the first file URL from the result
             guard let selectedFileURL = try result.get().first else {
-                print("No file was selected.")
+                //print("No file was selected.")
                 return
             }
 
@@ -177,10 +177,10 @@ struct NoteExplorerView: View {
             print(
                 "Error handling file selection: \(fileError.localizedDescription)"
             )
-            print("Underlying error: \(fileError.userInfo)")
+            //print("Underlying error: \(fileError.userInfo)")
         } catch {
             // Catch any other unexpected errors
-            print("An unexpected error occurred: \(error)")
+            //print("An unexpected error occurred: \(error)")
         }
     }
 

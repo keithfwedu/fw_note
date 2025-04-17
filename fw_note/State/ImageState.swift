@@ -30,7 +30,7 @@ class ImageState: ObservableObject {
     // Save image paths for persistence
     func saveImage(filePath: String?) -> OriginalImageObj? {
         guard let filePath = filePath else {
-            print("Invalid file path for image")
+            //print("Invalid file path for image")
             return nil
         }
         
@@ -62,32 +62,32 @@ class ImageState: ObservableObject {
     // Load saved image paths
     func loadImages() {
         guard let imageDirectory: URL = FileHelper.getImageDirectory() else {
-            print("Failed to get image directory")
+            //print("Failed to get image directory")
             return
         }
         let jsonFileURL = imageDirectory.appendingPathComponent(
             "images.json")
 
-        print("Loading images from \(jsonFileURL.path)")
+        //print("Loading images from \(jsonFileURL.path)")
 
         do {
             if FileManager.default.fileExists(atPath: jsonFileURL.path) {
                 let data = try Data(contentsOf: jsonFileURL)
                 images = try JSONDecoder().decode(
                     [OriginalImageObj].self, from: data)
-                print("Loaded image paths: \(images)")
+                //print("Loaded image paths: \(images)")
             } else {
-                print("No image paths file found.")
+                //print("No image paths file found.")
                 images = []
             }
         } catch {
-            print("Failed to load image paths: \(error)")
+            //print("Failed to load image paths: \(error)")
         }
     }
 
     func persistImages() {
         guard let imageDirectory: URL = FileHelper.getImageDirectory() else {
-            print("Failed to get image directory")
+            //print("Failed to get image directory")
             return
         }
         let jsonFileURL = imageDirectory.appendingPathComponent(
@@ -97,9 +97,9 @@ class ImageState: ObservableObject {
             let encoder = JSONEncoder()
             let jsonData = try encoder.encode(images)
             try jsonData.write(to: jsonFileURL)
-            print("Saved image paths to \(jsonFileURL.path)")
+            //print("Saved image paths to \(jsonFileURL.path)")
         } catch {
-            print("Failed to save image paths: \(error)")
+            //print("Failed to save image paths: \(error)")
         }
     }
 

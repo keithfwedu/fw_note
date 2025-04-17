@@ -22,9 +22,9 @@ struct ContentView: View {
         newAppState.currentUserId = "guest"
         do {
             try viewContext.save()
-            print("Default AppState created!")
+            //print("Default AppState created!")
         } catch {
-            print("Failed to save default AppState: \(error)")
+            //print("Failed to save default AppState: \(error)")
         }
     }
 }

@@ -106,11 +106,11 @@ class FileHelper {
                 newAppState.currentUserId = "guest"
 
                 try context.save()
-                print("Default AppState created with currentUserId: guest")
+                //print("Default AppState created with currentUserId: guest")
                 return "guest"
             }
         } catch {
-            print("Failed to fetch or create AppState: \(error)")
+            //print("Failed to fetch or create AppState: \(error)")
             return "guest"
         }
     }
@@ -144,7 +144,7 @@ class FileHelper {
                         at: directory,
                         withIntermediateDirectories: true
                     )
-                    print("Directory created at path: \(directory.path)")
+                    //print("Directory created at path: \(directory.path)")
                 } catch {
                     print(
                         "Failed to create directory at path \(directory.path): \(error)"
@@ -198,7 +198,7 @@ class FileHelper {
                         "Project directory created at: \(directory.path)"
                     )
                 } catch {
-                    print("Failed to create project directory: \(error)")
+                    //print("Failed to create project directory: \(error)")
                     return
                 }
             }
@@ -210,9 +210,9 @@ class FileHelper {
                     at: pdfPathUrl!,
                     to: sourcePdfPath
                 )
-                print("PDF copied to: \(sourcePdfPath.path)")
+                //print("PDF copied to: \(sourcePdfPath.path)")
             } catch {
-                print("Failed to copy PDF: \(error)")
+                //print("Failed to copy PDF: \(error)")
                 return
             }
         } else {
@@ -226,11 +226,11 @@ class FileHelper {
 
             // Write JSON data to the file
             try jsonData.write(to: dataPath)
-            print("Metadata saved to: \(dataPath)")
+            //print("Metadata saved to: \(dataPath)")
 
         } catch {
             // Handle errors and print meaningful messages
-            print("Error saving metadata to \(dataPath): \(error)")
+            //print("Error saving metadata to \(dataPath): \(error)")
 
         }
 
@@ -260,10 +260,10 @@ class FileHelper {
 
             // Write the JSON data to the file
             try jsonData.write(to: dataPath)
-            print("NoteFile metadata saved to: \(dataPath.path)")
+            //print("NoteFile metadata saved to: \(dataPath.path)")
         } catch {
             // Handle errors during encoding or writing
-            print("Error saving NoteFile to \(dataPath.path): \(error)")
+            //print("Error saving NoteFile to \(dataPath.path): \(error)")
         }
     }
 
@@ -277,7 +277,7 @@ class FileHelper {
 
         guard FileManager.default.fileExists(atPath: imagesDirectory.path)
         else {
-            print("data.json file not found at path: \(imagesDirectory.path)")
+            //print("data.json file not found at path: \(imagesDirectory.path)")
             return nil
         }
         return imagesDirectory
@@ -294,7 +294,7 @@ class FileHelper {
 
         // Check if the data.json file exists
         guard FileManager.default.fileExists(atPath: dataPath.path) else {
-            print("data.json file not found at path: \(dataPath.path)")
+            //print("data.json file not found at path: \(dataPath.path)")
             return nil
         }
 
@@ -305,11 +305,11 @@ class FileHelper {
             // Decode the JSON data into a NoteFile object
             let decoder = JSONDecoder()
             let noteFile = try decoder.decode(NoteFile.self, from: jsonData)
-            print("NoteFile metadata read successfully: \(noteFile)")
+            //print("NoteFile metadata read successfully: \(noteFile)")
             return noteFile
         } catch {
             // Handle errors during file reading or decoding
-            print("Error reading NoteFile from \(dataPath.path): \(error)")
+            //print("Error reading NoteFile from \(dataPath.path): \(error)")
             return nil
         }
     }
@@ -379,10 +379,10 @@ class FileHelper {
                     at: imagesDirectory,
                     withIntermediateDirectories: true
                 )
-                print("Images directory created at: \(imagesDirectory.path)")
+                //print("Images directory created at: \(imagesDirectory.path)")
             }
         } catch {
-            print("Failed to create images directory: \(error)")
+            //print("Failed to create images directory: \(error)")
             return nil
         }
 
@@ -396,12 +396,12 @@ class FileHelper {
             imageFileName
         )
 
-        print("Source URL: \(absoluteImagePath)")
-        print("Destination URL: \(destinationPath)")
+        //print("Source URL: \(absoluteImagePath)")
+        //print("Destination URL: \(destinationPath)")
 
         // Check if the image already exists at the destination path
         if FileManager.default.fileExists(atPath: destinationPath.path) {
-            print("Image already exists at: \(destinationPath.path)")
+            //print("Image already exists at: \(destinationPath.path)")
             return imageFileName  // Return existing file name
         }
 
@@ -411,10 +411,10 @@ class FileHelper {
                 at: absoluteImagePath,
                 to: destinationPath
             )
-            print("Image copied to: \(destinationPath.path)")
+            //print("Image copied to: \(destinationPath.path)")
             return imageFileName
         } catch {
-            print("Failed to copy image: \(error)")
+            //print("Failed to copy image: \(error)")
             return nil
         }
     }
@@ -424,13 +424,13 @@ class FileHelper {
         saveTo thumbnailPath: URL
     ) {
         guard let pdfDocument = PDFDocument(url: pdfUrl) else {
-            print("Failed to open PDF document.")
+            //print("Failed to open PDF document.")
             return
         }
 
         // Get the first page of the PDF
         guard let pdfPage = pdfDocument.page(at: 0) else {
-            print("Failed to get the first page of the PDF.")
+            //print("Failed to get the first page of the PDF.")
             return
         }
 
@@ -443,9 +443,9 @@ class FileHelper {
         if let jpegData = thumbnail.jpegData(compressionQuality: 0.8) {
             do {
                 try jpegData.write(to: thumbnailPath)
-                print("Thumbnail saved to: \(thumbnailPath.path)")
+                //print("Thumbnail saved to: \(thumbnailPath.path)")
             } catch {
-                print("Failed to save thumbnail: \(error)")
+                //print("Failed to save thumbnail: \(error)")
             }
         }
     }
@@ -474,7 +474,7 @@ class FileHelper {
                 let jsonFileURL = directory.appendingPathComponent("data.json")
                 guard FileManager.default.fileExists(atPath: jsonFileURL.path)
                 else {
-                    print("Skipping: No data.json found in \(directory).")
+                    //print("Skipping: No data.json found in \(directory).")
                     return nil
                 }
 
@@ -512,9 +512,9 @@ class FileHelper {
             do {
                 // Attempt to remove the directory and its contents
                 try FileManager.default.removeItem(at: projectDirectory)
-                print("Project directory deleted: \(projectDirectory.path)")
+                //print("Project directory deleted: \(projectDirectory.path)")
             } catch {
-                print("Failed to delete project directory: \(error)")
+                //print("Failed to delete project directory: \(error)")
             }
         } else {
             print(
@@ -529,7 +529,7 @@ class FileHelper {
 
         // Validate that the fullPathString starts with basePathString
         guard fullPathString.hasPrefix(basePathString) else {
-            print("Error: Full path does not start with the base path.")
+            //print("Error: Full path does not start with the base path.")
             return nil
         }
 

@@ -14,11 +14,11 @@ class PdfHelper {
               let documentData = originalDocument.dataRepresentation(),
               let clonedDocument = PDFDocument(data: documentData)
         else {
-            print("Failed to clone the PDFDocument.")
+            //print("Failed to clone the PDFDocument.")
             return nil
         }
         
-        print("Successfully cloned PDFDocument!")
+        //print("Successfully cloned PDFDocument!")
         return clonedDocument
     }
     

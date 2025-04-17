@@ -60,7 +60,7 @@ struct PdfNoteScreen: View {
                             searchText: $searchText,
                             displayDirection: $canvasState.displayDirection,
                             onUpdateDocument: { document in
-                                print("onUpdate")
+                                //print("onUpdate")
                                 pdfDocument = document
                             }
                         )
@@ -139,9 +139,9 @@ struct PdfNoteScreen: View {
 
     // Mock functions
     func savePDF() async {
-        print("Save PDF")
+        //print("Save PDF")
         FileHelper.saveProject(noteFile: noteFile)
-        // print("draw2 \(canvasState.canvasPool[0])")
+        // //print("draw2 \(canvasState.canvasPool[0])")
         let pageSize = CGSize(
             width: noteFile.notePages[0].canvasWidth,
             height: noteFile.notePages[0].canvasHeight
@@ -174,7 +174,7 @@ struct PdfNoteScreen: View {
                     overlayImage: canvasSnapshot
                 )
             else {
-                print("Error combining images")
+                //print("Error combining images")
                 return
             }
 

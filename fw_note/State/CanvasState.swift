@@ -119,10 +119,10 @@ class CanvasState: ObservableObject {
                 pdfState.colorHistory5 = self.recentColors[4].toHex()
                 try context.save()
             } else {
-                print("PdfState not found")
+                //print("PdfState not found")
             }
         } catch {
-            print("Failed to update PdfState: \(error)")
+            //print("Failed to update PdfState: \(error)")
         }
     }
 
@@ -175,10 +175,10 @@ class CanvasState: ObservableObject {
                 ]
                 isInitialized = true
             } else {
-                print("PdfState not found2")
+                //print("PdfState not found2")
             }
         } catch {
-            print("Failed to fetch or createPdfState: \(error)")
+            //print("Failed to fetch or createPdfState: \(error)")
 
         }
 
@@ -207,10 +207,10 @@ class CanvasState: ObservableObject {
                 newPdfState.colorHistory5 = "#00FF00"
                 
                 try context.save()
-                print("Default PdfState created.")
+                //print("Default PdfState created.")
             }
         } catch {
-            print("Failed to ensure PdfState exists: \(error)")
+            //print("Failed to ensure PdfState exists: \(error)")
         }
     }
 

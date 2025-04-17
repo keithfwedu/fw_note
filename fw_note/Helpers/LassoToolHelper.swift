@@ -135,7 +135,7 @@ class LassoToolHelper {
 
         // Ensure there are items to define the rectangle
         guard !allPoints.isEmpty else {
-            print("No items to create a rectangle.")
+            //print("No items to create a rectangle.")
             return []
         }
 

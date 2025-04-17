@@ -87,12 +87,12 @@ struct ImageObj: Identifiable, Codable, Equatable {
     
     func getAbsolutePath() -> String? {
         guard let path = self.path else {
-            print("Error: Path is nil")
+            //print("Error: Path is nil")
             return nil
         }
         
         guard let projectId = currentProjectId else {
-            print("Error: currentProjectId is nil")
+            //print("Error: currentProjectId is nil")
             return nil
         }
         
@@ -101,7 +101,7 @@ struct ImageObj: Identifiable, Codable, Equatable {
                 imageName: path,
                 projectId: projectId
             ) else {
-            print("Error: absolutePath is nil")
+            //print("Error: absolutePath is nil")
             return nil
         }
                 
@@ -113,12 +113,12 @@ struct ImageObj: Identifiable, Codable, Equatable {
         
         if(self.cgImage == nil) {
             guard let path = path else {
-                print("Error: Path is nil")
+                //print("Error: Path is nil")
                 return
             }
             
             guard let projectId = currentProjectId else {
-                print("Error: currentProjectId is nil")
+                //print("Error: currentProjectId is nil")
                 return
             }
             
@@ -128,7 +128,7 @@ struct ImageObj: Identifiable, Codable, Equatable {
                     projectId: projectId
                 )
             else {
-                print("Error: absolutePath is nil")
+                //print("Error: absolutePath is nil")
                 return
             }
             
@@ -143,7 +143,7 @@ struct ImageObj: Identifiable, Codable, Equatable {
                 animatedImage = nil
                 cgImage = uiImage.cgImage
             } else {
-                print("Error: Unable to load image at path \(absolutePath)")
+                //print("Error: Unable to load image at path \(absolutePath)")
                 cgImage = UIImage(systemName: "photo")!.cgImage!
             }
         }

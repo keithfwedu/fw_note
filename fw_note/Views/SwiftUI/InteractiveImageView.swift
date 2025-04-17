@@ -153,7 +153,7 @@ struct InteractiveImageView: View {
                     if selectMode && isFocused {
                         Button(action: {
                             // Add your action here, such as removing the view or triggering some logic
-                            print("Close button tapped")
+                            //print("Close button tapped")
                             onRemove(imageObj.id)
                         }) {
                             ZStack {
@@ -346,7 +346,7 @@ struct InteractiveImageView: View {
                             v.startLocation.x - self.length / 2,
                             self.length / 2 - v.startLocation.y)) * 180 / .pi
                 if theta < 0 { theta += 360 }
-                //print("angle \(self.imageObj.angle)")
+                ////print("angle \(self.imageObj.angle)")
                 self.imageObj.angle = theta + self.lastAngle
             }
             .onEnded { v in

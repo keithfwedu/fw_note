@@ -19,7 +19,7 @@ class NotePage: Identifiable, Codable, ObservableObject {
     
 
     init(pageIndex: Int) {
-        print("pageIndex: \(pageIndex)")
+        //print("pageIndex: \(pageIndex)")
         self.pageIndex = pageIndex
     }
 

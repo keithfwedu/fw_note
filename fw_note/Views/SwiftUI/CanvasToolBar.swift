@@ -258,7 +258,7 @@ struct CanvasToolBar: View {
     func addPdfPage() {
         guard let pdfDocument = PdfHelper.clonePdfDocument(originalDocument: pdfDocument)
         else {
-            print("No document found to add pages.")
+            //print("No document found to add pages.")
             return
         }
 
@@ -274,7 +274,7 @@ struct CanvasToolBar: View {
         // Create a blank UIImage
         UIGraphicsBeginImageContext(pageRect.size)
         guard let context = UIGraphicsGetCurrentContext() else {
-            print("Failed to initialize graphics context.")
+            //print("Failed to initialize graphics context.")
             return
         }
         context.setFillColor(UIColor.white.cgColor)
@@ -304,10 +304,10 @@ struct CanvasToolBar: View {
                     "SwiftUI binding updated successfully. Current Page Count: \(self.pdfDocument?.pageCount ?? 0)"
                 )
             } else {
-                print("Failed to refresh the document with new data.")
+                //print("Failed to refresh the document with new data.")
             }
         } else {
-            print("Failed to create a blank PDF page.")
+            //print("Failed to create a blank PDF page.")
         }
 
     }
@@ -337,46 +337,46 @@ struct CanvasToolBar: View {
     }
 
     func selectPenTool() {
-        print("selectPenTool")
+        //print("selectPenTool")
         canvasState.canvasMode = CanvasMode.draw
         canvasState.canvasTool = CanvasTool.pen
     }
     
     func selectHighlighterTool() {
-        print("selectHighlighterTool")
+        //print("selectHighlighterTool")
         canvasState.canvasMode = CanvasMode.draw
         canvasState.canvasTool = CanvasTool.highlighter
     }
     
     func toggleLaserMode() {
-        print("toggleLaserMode")
+        //print("toggleLaserMode")
         canvasState.canvasMode = CanvasMode.laser
         canvasState.canvasTool = CanvasTool.laser
     }
     
     func selectEraserTool() {
-        print("selectEraserTool")
+        //print("selectEraserTool")
         canvasState.canvasMode = CanvasMode.eraser
         canvasState.canvasTool = CanvasTool.eraser
     }
  
     
     func selectLassorTool() {
-        print("selectLassorTool")
+        //print("selectLassorTool")
         canvasState.canvasMode = CanvasMode.lasso
         canvasState.canvasTool = CanvasTool.lasso
     }
     func addImage() {
-        print("addImage")
+        //print("addImage")
 
         canvasState.showImagePicker.toggle()
     }
     func undoAction() {
-        print("undoAction")
+        //print("undoAction")
         noteUndoManager.undo()
     }
     func redoAction() {
-        print("redoAction")
+        //print("redoAction")
         noteUndoManager.redo()
     }
 
@@ -493,7 +493,7 @@ struct CanvasToolBar: View {
                         }
                     } else {
                         UIGraphicsEndImageContext()
-                        print("Failed to create updated page image.")
+                        //print("Failed to create updated page image.")
                     }
                 }
             }
@@ -501,11 +501,11 @@ struct CanvasToolBar: View {
             // Save the new PDFDocument
             do {
                 newPDFDocument.write(to: destinationURL)
-                print("New PDF exported successfully to \(destinationURL.path)")
+                //print("New PDF exported successfully to \(destinationURL.path)")
             }
 
         } else {
-            print("Failed to load the original PDF document.")
+            //print("Failed to load the original PDF document.")
         }
     }
 

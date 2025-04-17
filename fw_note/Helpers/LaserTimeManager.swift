@@ -11,7 +11,7 @@ class LaserTimerManager {
     private var laserTimer: Timer?
 
     private func cancelLaserTimer() {
-        print("cancel laser timer")
+        //print("cancel laser timer")
         self.laserTimer?.invalidate()
         self.laserTimer = nil
     }
@@ -28,7 +28,7 @@ class LaserTimerManager {
 
     func setLaserTimer(onFadout: @escaping () -> Void) {
         self.cancelLaserTimer()
-        print("New laser timer")
+        //print("New laser timer")
         self.startLaserTimer(onFadout: onFadout)
     }
 }

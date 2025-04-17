@@ -19,7 +19,7 @@ class ImageHelper {
         guard
             let fileData = try? Data(contentsOf: URL(fileURLWithPath: filePath))
         else {
-            print("Failed to load file at path: \(filePath)")
+            //print("Failed to load file at path: \(filePath)")
             return false
         }
 
@@ -52,7 +52,7 @@ class ImageHelper {
                     height: maxDimension)
             }
 
-            print("newSize: \(newSize)")
+            //print("newSize: \(newSize)")
 
             UIGraphicsBeginImageContextWithOptions(
                 newSize, false, 1.0)
@@ -61,7 +61,7 @@ class ImageHelper {
                 UIGraphicsGetImageFromCurrentImageContext() ?? image
             UIGraphicsEndImageContext()
         } else {
-            print("No newSize: \(image.size)")
+            //print("No newSize: \(image.size)")
             resizedImage = image  // No resize needed
         }
 
@@ -71,7 +71,7 @@ class ImageHelper {
     static func resizeGIF(_ gifData: Data, to newSize: CGFloat = 200) -> Data? {
         guard let source = CGImageSourceCreateWithData(gifData as CFData, nil)
         else {
-            print("Failed to create CGImageSource.")
+            //print("Failed to create CGImageSource.")
             return nil
         }
 
@@ -83,7 +83,7 @@ class ImageHelper {
             let destination = CGImageDestinationCreateWithData(
                 newGIFData, UTType.gif.identifier as CFString, frameCount, nil)
         else {
-            print("Failed to create GIF destination.")
+            //print("Failed to create GIF destination.")
             return nil
         }
 
@@ -149,31 +149,31 @@ class ImageHelper {
 
         // Finalize the new GIF
         if !CGImageDestinationFinalize(destination) {
-            print("Failed to finalize the GIF.")
+            //print("Failed to finalize the GIF.")
             return nil
         }
 
-        print("Resized GIF with loop count set to infinite (0).")
+        //print("Resized GIF with loop count set to infinite (0).")
         return newGIFData as Data
     }
     
     
     static func handleGIFWithUUID(input: String, completion: @escaping (String?) -> Void) {
         guard let uuid = parseUUID(from: input) else {
-            print("Failed to parse UUID from input: \(input)")
+            //print("Failed to parse UUID from input: \(input)")
             completion(nil)
             return
         }
 
         fetchGIFByUUID(uuid: uuid) { gifData in
             guard let gifData = gifData else {
-                print("Failed to fetch GIF for UUID: \(uuid)")
+                //print("Failed to fetch GIF for UUID: \(uuid)")
                 completion(nil)
                 return
             }
 
             if let path = saveGIFImage(imageData: gifData) {
-                print("GIF successfully saved at: \(path)")
+                //print("GIF successfully saved at: \(path)")
                 completion(path)
             } else {
                 completion(nil)
@@ -201,7 +201,7 @@ class ImageHelper {
         // Request access to the Photos library
         PHPhotoLibrary.requestAuthorization { status in
             guard status == .authorized else {
-                print("Photos access denied.")
+                //print("Photos access denied.")
                 completion(nil)
                 return
             }
@@ -212,7 +212,7 @@ class ImageHelper {
             
             let assets = PHAsset.fetchAssets(with: fetchOptions)
             guard let asset = assets.firstObject else {
-                print("No asset found for UUID: \(uuid)")
+                //print("No asset found for UUID: \(uuid)")
                 completion(nil)
                 return
             }
@@ -236,17 +236,17 @@ class ImageHelper {
             let fileName = UUID().uuidString + ".gif"
             guard let fileURL = imageDirectory?.appendingPathComponent(fileName)
             else {
-                print("Error get fileURL")
+                //print("Error get fileURL")
                 return nil
             }
 
             try imageData.write(to: fileURL)
-            print("GIF saved successfully at \(fileURL)")
+            //print("GIF saved successfully at \(fileURL)")
             let relativePath: String = URL(fileURLWithPath: fileURL.path)
                 .lastPathComponent
             return relativePath
         } catch {
-            print("Error saving image: \(error.localizedDescription)")
+            //print("Error saving image: \(error.localizedDescription)")
             return nil
         }
     }
@@ -257,7 +257,7 @@ class ImageHelper {
             let fileName = UUID().uuidString + ".png"
             guard let fileURL = imageDirectory?.appendingPathComponent(fileName)
             else {
-                print("Error get fileURL")
+                //print("Error get fileURL")
                 return nil
             }
 
@@ -284,12 +284,12 @@ class ImageHelper {
                     ])
             }
             try resizedImageData.write(to: fileURL)
-            print("Resized PNG saved successfully at \(fileURL)")
+            //print("Resized PNG saved successfully at \(fileURL)")
             let relativePath: String = URL(fileURLWithPath: fileURL.path)
                 .lastPathComponent
             return relativePath
         } catch {
-            print("Error saving image: \(error.localizedDescription)")
+            //print("Error saving image: \(error.localizedDescription)")
             return nil
         }
     }

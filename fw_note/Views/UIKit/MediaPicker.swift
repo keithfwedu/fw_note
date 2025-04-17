@@ -55,7 +55,7 @@ public struct MediaPicker: UIViewControllerRepresentable {
                 if let image = info[.originalImage] as? UIImage {
                     handleImage(image)
                 } else {
-                    print("Error: Invalid selection or unsupported media type.")
+                    //print("Error: Invalid selection or unsupported media type.")
                     onCancel()
                 }
                 picker.dismiss(animated: true) // Explicitly dismiss the picker
@@ -67,7 +67,7 @@ public struct MediaPicker: UIViewControllerRepresentable {
 
         private func handleImage(_ image: UIImage) {
             guard let imageData = image.jpegData(compressionQuality: 1.0) else {
-                print("Error: Unable to convert image to JPEG format.")
+                //print("Error: Unable to convert image to JPEG format.")
                 onCancel()
                 return
             }
@@ -81,7 +81,7 @@ public struct MediaPicker: UIViewControllerRepresentable {
 
             imageManager.requestImageDataAndOrientation(for: asset, options: options) { data, _, _, _ in
                 guard let mediaData = data else {
-                    print("Error: Unable to retrieve asset data.")
+                    //print("Error: Unable to retrieve asset data.")
                     self.onCancel()
                     return
                 }

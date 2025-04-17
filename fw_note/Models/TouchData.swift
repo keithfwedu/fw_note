@@ -8,6 +8,7 @@
 import UIKit
 
 struct TouchData {
+    var majorRadius: CGFloat
     var type: UITouch.TouchType
     var location: CGPoint
     var startLocation: CGPoint

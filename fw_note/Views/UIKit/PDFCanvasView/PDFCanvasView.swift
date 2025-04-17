@@ -8,6 +8,7 @@
 import PDFKit
 import SwiftUI
 
+
 struct PDFCanvasView: UIViewRepresentable {
     @Binding var pdfDocument: PDFDocument?  // Make it bindable
     var imageState: ImageState
@@ -23,7 +24,7 @@ struct PDFCanvasView: UIViewRepresentable {
     func makeUIView(context: Context) -> CustomPDFView {
 
         pdfView.document = pdfDocument
-        pdfView.autoScales = false
+        pdfView.autoScales = true
         pdfView.displayMode = .singlePageContinuous
         pdfView.displaysPageBreaks = true
         pdfView.displayDirection = displayDirection
@@ -40,10 +41,13 @@ struct PDFCanvasView: UIViewRepresentable {
         // Access the internal UIScrollView and configure two-finger scrolling
         if let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }
         ) as? UIScrollView {
+            scrollView.layer.shouldRasterize = true
+            scrollView.layer.rasterizationScale = UIScreen.main.scale
             scrollView.delegate = context.coordinator
             scrollView.delaysContentTouches = false
             scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
             scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
+        
         }
 
         context.coordinator.configure(
@@ -93,20 +97,20 @@ struct PDFCanvasView: UIViewRepresentable {
             context.coordinator.addPageIndicator(to: uiView)
         }
 
-        uiView.layoutDocumentView()
+       /* uiView.layoutDocumentView()
 
         DispatchQueue.main.async {
             self.canvasState.scaleFactor = uiView.scaleFactor
         }
 
-        context.coordinator.handleSearchTextChange(searchText)
+        context.coordinator.handleSearchTextChange(searchText)*/
     }
 
     func setPageBreakMargins(pdfView: CustomPDFView) {
         guard let document = pdfView.document,
             let page = document.page(at: 0)
         else {
-            print("no padding")
+            //print("no padding")
             return
         }
 
@@ -146,11 +150,11 @@ struct PDFCanvasView: UIViewRepresentable {
                         originalDocument: pdfDocument
                     )
                 else {
-                    print("No document")
+                    //print("No document")
                     return
                 }
                 if let index = self.noteFile.notePages.firstIndex(where: { $0.id == pageId }) {
-                    print("Page found at index: \(index)")
+                    //print("Page found at index: \(index)")
                     clonedPdfDocument.removePage(at: index)
                   
                     pdfDocument = clonedPdfDocument
@@ -162,7 +166,7 @@ struct PDFCanvasView: UIViewRepresentable {
                     pdfView.layoutDocumentView()
                     noteUndoManager.removeCanvasStack(pageId: pageId)
                 } else {
-                    print("Page with id \(pageId) not found.")
+                    //print("Page with id \(pageId) not found.")
                 }
             }
         )
@@ -300,7 +304,7 @@ struct PDFCanvasView: UIViewRepresentable {
 
                     let currentPageIndex =
                         pdfView.document?.index(for: newPage) ?? 0
-                    print("Current page index: \(currentPageIndex)")
+                    //print("Current page index: \(currentPageIndex)")
 
                     updatePageIndicator(
                         for: pdfView,
@@ -327,7 +331,7 @@ struct PDFCanvasView: UIViewRepresentable {
             for pageIndex in 0..<document.pageCount {
                 guard let page = document.page(at: pageIndex) else { continue }
                 guard let documentView = pdfView.documentView else {
-                    print("Document view not found")
+                    //print("Document view not found")
                     return
                 }
 
@@ -392,6 +396,8 @@ struct PDFCanvasView: UIViewRepresentable {
                 pdfView.highlightedSelections = matches
             }
         }
+        
+
 
         func addPageIndicator(to pdfView: PDFView) {
             // Remove any existing page indicator first
@@ -475,7 +481,7 @@ struct PDFCanvasView: UIViewRepresentable {
             ) {
                 let currentPageIndex =
                     pdfView.document?.index(for: currentPage) ?? 0
-                print("Current page index: \(currentPageIndex)")
+                //print("Current page index: \(currentPageIndex)")
 
                 updatePageIndicator(
                     for: pdfView,

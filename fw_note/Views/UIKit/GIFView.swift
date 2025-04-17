@@ -41,12 +41,12 @@ struct GIFView: UIViewRepresentable {
     func updateUIView(_ uiView: UIView, context: Context) {
         // Load GIF data and set it to FLAnimatedImageView
         guard let animatedImageView = uiView.subviews.first as? FLAnimatedImageView else {
-            print("Failed to locate FLAnimatedImageView.")
+            //print("Failed to locate FLAnimatedImageView.")
             return
         }
 
         guard let gifData = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
-            print("Failed to load GIF data from path: \(path)")
+            //print("Failed to load GIF data from path: \(path)")
             return
         }
 
