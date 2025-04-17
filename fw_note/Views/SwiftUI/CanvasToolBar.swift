@@ -14,9 +14,12 @@ struct CanvasToolBar: View {
     @StateObject var canvasState: CanvasState
     @ObservedObject var noteUndoManager: NoteUndoManager
 
+    private let defaultFileName: String = "MyExportedFile"
     @State private var selectedURL: URL?
     @State private var fileName: String = "MyExportedFile.pdf"
+    @State private var errorMessage = ""
     @State private var showAlert = false
+    @State private var showErrorAlert = false
 
     var body: some View {
         HStack {
@@ -159,12 +162,45 @@ struct CanvasToolBar: View {
         }.alert("Enter File Name", isPresented: $showAlert) {
             TextField("File Name", text: $fileName)
             Button("Export") {
-                if let url = selectedURL {
-                    exportFile(to: url)
+                if let directoryURL = selectedURL {
+                    let destinationURL = directoryURL.appendingPathComponent(fileName)
+                    
+                    // Check if file exists
+                    if FileManager.default.fileExists(atPath: destinationURL.path) {
+                        // File exists, show confirmation alert
+                        errorMessage = "File already exists. Do you want to overwrite it?"
+                        showErrorAlert = true
+                        // Pass the destinationURL for confirmation handling
+                    } else {
+                        // Proceed with exporting the file
+                        exportFile(to: destinationURL)
+                    }
                 }
             }
             Button("Cancel", role: .cancel, action: {})
         }
+        .alert("Confirmation", isPresented: $showErrorAlert) {
+            Button("Overwrite") {
+                if let directoryURL = selectedURL {
+                    let destinationURL = directoryURL.appendingPathComponent(fileName)
+                    // Overwrite the file
+                    exportFile(to: destinationURL)
+                    showErrorAlert = false
+                }
+            }
+            Button("Rename") {
+                // Dismiss the current alert and reopen the "Enter File Name" alert
+                showErrorAlert = false
+                showAlert = true // Prompt user to enter a new file name
+            }
+            Button("Cancel", role: .cancel, action: {
+                showErrorAlert = false
+            })
+        } message: {
+            Text(errorMessage)
+        }
+
+
     }
 
     func selectPenTool() {
@@ -197,22 +233,24 @@ struct CanvasToolBar: View {
         print("redoAction")
         noteUndoManager.redo()
     }
-    
+
     func clonePdfDocument(originalDocument: PDFDocument?) -> PDFDocument? {
         guard let originalDocument = originalDocument,
-              let documentData = originalDocument.dataRepresentation(),
-              let clonedDocument = PDFDocument(data: documentData) else {
+            let documentData = originalDocument.dataRepresentation(),
+            let clonedDocument = PDFDocument(data: documentData)
+        else {
             print("Failed to clone the PDFDocument.")
             return nil
         }
-        
+
         print("Successfully cloned PDFDocument!")
         return clonedDocument
     }
 
     func addPdfPage() {
 
-        guard let pdfDocument = clonePdfDocument(originalDocument: pdfDocument) else {
+        guard let pdfDocument = clonePdfDocument(originalDocument: pdfDocument)
+        else {
             print("No document found to add pages.")
             return
         }
@@ -252,7 +290,9 @@ struct CanvasToolBar: View {
                 let updatedDocument = PDFDocument(data: updatedData)
             {
                 self.pdfDocument = updatedDocument
-                noteFile.notePages.append(NotePage(pageIndex: noteFile.notePages.count))
+                noteFile.notePages.append(
+                    NotePage(pageIndex: noteFile.notePages.count)
+                )
                 print(
                     "SwiftUI binding updated successfully. Current Page Count: \(self.pdfDocument?.pageCount ?? 0)"
                 )
@@ -275,12 +315,31 @@ struct CanvasToolBar: View {
             "Scroll direction changed to \(canvasState.displayDirection == .horizontal ? "Horizontal" : "Vertical")"
         )
     }
+    
+    
+    private func getDefaultFileName(url: URL, fileName: String) -> String {
+        var defaultFileName = fileName
+        var suffix = 0
+        var filePath = url.appendingPathComponent("\(defaultFileName).pdf")
+
+        while FileManager.default.fileExists(atPath: filePath.path) {
+            // Increment the suffix and update the file name
+            suffix += 1
+            defaultFileName = "\(fileName) (\(suffix))"
+            filePath = url.appendingPathComponent("\(defaultFileName).pdf")
+        }
+
+        return defaultFileName
+    }
+
 
     private func showFilePicker() {
         let picker = FilePicker(
             selectedURL: $selectedURL,
             onPick: { url in
                 selectedURL = url
+               
+                fileName = getDefaultFileName(url: url, fileName: defaultFileName) + ".pdf"
                 showAlert = true  // Show the alert for renaming
             }
         )
@@ -296,8 +355,6 @@ struct CanvasToolBar: View {
     func exportFile(to directoryURL: URL) {
         FileHelper.saveProject(noteFile: noteFile)
         let destinationURL = directoryURL.appendingPathComponent(fileName)
-
-       
 
         if let originalPDFDocument = pdfDocument {
             // Create a new PDFDocument
