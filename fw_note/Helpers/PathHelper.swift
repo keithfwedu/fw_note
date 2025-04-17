@@ -8,7 +8,7 @@ import SwiftUI
 
 class PathHelper {
     
-    static func createStableCurvedPath(points: [CGPoint], maxOffsetForAverage: CGFloat, curveWeight: CGFloat = 0.2) -> Path {
+    static func createStableCurvedPath(points: [DrawPoint], maxOffsetForAverage: CGFloat, curveWeight: CGFloat = 0.2) -> Path {
         var path = Path() // Initialize the Path object
         let nPoints = points.count
         guard nPoints > 1 else { return path } // Return an empty path if fewer than 2 points
@@ -32,7 +32,7 @@ class PathHelper {
             let rangeEnd = min(nPoints - 1, i + interpolatedOffset)
 
             if i == 0, let firstPoint = points.first {
-                path.move(to: firstPoint)
+                path.move(to: CGPoint(x: firstPoint.x, y: firstPoint.y))
                 for point in points[rangeBegin...rangeEnd] {
                     xSum += point.x
                     ySum += point.y
@@ -59,7 +59,7 @@ class PathHelper {
         }
 
         if nPoints > 2, let lastPoint = points.last {
-            path.addLine(to: lastPoint)
+            path.addLine(to: CGPoint(x: lastPoint.x, y: lastPoint.y))
         }
 
         return path

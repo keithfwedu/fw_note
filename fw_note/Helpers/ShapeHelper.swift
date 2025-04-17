@@ -9,7 +9,7 @@ import SwiftUI
 
 class ShapeHelper {
     
-    static func lineToShape(_ line: LineObj) -> [CGPoint] {
+    static func lineToShape(_ line: LineObj) -> [DrawPoint] {
         let shape = ShapeHelper.predictLineShape(line)
        
         // Proceed with transformation based on the identified shape
@@ -41,7 +41,7 @@ class ShapeHelper {
         return "curve"
     }
 
-    static func lineToStraightLine(_ line: LineObj, segments: Int = 100) -> [CGPoint] {
+    static func lineToStraightLine(_ line: LineObj, segments: Int = 100) -> [DrawPoint] {
         guard let firstPoint = line.points.first,
               let lastPoint = line.points.last
         else {
@@ -52,10 +52,10 @@ class ShapeHelper {
         print(line.points)
 
         // Calculate evenly spaced points along the straight line
-        var refinedPoints: [CGPoint] = []
+        var refinedPoints: [DrawPoint] = []
         for i in 0...segments {
             let t = CGFloat(i) / CGFloat(segments) // Linear interpolation factor
-            let interpolatedPoint = CGPoint(
+            let interpolatedPoint = DrawPoint(
                 x: firstPoint.x + t * (lastPoint.x - firstPoint.x),
                 y: firstPoint.y + t * (lastPoint.y - firstPoint.y)
             )
@@ -67,7 +67,7 @@ class ShapeHelper {
     }
 
 
-    static func lineToCurve(_ line: LineObj) -> [CGPoint] {
+    static func lineToCurve(_ line: LineObj) -> [DrawPoint] {
         print("Line \(line.id) converted to a refined Bézier curve.")
         guard let firstPoint = line.points.first,
             let lastPoint = line.points.last
@@ -94,7 +94,7 @@ class ShapeHelper {
                 * directionAdjustment
         )
 
-        return (0...100).map { t -> CGPoint in
+        return (0...100).map { t -> DrawPoint in
             let t = CGFloat(t) / 100
             let oneMinusT = 1 - t
 
@@ -105,20 +105,20 @@ class ShapeHelper {
                 oneMinusT * oneMinusT * firstPoint.y + 2 * oneMinusT * t
                 * adjustedControlPoint.y + t * t * lastPoint.y
 
-            return CGPoint(x: x, y: y)
+            return DrawPoint(x: x, y: y)
         }
 
     }
 
-    static func lineToCircle(_ line: LineObj) -> [CGPoint] {
+    static func lineToCircle(_ line: LineObj) -> [DrawPoint] {
         print("Line \(line.id) converted to a refined circlee.")
         guard let (circleCenter, radius) = fitCircleToPoints(to: line.points)
         else {
             return []
         }
-        return (0...360).map { angle -> CGPoint in
+        return (0...360).map { angle -> DrawPoint in
             let radians = CGFloat(angle) * .pi / 180
-            return CGPoint(
+            return DrawPoint(
                 x: circleCenter.x + radius * cos(radians),
                 y: circleCenter.y + radius * sin(radians)
             )
@@ -172,7 +172,7 @@ class ShapeHelper {
             && endpointDistance < approximateDiameter / 2
     }
 
-    static private func calculateAngularCoverage(of points: [CGPoint])
+    static private func calculateAngularCoverage(of points: [DrawPoint])
         -> CGFloat
     {
         guard let center = fitCircleToPoints(to: points)?.center else { return 0 }
@@ -193,15 +193,15 @@ class ShapeHelper {
         return totalSpan
     }
 
-    static func fitCircleToPoints(to points: [CGPoint]) -> (
-        center: CGPoint, radius: CGFloat
+    static func fitCircleToPoints(to points: [DrawPoint]) -> (
+        center: DrawPoint, radius: CGFloat
     )? {
         guard points.count >= 3 else { return nil }  // At least 3 points are needed
 
         // Step 1: Calculate an initial estimate for the center using averages
         let averageX = points.map { $0.x }.reduce(0, +) / CGFloat(points.count)
         let averageY = points.map { $0.y }.reduce(0, +) / CGFloat(points.count)
-        var center = CGPoint(x: averageX, y: averageY)
+        var center = DrawPoint(x: averageX, y: averageY)
 
         // Step 2: Iteratively refine the center to minimize radius variance
         let maxIterations = 10
@@ -229,7 +229,7 @@ class ShapeHelper {
             let adjustedY =
                 adjustments.map { $0.y }.reduce(0, +)
                 / CGFloat(adjustments.count)
-            center = CGPoint(x: adjustedX, y: adjustedY)
+            center = DrawPoint(x: adjustedX, y: adjustedY)
         }
 
         // Step 3: Final radius calculation

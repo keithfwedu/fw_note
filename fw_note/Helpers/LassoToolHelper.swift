@@ -7,9 +7,9 @@
 import SwiftUI
 
 class LassoToolHelper {
-    static func moveSelectionPath(selectionPath: [CGPoint],  translation: CGSize) -> [CGPoint] {
+    static func moveSelectionPath(selectionPath: [DrawPoint],  translation: CGSize) -> [DrawPoint] {
        return selectionPath.map { point in
-            CGPoint(
+           DrawPoint(
                 x: point.x + translation.width,
                 y: point.y + translation.height
             )
@@ -20,7 +20,7 @@ class LassoToolHelper {
         return selectedLines.map { line in
             var updatedLine = line  // Create a mutable copy of the line
             updatedLine.points = line.points.map { point in
-                CGPoint(
+                DrawPoint(
                     x: point.x + translation.width,
                     y: point.y + translation.height
                 )
@@ -37,7 +37,7 @@ class LassoToolHelper {
                 // Create an updated version of the selected line with translated points
                 var updatedLine = selectedLine
                 updatedLine.points = selectedLine.points.map { point in
-                    CGPoint(
+                    DrawPoint(
                         x: point.x + translation.width,
                         y: point.y + translation.height
                     )
@@ -69,16 +69,16 @@ class LassoToolHelper {
 
 
    
-    static func getSelectedLines(selectionPath: [CGPoint], lines: [LineObj]) -> [LineObj] {
+    static func getSelectedLines(selectionPath: [DrawPoint], lines: [LineObj]) -> [LineObj] {
         let selectionRect = calculateSelectionRect(from: selectionPath);
         return lines.filter { line in
             line.points.contains { point in
-                selectionRect.contains(point)
+                selectionRect.contains(CGPoint(x: point.x, y: point.y))
             }
         }
     }
     
-    static func getSelectedImages(selectionPath: [CGPoint], images: [ImageObj]) -> [UUID] {
+    static func getSelectedImages(selectionPath: [DrawPoint], images: [ImageObj]) -> [UUID] {
         let selectionRect = calculateSelectionRect(from: selectionPath);
         return images.filter { image in
             selectionRect.contains(image.position)
@@ -108,26 +108,26 @@ class LassoToolHelper {
     static func createSelectionBounds(imageStack: [ImageObj],
                                            selectedLines: [LineObj],
                                                   selectedImages: [UUID]
-                                                 ) -> [CGPoint] {
+                                                 ) -> [DrawPoint] {
         // Gather all points from selected lines and image positions (with dimensions)
         var allPoints = selectedLines.flatMap { $0.points }
         for image in imageStack {
             if selectedImages.contains(image.id) {
                 // Add all four corners of the image to account for its size
                 allPoints.append(
-                    CGPoint(
+                    DrawPoint(
                         x: image.position.x - image.size.width / 2,
                         y: image.position.y - image.size.height / 2))  // Top-left
                 allPoints.append(
-                    CGPoint(
+                    DrawPoint(
                         x: image.position.x + image.size.width / 2,
                         y: image.position.y - image.size.height / 2))  // Top-right
                 allPoints.append(
-                    CGPoint(
+                    DrawPoint(
                         x: image.position.x + image.size.width / 2,
                         y: image.position.y + image.size.height / 2))  // Bottom-right
                 allPoints.append(
-                    CGPoint(
+                    DrawPoint(
                         x: image.position.x - image.size.width / 2,
                         y: image.position.y + image.size.height / 2))  // Bottom-left
             }
@@ -150,50 +150,50 @@ class LassoToolHelper {
 
         // Create a rectangular selection path with padding
         return [
-            CGPoint(x: minX - padding, y: minY - padding),  // Top-left
-            CGPoint(x: maxX + padding, y: minY - padding),  // Top-right
-            CGPoint(x: maxX + padding, y: maxY + padding),  // Bottom-right
-            CGPoint(x: minX - padding, y: maxY + padding),  // Bottom-left
-            CGPoint(x: minX - padding, y: minY - padding),  // Close the rectangle
+            DrawPoint(x: minX - padding, y: minY - padding),  // Top-left
+            DrawPoint(x: maxX + padding, y: minY - padding),  // Top-right
+            DrawPoint(x: maxX + padding, y: maxY + padding),  // Bottom-right
+            DrawPoint(x: minX - padding, y: maxY + padding),  // Bottom-left
+            DrawPoint(x: minX - padding, y: minY - padding),  // Close the rectangle
         ]
     }
     
-    static func calculateSelectionRect(from selectionPath: [CGPoint]) -> CGRect {
+    static func calculateSelectionRect(from selectionPath: [DrawPoint]) -> CGRect {
         return Path { path in
-            path.addLines(selectionPath)
+            path.addLines(selectionPath.map { $0.point })
             path.closeSubpath()
         }.boundingRect
     }
 
 
     // Checks if a point is inside the current selection area
-    static func isPointInsideSelection(_ selectionPath: [CGPoint], point: CGPoint) -> Bool {
+    static func isPointInsideSelection(_ selectionPath: [DrawPoint], point: DrawPoint) -> Bool {
         guard selectionPath.count > 2 else { return false }  // Ensure the path has enough points to form a closed area
 
         // Create a CGPath from the selectionPath
         let path = CGMutablePath()
-        path.addLines(between: selectionPath)
+        path.addLines(between: selectionPath.map{ CGPoint(x: $0.x, y: $0.y) })
         path.closeSubpath()  // Close the path to ensure it forms a valid shape
 
         // Check if the point is inside the closed path
-        return path.contains(point)
+        return path.contains(CGPoint(x: point.x, y: point.y))
     }
 
-    static func calculateSelectionCenter(imageStack: [ImageObj], selectedLines: [LineObj], selectedImages: [UUID]) -> CGPoint {
+    static func calculateSelectionCenter(imageStack: [ImageObj], selectedLines: [LineObj], selectedImages: [UUID]) -> DrawPoint {
         let allPoints =
-            selectedLines.flatMap { $0.points }
+        selectedLines.flatMap { $0.points }.map{ $0.point }
             + imageStack.filter { selectedImages.contains($0.id) }.map {
                 $0.position
             }
 
-        guard !allPoints.isEmpty else { return CGPoint.zero }
+        guard !allPoints.isEmpty else { return DrawPoint(x: 0, y: 0) }
 
         let minX = allPoints.map { $0.x }.min() ?? 0
         let maxX = allPoints.map { $0.x }.max() ?? 0
         let minY = allPoints.map { $0.y }.min() ?? 0
         let maxY = allPoints.map { $0.y }.max() ?? 0
 
-        return CGPoint(
+        return DrawPoint(
             x: (minX + maxX) / 2,
             y: (minY + maxY) / 2
         )

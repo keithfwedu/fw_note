@@ -19,7 +19,7 @@ struct CanvasView: View {
     @ObservedObject var notePage: NotePage
 
     //Selected
-    @State var selectionPaths: [CGPoint] = []
+    @State var selectionPaths: [DrawPoint] = []
     @State var selectedImageObjIds: [UUID] = []
     @State var selectedGifObjIds: [UUID] = []
     @State var selectedLineStack: [LineObj] = []
@@ -168,7 +168,7 @@ struct CanvasView: View {
                 {
                     var selectionDrawing = Path()
                     selectionDrawing.addLines(
-                        selectionPaths
+                        selectionPaths.map{ CGPoint(x: $0.x, y: $0.y) }
                     )
                     selectionDrawing.closeSubpath()
                     context.stroke(
@@ -789,7 +789,7 @@ struct CanvasView: View {
         print("First drag detected for a new stroke")
         let newLineObj = LineObj(
             color: canvasState.penColor,
-            points: [dragValue.location],
+            points: [DrawPoint(x: dragValue.location.x, y: dragValue.location.y)],
             lineWidth: canvasState.penSize,
             mode: .draw
         )
@@ -808,9 +808,10 @@ struct CanvasView: View {
         }),
             let lastLine = lastCanvasWithLine.lineObj
         {
+            let lastPoint = DrawPoint(x: lastLine.points.last?.x ?? 0, y: lastLine.points.last?.y ?? 0)
             let interpolatedPoints = PointHelper.interpolatePoints(
-                from: lastLine.points.last ?? dragValue.location,
-                to: dragValue.location
+                from: (lastLine.points.last != nil) ? lastPoint : DrawPoint(x: dragValue.location.x, y: dragValue.location.y),
+                to: DrawPoint(x: dragValue.location.x, y: dragValue.location.y)
             )
             if let lastIndex = notePage.canvasStack.lastIndex(where: {
                 $0.id == lastCanvasWithLine.id
@@ -825,8 +826,8 @@ struct CanvasView: View {
         // Update hold detection logic for the latest position
         if lastDrawPosition != nil {
             if PointHelper.distance(
-                lastDrawPosition!,
-                dragValue.location
+                DrawPoint(x: lastDrawPosition!.x, y: lastDrawPosition!.y),
+                DrawPoint(x: dragValue.location.x, y: dragValue.location.y)
             ) > 5.0 {
                 print("set hold timer")
                 lastDrawPosition = dragValue.location
@@ -889,7 +890,7 @@ struct CanvasView: View {
             print("First drag detected for a new Laser \(canvasState.penSize)")
             let newLine = LineObj(
                 color: Color.white,
-                points: [dragValue.location],
+                points: [DrawPoint(x: dragValue.location.x, y: dragValue.location.y)],
                 lineWidth: canvasState.penSize,
                 mode: .draw
             )
@@ -899,9 +900,10 @@ struct CanvasView: View {
             // Add points to the current stroke
             print("drag detected for a new Laser")
             if let lastLine = laserStack.last {
+                let lastPoint = DrawPoint(x: lastLine.points.last?.x ?? 0, y: lastLine.points.last?.y ?? 0)
                 let interpolatedPoints = PointHelper.interpolatePoints(
-                    from: lastLine.points.last ?? dragValue.location,
-                    to: dragValue.location
+                    from: (lastLine.points.last != nil) ? lastPoint : DrawPoint(x:dragValue.location.x, y: dragValue.location.y),
+                    to: DrawPoint(x:dragValue.location.x, y: dragValue.location.y)
                 )
                 let lastIndex: Int = laserStack.count - 1
                 laserStack[lastIndex].points.append(
@@ -938,14 +940,14 @@ struct CanvasView: View {
         if lastDragPosition == nil {
             print("First drag detected")
             resetSelection()  // Ensure there's no existing selection
-            self.selectionPaths = [dragValue.location]  // Initialize selection path
+            self.selectionPaths = [DrawPoint(x: dragValue.location.x, y: dragValue.location.y)]  // Initialize selection path
             lastDragPosition = dragValue.location
             return  // Exit early as this is the first touch point
         }
 
         let isCurrentlyInsideSelection = LassoToolHelper.isPointInsideSelection(
             selectionPaths,
-            point: dragValue.location
+            point: DrawPoint(x: dragValue.location.x, y: dragValue.location.y)
         )
 
         if isCurrentlyInsideSelection {
@@ -963,7 +965,7 @@ struct CanvasView: View {
                 for i in 0..<selectedLineStack.count {
                     let updatedPoints = selectedLineStack[i].points
                         .map {
-                            CGPoint(
+                            DrawPoint(
                                 x: $0.x + centerTranslation.width,
                                 y: $0.y + centerTranslation.height
                             )
@@ -1007,7 +1009,7 @@ struct CanvasView: View {
                 isLassoCreated = false
             }
             if !isLassoCreated {
-                self.selectionPaths.append(dragValue.location)
+                self.selectionPaths.append(DrawPoint(x: dragValue.location.x, y: dragValue.location.y))
             }  // Extend the selection path
 
         }

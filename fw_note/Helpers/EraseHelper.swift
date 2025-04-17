@@ -12,7 +12,9 @@ class EraseHelper {
         dragValue: TouchData,
         eraserRadius: CGFloat = 8
     ) -> [CanvasObj] {
-        let adjustedLocation = dragValue.location
+        let adjustedLocation = DrawPoint(x: dragValue.location.x, y: dragValue.location.y)
+        
+        
         var updatedCanvasStack: [CanvasObj] = []
 
         for canvasObj in canvasStack {
@@ -52,7 +54,7 @@ class EraseHelper {
         dragValue: TouchData,
         eraserRadius: CGFloat = 8
     ) -> [CanvasObj] {
-        let adjustedLocation = dragValue.location
+        let adjustedLocation = DrawPoint(x: dragValue.location.x, y: dragValue.location.y)
         var updatedCanvasStack: [CanvasObj] = []
 
         for canvasObj in canvasStack {
@@ -77,8 +79,8 @@ class EraseHelper {
             let interpolatedPoints = interpolatePoints(
                 points: lineObj.points, maxDistance: eraserRadius / 2
             )
-            var newSegments: [[CGPoint]] = []
-            var currentSegment: [CGPoint] = []
+            var newSegments: [[DrawPoint]] = []
+            var currentSegment: [DrawPoint] = []
 
             // Split the points into segments based on eraser radius
             for point in interpolatedPoints {
@@ -117,11 +119,11 @@ class EraseHelper {
     }
 
 
-    static func interpolatePoints(points: [CGPoint], maxDistance: CGFloat)
-            -> [CGPoint]
+    static func interpolatePoints(points: [DrawPoint], maxDistance: CGFloat)
+            -> [DrawPoint]
         {
             guard points.count > 1 else { return points }  // Return as-is if there are no points to interpolate
-            var interpolatedPoints: [CGPoint] = []
+            var interpolatedPoints: [DrawPoint] = []
 
             for i in 0..<points.count - 1 {
                 let start = points[i]
@@ -133,7 +135,7 @@ class EraseHelper {
                     let numIntermediatePoints = Int(ceil(distance / maxDistance))
                     for j in 1..<numIntermediatePoints {
                         let t = CGFloat(j) / CGFloat(numIntermediatePoints)
-                        let intermediatePoint = CGPoint(
+                        let intermediatePoint = DrawPoint(
                             x: start.x + t * (end.x - start.x),
                             y: start.y + t * (end.y - start.y)
                         )

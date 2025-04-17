@@ -10,7 +10,7 @@ import SwiftUI
 struct LineObj: Identifiable, Codable, Equatable {
     var id = UUID()
     var color: Color
-    var points: [CGPoint]
+    var points: [DrawPoint]
     var lineWidth: CGFloat
     var opacity: Double = 1.0
     
@@ -21,7 +21,7 @@ struct LineObj: Identifiable, Codable, Equatable {
         return LineObj(id: id, color: color, points: points, lineWidth: lineWidth, mode: mode)
     }
     
-    func updatePoints(_ newPoints: [CGPoint]) -> LineObj {
+    func updatePoints(_ newPoints: [DrawPoint]) -> LineObj {
         LineObj(id: id, color: color, points: newPoints, lineWidth: lineWidth, mode: mode)
     }
 
@@ -35,7 +35,7 @@ struct LineObj: Identifiable, Codable, Equatable {
     }
 
     // Initializer for convenience
-    init(id: UUID = UUID(), color: Color, points: [CGPoint], lineWidth: CGFloat, mode: CanvasMode) {
+    init(id: UUID = UUID(), color: Color, points: [DrawPoint], lineWidth: CGFloat, mode: CanvasMode) {
         self.id = id
         self.color = color
         self.points = points

@@ -24,4 +24,8 @@ extension CGPoint {
         let y = try container.decode(CGFloat.self, forKey: .y)
         self.init(x: x, y: y)
     }
+    
+    func toDrawPoint() -> DrawPoint {
+        return DrawPoint(x: self.x, y: self.y)
+    }
 }
