@@ -231,7 +231,7 @@ struct ImagePickerView: View {
         canvasState.canvasMode = CanvasMode.draw
         // Add the operation to the undo stack
         noteUndoManager.addToUndo(
-            pageIndex: pageIndex,
+            pageId: page.id,
             canvasStack: page.canvasStack
         )
     }

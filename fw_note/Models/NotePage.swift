@@ -8,7 +8,7 @@
 import SwiftUI
 
 class NotePage: Identifiable, Codable, ObservableObject {
-    var id = UUID()
+    var id:UUID = UUID()
     var pageCenterPoint: CGPoint = .zero
     var canvasWidth: CGFloat = .zero
     var canvasHeight: CGFloat = .zero

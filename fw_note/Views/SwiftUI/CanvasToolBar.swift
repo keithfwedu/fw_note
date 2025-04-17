@@ -37,10 +37,10 @@ struct CanvasToolBar: View {
                         .background(Color.gray.opacity(0.2))
                         .cornerRadius(8)
                         .accessibilityLabel("Change Scroll Direction")
-                        /*Button(action: addPdfPage) {
+                        Button(action: addPdfPage) {
                             Image(systemName: "text.page")
                         }
-                        .frame(width: 40, height: 40)*/
+                        .frame(width: 40, height: 40)
                         // Tool Buttons
                         Button(action: selectPenTool) {
                             Image(systemName: "pencil")
@@ -297,11 +297,9 @@ struct CanvasToolBar: View {
         FileHelper.saveProject(noteFile: noteFile)
         let destinationURL = directoryURL.appendingPathComponent(fileName)
 
-        let pdfFilePath = FileHelper.getPDFPath(projectId: noteFile.id)
+       
 
-        if let originalPDFDocument = PDFDocument(
-            url: URL(fileURLWithPath: pdfFilePath)
-        ) {
+        if let originalPDFDocument = pdfDocument {
             // Create a new PDFDocument
             let newPDFDocument = PDFDocument()
 

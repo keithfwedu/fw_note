@@ -386,7 +386,7 @@ struct CanvasView: View {
         .onAppear {
             canvasState.canvasPool[pageIndex] = AnyView(canvas)
             noteUndoManager.addInitialCanvasStack(
-                pageIndex: pageIndex,
+                pageId: self.notePage.id,
                 canvasStack: self.notePage.canvasStack
             )
 
@@ -473,7 +473,7 @@ struct CanvasView: View {
 
             // Add the current state of the canvas stack to the undo manager
             noteUndoManager.addToUndo(
-                pageIndex: pageIndex,
+                pageId: notePage.id,
                 canvasStack: notePage.canvasStack
             )
             canvasState.isEdited = true
@@ -516,7 +516,7 @@ struct CanvasView: View {
             notePage.canvasStack[index].imageObj = imageObj
 
             noteUndoManager.addToUndo(
-                pageIndex: self.pageIndex,
+                pageId: notePage.id,
                 canvasStack: notePage.canvasStack
             )
             canvasState.isEdited = true
@@ -696,7 +696,7 @@ struct CanvasView: View {
             canvasState.timerManager.cancelHoldTimer()
             if self.isTapImage == false {
                 noteUndoManager.addToUndo(
-                    pageIndex: pageIndex,
+                    pageId: self.notePage.id,
                     canvasStack: self.notePage.canvasStack
                 )
                canvasState.isEdited = true
@@ -706,7 +706,7 @@ struct CanvasView: View {
         case .eraser:  // Erase Mode
             lastDragPosition = nil
             noteUndoManager.addToUndo(
-                pageIndex: pageIndex,
+                pageId: self.notePage.id,
                 canvasStack: self.notePage.canvasStack
             )
             canvasState.isEdited = true
@@ -740,7 +740,7 @@ struct CanvasView: View {
             }
             
             noteUndoManager.addToUndo(
-                pageIndex: pageIndex,
+                pageId: notePage.id,
                 canvasStack: notePage.canvasStack
             )
             canvasState.isEdited = true
@@ -1155,7 +1155,7 @@ struct CanvasView: View {
         canvasState.canvasMode = CanvasMode.draw
         // Add the operation to the undo stack
         noteUndoManager.addToUndo(
-            pageIndex: pageIndex,
+            pageId: page.id,
             canvasStack: page.canvasStack
         )
         

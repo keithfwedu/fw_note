@@ -22,26 +22,32 @@ class NoteUndoManager: ObservableObject {
         self.noteFile = noteFile
     }
 
-    func addInitialCanvasStack(pageIndex: Int, canvasStack: [CanvasObj]) {
+    func addInitialCanvasStack(pageId: UUID, canvasStack: [CanvasObj]) {
         let clonedCanvasStack = canvasStack.map { $0.clone() }
         let action = ActionStack(
-            pageIndex: pageIndex,
+            pageId: pageId,
             canvasStack: clonedCanvasStack
         )
         initCanvasStack.append(action)
     }
+    
+    func removeCanvasStack(pageId: UUID) {
+        undoStack.removeAll(where: { $0.id == pageId })
+        redoStack.removeAll(where: { $0.id == pageId })
+        initCanvasStack.removeAll(where: { $0.id == pageId })
+    }
 
-    func addToUndo(pageIndex: Int, canvasStack: [CanvasObj]?) {
+    func addToUndo(pageId: UUID, canvasStack: [CanvasObj]?) {
         // Clone the canvasStack to create an independent copy
         let clonedCanvasStack = canvasStack?.map { $0.clone() }
 
         print(
-            "Add to undo: Page \(pageIndex), Canvas count \(clonedCanvasStack?.count ?? 0)"
+            "Add to undo: Page \(pageId), Canvas count \(clonedCanvasStack?.count ?? 0)"
         )
 
         // Create a new ActionStack with the cloned canvasStack
         let action = ActionStack(
-            pageIndex: pageIndex,
+            pageId: pageId,
             canvasStack: clonedCanvasStack
         )
 
@@ -50,7 +56,7 @@ class NoteUndoManager: ObservableObject {
             // Save the first undoStack to initCanvasStack
             if let firstAction = undoStack.first {
                 // Remove existing entries in initCanvasStack for the same pageIndex
-                initCanvasStack.removeAll { $0.pageIndex == pageIndex }
+                initCanvasStack.removeAll { $0.pageId == pageId }
                 // Save the first undoStack entry to initCanvasStack
                 initCanvasStack.append(firstAction)
             }
@@ -67,22 +73,22 @@ class NoteUndoManager: ObservableObject {
         guard let currentAction = undoStack.popLast() else {
             return
         }
-        print("currentAction: \(currentAction.pageIndex)")
+        print("currentAction: \(currentAction.pageId)")
         redoStack.append(currentAction)
         let remainActions = undoStack.filter({
-            $0.pageIndex == currentAction.pageIndex
+            $0.pageId == currentAction.pageId
         })
         print("remainActions: \(remainActions)")
         // Check if there is a previous action
         if let lastAction = remainActions.last {
-            print("lastActioin: \(lastAction.pageIndex)")
+            print("lastActioin: \(lastAction.pageId)")
             // Update stacks based on the last action
             updateStacks(for: lastAction)
 
         } else {
             print("undoStack.isEmpty")
             let filteredActionStacks = initCanvasStack.filter {
-                $0.pageIndex == currentAction.pageIndex
+                $0.pageId == currentAction.pageId
             }
             updateStacks(for: filteredActionStacks.first!)
 
@@ -106,13 +112,12 @@ class NoteUndoManager: ObservableObject {
 
     private func updateStacks(for action: ActionStack) {
         print(
-            "Undoing action for pageIndex: \(action.pageIndex). \((action.canvasStack ?? []).count)"
+            "Undoing action for pageId: \(action.pageId). \((action.canvasStack ?? []).count)"
         )
 
         if action.canvasStack != nil {
             print("undo canvasStack")
-            noteFile.notePages[action.pageIndex].canvasStack = action
-                .canvasStack!
+            noteFile.notePages.first(where: { $0.id == action.pageId })?.canvasStack = action.canvasStack!
         }
     }
 }

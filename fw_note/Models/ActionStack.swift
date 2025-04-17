@@ -9,6 +9,6 @@ import Foundation
 
 struct ActionStack: Identifiable, Codable {
     var id = UUID()
-    var pageIndex: Int
+    var pageId: UUID
     var canvasStack: [CanvasObj]?
 }
