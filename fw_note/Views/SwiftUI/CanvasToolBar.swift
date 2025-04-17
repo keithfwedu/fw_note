@@ -12,7 +12,7 @@ struct CanvasToolBar: View {
     @Binding var pdfDocument: PDFDocument?
     @StateObject var noteFile: NoteFile
     @StateObject var canvasState: CanvasState
-    @ObservedObject var noteUndoManager: NoteUndoManager
+    @Binding var noteUndoManager: NoteUndoManager
 
     private let defaultFileName: String = "MyExportedFile"
     @State private var selectedURL: URL?
@@ -255,6 +255,63 @@ struct CanvasToolBar: View {
         }
     }
     
+    func addPdfPage() {
+        guard let pdfDocument = PdfHelper.clonePdfDocument(originalDocument: pdfDocument)
+        else {
+            print("No document found to add pages.")
+            return
+        }
+
+        // Get the size of the first page
+
+        let pageRect = CGRect(
+            x: 0,
+            y: 0,
+            width: 595,
+            height: 842
+        )
+
+        // Create a blank UIImage
+        UIGraphicsBeginImageContext(pageRect.size)
+        guard let context = UIGraphicsGetCurrentContext() else {
+            print("Failed to initialize graphics context.")
+            return
+        }
+        context.setFillColor(UIColor.white.cgColor)
+        context.fill(pageRect)
+        let blankImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        // Create a PDFPage from the blank image
+        if let blankImage = blankImage,
+            let blankPage = PDFPage(image: blankImage)
+        {
+            // Add the blank page to the PDFDocument
+            pdfDocument.insert(blankPage, at: pdfDocument.pageCount)
+            print(
+                "Blank page added successfully! Total Pages: \(pdfDocument.pageCount)"
+            )
+
+            // Update SwiftUI binding
+            if let updatedData = pdfDocument.dataRepresentation(),
+                let updatedDocument = PDFDocument(data: updatedData)
+            {
+                self.pdfDocument = updatedDocument
+                noteFile.notePages.append(
+                    NotePage(pageIndex: noteFile.notePages.count)
+                )
+                print(
+                    "SwiftUI binding updated successfully. Current Page Count: \(self.pdfDocument?.pageCount ?? 0)"
+                )
+            } else {
+                print("Failed to refresh the document with new data.")
+            }
+        } else {
+            print("Failed to create a blank PDF page.")
+        }
+
+    }
+    
     func setDrawSize(size: CGFloat) {
         switch canvasState.canvasTool {
         case CanvasTool.eraser:
@@ -323,79 +380,7 @@ struct CanvasToolBar: View {
         noteUndoManager.redo()
     }
 
-    func clonePdfDocument(originalDocument: PDFDocument?) -> PDFDocument? {
-        guard let originalDocument = originalDocument,
-            let documentData = originalDocument.dataRepresentation(),
-            let clonedDocument = PDFDocument(data: documentData)
-        else {
-            print("Failed to clone the PDFDocument.")
-            return nil
-        }
-
-        print("Successfully cloned PDFDocument!")
-        return clonedDocument
-    }
-
-    func addPdfPage() {
-
-        guard let pdfDocument = clonePdfDocument(originalDocument: pdfDocument)
-        else {
-            print("No document found to add pages.")
-            return
-        }
-
-        // Get the size of the first page
-
-        let pageRect = CGRect(
-            x: 0,
-            y: 0,
-            width: 595,
-            height: 842
-        )
-
-        // Create a blank UIImage
-        UIGraphicsBeginImageContext(pageRect.size)
-        guard let context = UIGraphicsGetCurrentContext() else {
-            print("Failed to initialize graphics context.")
-            return
-        }
-        context.setFillColor(UIColor.white.cgColor)
-        context.fill(pageRect)
-        let blankImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-
-        // Create a PDFPage from the blank image
-        if let blankImage = blankImage,
-            let blankPage = PDFPage(image: blankImage)
-        {
-            // Add the blank page to the PDFDocument
-            pdfDocument.insert(blankPage, at: pdfDocument.pageCount)
-            print(
-                "Blank page added successfully! Total Pages: \(pdfDocument.pageCount)"
-            )
-
-            // Update SwiftUI binding
-            if let updatedData = pdfDocument.dataRepresentation(),
-                let updatedDocument = PDFDocument(data: updatedData)
-            {
-                self.pdfDocument = updatedDocument
-                noteFile.notePages.append(
-                    NotePage(pageIndex: noteFile.notePages.count)
-                )
-                print(
-                    "SwiftUI binding updated successfully. Current Page Count: \(self.pdfDocument?.pageCount ?? 0)"
-                )
-            } else {
-                print("Failed to refresh the document with new data.")
-            }
-        } else {
-            print("Failed to create a blank PDF page.")
-        }
-
-    }
-
     func toggleDisplayDirection() {
-
         canvasState.displayDirection =
             canvasState.displayDirection == .horizontal
             ? .vertical : .horizontal

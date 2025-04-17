@@ -50,13 +50,14 @@ struct CanvasView: View {
 
     @State private var showToast = false
     @State private var toastMessage = ""
-
+    @State private var showRemovePageConfirmation = false
     @State private var isLoading = false  // State to track loading
 
     @State var imageStack: [ImageObj] = []
     @State private var pageSize: CGSize = .zero
     let onDoubleTap: () -> Void
-    //@Binding var shouldScroll: Bool
+    let onRemovePdfPage: ((_ pageId: UUID) -> Void)?
+    
     private var axes: Axis.Set {
         //return shouldScroll ? .horizontal : []
         return []
@@ -244,12 +245,13 @@ struct CanvasView: View {
     }
 
     var body: some View {
-        VStack {
+        ZStack {
             /*  Button("save") {
                   saveTest()
               }*/
 
             ZStack {
+
                 /* HStack {
                      Text("init: \(noteUndoManager.initCanvasStack.count)")
                      Text("Undo: \(noteUndoManager.undoStack.count)")
@@ -320,10 +322,9 @@ struct CanvasView: View {
                                     dragValue: value
                                 )
                             } else {
-                              
-                                
+
                                 toastMessage =
-                                "Not enabled to draw By \(value.type == .pencil ? "pencil" : "fingers")"
+                                    "Not enabled to draw By \(value.type == .pencil ? "pencil" : "fingers")"
                                 showToast = true
                                 DispatchQueue.main.asyncAfter(
                                     deadline: .now() + 2
@@ -435,9 +436,46 @@ struct CanvasView: View {
 
                 print("imageStack \(imageStack)")
             }
+
+            if canvasState.scaleFactor < 0.9 {
+                VStack {
+                    Button(action: {
+                        showRemovePageConfirmation = true
+                    }) {
+                        Text("X")
+                            .font(.system(size: 24, weight: .bold))  // Large, bold text
+                            .padding()
+                            .frame(width: 60, height: 60)  // Adjust the size of the button
+                            .background(Color.white)
+                            .cornerRadius(30)  // Rounded corners for a polished look
+                            .shadow(radius: 10)  // Add a shadow for emphasis
+                    }
+                }
+                .position(x: notePage.canvasWidth / 2, y: 10)
+                .alert(
+                    "Confirm Close",
+                    isPresented: $showRemovePageConfirmation
+                ) {
+                    Button("Yes") {
+                        // Perform the close action
+                        removePdfPage(pageIndex: pageIndex)
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Are you sure you want to close?")
+                }
+            }
         }
     }
 
+   
+
+    func removePdfPage(pageIndex: Int) {
+        onRemovePdfPage!(notePage.id)
+        
+    }
+    
+    
     func handleDrawSetting(canvasTool: CanvasTool) {
 
         switch canvasTool {

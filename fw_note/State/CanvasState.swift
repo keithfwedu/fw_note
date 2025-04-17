@@ -28,7 +28,7 @@ class CanvasState: ObservableObject {
     @Published var isDragging: Bool = false
 
     @Published var canvasPool: [Int: AnyView] = [:]
- 
+    @Published var scaleFactor: CGFloat = 1.0
     
     //Configs
     @Published var displayDirection: PDFDisplayDirection = .vertical {

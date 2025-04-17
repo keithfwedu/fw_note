@@ -13,12 +13,12 @@ struct PDFCanvasView: UIViewRepresentable {
     var imageState: ImageState
     var canvasState: CanvasState
     var noteFile: NoteFile
-    var noteUndoManager: NoteUndoManager
+    @Binding var noteUndoManager: NoteUndoManager
     var pdfView: CustomPDFView = CustomPDFView()
     @Binding var searchText: String
 
     @Binding var displayDirection: PDFDisplayDirection  // Bindable property to change display direction
-  
+
     func makeUIView(context: Context) -> CustomPDFView {
 
         pdfView.document = pdfDocument
@@ -58,7 +58,7 @@ struct PDFCanvasView: UIViewRepresentable {
 
         // Add page information (Current Page / Total Pages)
         context.coordinator.addPageIndicator(to: pdfView)
-       
+
         return pdfView
     }
 
@@ -76,13 +76,13 @@ struct PDFCanvasView: UIViewRepresentable {
         }
 
         if uiView.document !== pdfDocument {
-             uiView.document = pdfDocument
+            uiView.document = pdfDocument
             context.coordinator.pdfDocument = pdfDocument!
             context.coordinator.configure(
                 pdfView: uiView,
                 displayDirection: displayDirection
             )  // Pass PDFView to the Coordinator
-            
+
             context.coordinator.addCanvasesToPages(
                 pdfView: uiView,
                 displayDirection: displayDirection
@@ -93,6 +93,10 @@ struct PDFCanvasView: UIViewRepresentable {
         }
 
         uiView.layoutDocumentView()
+
+        DispatchQueue.main.async {
+            self.canvasState.scaleFactor = uiView.scaleFactor
+        }
 
         context.coordinator.handleSearchTextChange(searchText)
     }
@@ -134,7 +138,32 @@ struct PDFCanvasView: UIViewRepresentable {
             noteUndoManager: noteUndoManager,
             imageState: imageState,
             canvasState: canvasState,
-            searchText: $searchText
+            searchText: $searchText,
+            onRemovePage: { pageId in
+                guard
+                    let clonedPdfDocument = PdfHelper.clonePdfDocument(
+                        originalDocument: pdfDocument
+                    )
+                else {
+                    print("No document")
+                    return
+                }
+                if let index = self.noteFile.notePages.firstIndex(where: { $0.id == pageId }) {
+                    print("Page found at index: \(index)")
+                    clonedPdfDocument.removePage(at: index)
+                  
+                    self.pdfDocument = clonedPdfDocument
+                   
+                    self.noteFile.notePages.removeAll(where: {
+                        $0.id == pageId
+                    })
+                  
+                    pdfView.layoutDocumentView()
+                    self.noteUndoManager.removeCanvasStack(pageId: pageId)
+                } else {
+                    print("Page with id \(pageId) not found.")
+                }
+            }
         )
     }
 
@@ -150,6 +179,7 @@ struct PDFCanvasView: UIViewRepresentable {
         var scaleFactor: CGFloat = 1.0
         var displayDirection: PDFDisplayDirection = .vertical
         var rawPageFrames: [CGRect] = []
+        var onRemovePage: ((_ pageId: UUID) -> Void)?
         @Binding private var searchText: String
 
         init(
@@ -159,7 +189,8 @@ struct PDFCanvasView: UIViewRepresentable {
             noteUndoManager: NoteUndoManager,
             imageState: ImageState,
             canvasState: CanvasState,
-            searchText: Binding<String>
+            searchText: Binding<String>,
+            onRemovePage: ((_ pageId: UUID) -> Void)?
         ) {
             self.pdfDocument = pdfDocument
             self.noteFile = noteFile
@@ -168,6 +199,7 @@ struct PDFCanvasView: UIViewRepresentable {
             self.canvasState = canvasState
             self.pdfView = pdfView
             self._searchText = searchText
+            self.onRemovePage = onRemovePage
         }
 
         func configure(
@@ -325,6 +357,9 @@ struct PDFCanvasView: UIViewRepresentable {
                             frame: normalizedPageFrame
                         )
 
+                    },
+                    onRemovePdfPage: { [self] pageId in
+                        onRemovePage!(pageId)
                     }
                 )
                 canvasViewWrapper.backgroundColor = UIColor.clear

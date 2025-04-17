@@ -32,9 +32,12 @@ class NoteUndoManager: ObservableObject {
     }
     
     func removeCanvasStack(pageId: UUID) {
-        undoStack.removeAll(where: { $0.id == pageId })
-        redoStack.removeAll(where: { $0.id == pageId })
-        initCanvasStack.removeAll(where: { $0.id == pageId })
+        print("remove undo stack \(pageId)")
+        self.undoStack.removeAll(where: { $0.pageId == pageId })
+        self.redoStack.removeAll(where: { $0.pageId == pageId })
+        self.initCanvasStack.removeAll(where: { $0.pageId == pageId })
+        
+        print("remove undo stack2 \(undoStack.count)")
     }
 
     func addToUndo(pageId: UUID, canvasStack: [CanvasObj]?) {

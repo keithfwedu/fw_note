@@ -45,7 +45,7 @@ struct PdfNoteScreen: View {
                     pdfDocument: $pdfDocument,
                     noteFile: noteFile,
                     canvasState: canvasState,
-                    noteUndoManager: noteUndoManager
+                    noteUndoManager: $noteUndoManager
                 )
                 ZStack {
                   
@@ -56,7 +56,7 @@ struct PdfNoteScreen: View {
                             imageState: imageState,
                             canvasState: canvasState,
                             noteFile: noteFile,
-                            noteUndoManager: noteUndoManager,
+                            noteUndoManager: $noteUndoManager,
                             searchText: $searchText,
                             displayDirection: $canvasState.displayDirection
                         )

@@ -21,15 +21,16 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
 
     // Closure for handling double-tap action
     var onDoubleTap: (() -> Void)?
-
+    var onRemovePdfPage: ((_ pageId: UUID) -> Void)?
     func disableGestures(_ isDisabled: Bool) {
         gestureState.areGesturesEnabled = !isDisabled  // Toggle gesture state dynamically
     }
 
-    init(frame: CGRect, pageIndex: Int, pdfView: CustomPDFView, imageState: ImageState, canvasState: CanvasState, noteFile: NoteFile, noteUndoManager:NoteUndoManager, notePage: NotePage, onDoubleTap: (() -> Void)? = nil) {
+    init(frame: CGRect, pageIndex: Int, pdfView: CustomPDFView, imageState: ImageState, canvasState: CanvasState, noteFile: NoteFile, noteUndoManager:NoteUndoManager, notePage: NotePage, onDoubleTap: (() -> Void)? = nil, onRemovePdfPage: ((_ pageId: UUID) -> Void)? = nil) {
         self.pageIndex = pageIndex
         self.pdfView = pdfView
         self.onDoubleTap = onDoubleTap
+        self.onRemovePdfPage = onRemovePdfPage
         super.init(frame: frame)
 
         let canvasView = CanvasView(
@@ -46,6 +47,9 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
             onDoubleTap: { [weak self] in
                             self?.onDoubleTap?() // Call onDoubleTap from CanvasView
            },
+            onRemovePdfPage: { pageId in
+                self.onRemovePdfPage?(pageId)
+            }
         )
 
         hostingController = UIHostingController(rootView: canvasView)
