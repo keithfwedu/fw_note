@@ -453,7 +453,7 @@ struct CanvasView: View {
                 }
                 .position(x: notePage.canvasWidth / 2, y: 10)
                 .alert(
-                    "Confirm Close",
+                    "Confirm Remove page",
                     isPresented: $showRemovePageConfirmation
                 ) {
                     Button("Yes") {
@@ -462,7 +462,7 @@ struct CanvasView: View {
                     }
                     Button("Cancel", role: .cancel) {}
                 } message: {
-                    Text("Are you sure you want to close?")
+                    Text("Are you sure you want to remove this page?")
                 }
             }
         }
