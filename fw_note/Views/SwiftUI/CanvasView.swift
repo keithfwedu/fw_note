@@ -12,7 +12,6 @@ struct CanvasView: View {
     let pageIndex: Int
     var onGesture: ((CGFloat, CGSize) -> Void)?
     @ObservedObject var imageState: ImageState
-
     @ObservedObject var canvasState: CanvasState
     @ObservedObject var noteFile: NoteFile
     @ObservedObject var noteUndoManager: NoteUndoManager
@@ -177,7 +176,7 @@ struct CanvasView: View {
                     selectionDrawing.addLines(
                         selectionPaths.map { CGPoint(x: $0.x, y: $0.y) }
                     )
-                    selectionDrawing.closeSubpath()
+                   // selectionDrawing.closeSubpath()
                     context.stroke(
                         selectionDrawing,
                         with: .color(.green),
@@ -300,7 +299,9 @@ struct CanvasView: View {
                     // Pencil Detection View as overlay
                     PencilDetectionView(
                         onTap: { value in
+                           
                             if isEnableTouch(inputType: value.type) {
+                                print("onTap");
                                 focusedID = nil
                                 
                                 handleTap(
@@ -311,6 +312,7 @@ struct CanvasView: View {
                         },
                         onTouchBegin: { value in
                             if isEnableTouch(inputType: value.type) {
+                                print("onTouchBegin");
                                 focusedID = nil
 
                                 if value.type == .pencil {
@@ -318,11 +320,11 @@ struct CanvasView: View {
                                 } else {
                                     //print("touch with fingers")
                                 }
-                                if value.majorRadius < 20 {
+                              
                                     handleDragBegin(
                                         dragValue: value
                                     )
-                                }
+                               
                             } else {
 
                                 toastMessage =
@@ -337,6 +339,7 @@ struct CanvasView: View {
                         },
                         onTouchMove: { value in
                             if isEnableTouch(inputType: value.type) {
+                                print("onTouchMove");
                                 handleDragChange(
                                     dragValue: value,
                                     callback: {}
@@ -345,6 +348,7 @@ struct CanvasView: View {
                         },
                         onTouchEnd: { value in
                             if isEnableTouch(inputType: value.type) {
+                                print("onTouchEnd");
                                 handleDragChange(
                                     dragValue: value,
                                     callback: {
@@ -354,6 +358,7 @@ struct CanvasView: View {
                             }
                         },
                         onTouchCancel: {
+                            print("onTouchCancel");
                             handleDragEnded()
                         }
 
@@ -776,6 +781,7 @@ struct CanvasView: View {
 
         switch canvasState.canvasMode {
         case .draw:  // Draw Mode
+            print("drawing")
             handleDrawing(dragValue: dragValue)
         case .eraser:  // Erase Mode
             handleErasing(dragValue: dragValue)

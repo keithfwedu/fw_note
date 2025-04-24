@@ -6,6 +6,7 @@
 //
 import UIKit
 import SwiftUI
+import PDFKit
 
 
 class GestureState: ObservableObject {
@@ -17,7 +18,7 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
     var pageIndex: Int
     private var hostingController: UIHostingController<CanvasView>?
     var gestureState = GestureState()
-    var pdfView: CustomPDFView
+    var pdfView: PDFView
 
     // Closure for handling double-tap action
     var onDoubleTap: (() -> Void)?
@@ -26,7 +27,7 @@ class CanvasViewWrapper: UIView, UIGestureRecognizerDelegate {
         gestureState.areGesturesEnabled = !isDisabled  // Toggle gesture state dynamically
     }
 
-    init(frame: CGRect, pageIndex: Int, pdfView: CustomPDFView, imageState: ImageState, canvasState: CanvasState, noteFile: NoteFile, noteUndoManager:NoteUndoManager, notePage: NotePage, onDoubleTap: (() -> Void)? = nil, onRemovePdfPage: ((_ pageId: UUID) -> Void)? = nil) {
+    init(frame: CGRect, pageIndex: Int, pdfView: PDFView, imageState: ImageState, canvasState: CanvasState, noteFile: NoteFile, noteUndoManager:NoteUndoManager, notePage: NotePage, onDoubleTap: (() -> Void)? = nil, onRemovePdfPage: ((_ pageId: UUID) -> Void)? = nil) {
         self.pageIndex = pageIndex
         self.pdfView = pdfView
         self.onDoubleTap = onDoubleTap

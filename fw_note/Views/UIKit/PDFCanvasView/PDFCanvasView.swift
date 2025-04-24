@@ -8,29 +8,29 @@
 import PDFKit
 import SwiftUI
 
-
 struct PDFCanvasView: UIViewRepresentable {
     @Binding var pdfDocument: PDFDocument?  // Make it bindable
     var imageState: ImageState
     var canvasState: CanvasState
     var noteFile: NoteFile
     @Binding var noteUndoManager: NoteUndoManager
-    var pdfView: CustomPDFView = CustomPDFView()
+    var pdfView: PDFView = PDFView()
     @Binding var searchText: String
 
     @Binding var displayDirection: PDFDisplayDirection  // Bindable property to change display direction
     var onUpdateDocument: ((_ document: PDFDocument) -> Void)?
-    
-    func makeUIView(context: Context) -> CustomPDFView {
+
+    func makeUIView(context: Context) -> PDFView {
 
         pdfView.document = pdfDocument
         pdfView.autoScales = true
-        pdfView.displayMode = .singlePageContinuous
+        pdfView.displayMode = .singlePage
         pdfView.displaysPageBreaks = true
         pdfView.displayDirection = displayDirection
         pdfView.backgroundColor = UIColor.systemGray4
-        pdfView.usePageViewController(false)
-
+      
+        pdfView.usePageViewController(true, withViewOptions: nil)
+        
         pdfView.pageBreakMargins = UIEdgeInsets(
             top: 50,
             left: 0,
@@ -38,16 +38,27 @@ struct PDFCanvasView: UIViewRepresentable {
             right: 0
         )
 
+        // Customize gesture recognizers for three-finger swiping
+        // Delay gesture configuration to ensure the PageViewController is fully initialized
+            
         // Access the internal UIScrollView and configure two-finger scrolling
-        if let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }
-        ) as? UIScrollView {
+       if let scrollView = pdfView.subviews.first(where: { $0 is UIScrollView }) as? UIScrollView {
             scrollView.layer.shouldRasterize = true
             scrollView.layer.rasterizationScale = UIScreen.main.scale
             scrollView.delegate = context.coordinator
             scrollView.delaysContentTouches = false
-            scrollView.panGestureRecognizer.minimumNumberOfTouches = 2
-            scrollView.panGestureRecognizer.maximumNumberOfTouches = 2
-        
+
+            // Configure scrolling to only support three fingers
+         scrollView.panGestureRecognizer.minimumNumberOfTouches = 3
+            scrollView.panGestureRecognizer.maximumNumberOfTouches = 3
+
+            // Add two-finger pinch gesture for zooming
+            let pinchGestureRecognizer = UIPinchGestureRecognizer(
+                target: context.coordinator,
+                action: #selector(context.coordinator.handlePinch(_:))
+            )
+           
+            scrollView.addGestureRecognizer(pinchGestureRecognizer)
         }
 
         context.coordinator.configure(
@@ -67,7 +78,7 @@ struct PDFCanvasView: UIViewRepresentable {
         return pdfView
     }
 
-    func updateUIView(_ uiView: CustomPDFView, context: Context) {
+    func updateUIView(_ uiView: PDFView, context: Context) {
         // Update the display direction dynamically
         if uiView.displayDirection != displayDirection {
             uiView.displayDirection = displayDirection
@@ -97,16 +108,16 @@ struct PDFCanvasView: UIViewRepresentable {
             context.coordinator.addPageIndicator(to: uiView)
         }
 
-       /* uiView.layoutDocumentView()
-
-        DispatchQueue.main.async {
-            self.canvasState.scaleFactor = uiView.scaleFactor
-        }
-
-        context.coordinator.handleSearchTextChange(searchText)*/
+        /* uiView.layoutDocumentView()
+        
+         DispatchQueue.main.async {
+             self.canvasState.scaleFactor = uiView.scaleFactor
+         }
+        
+         context.coordinator.handleSearchTextChange(searchText)*/
     }
 
-    func setPageBreakMargins(pdfView: CustomPDFView) {
+    func setPageBreakMargins(pdfView: PDFView) {
         guard let document = pdfView.document,
             let page = document.page(at: 0)
         else {
@@ -129,9 +140,9 @@ struct PDFCanvasView: UIViewRepresentable {
             )
             : UIEdgeInsets(
                 top: 100,
-                left: paddingHorizontal,
+                left: paddingHorizontal/2,
                 bottom: 100,
-                right: paddingHorizontal
+                right: paddingHorizontal/2
             )
     }
 
@@ -153,16 +164,18 @@ struct PDFCanvasView: UIViewRepresentable {
                     //print("No document")
                     return
                 }
-                if let index = self.noteFile.notePages.firstIndex(where: { $0.id == pageId }) {
+                if let index = self.noteFile.notePages.firstIndex(where: {
+                    $0.id == pageId
+                }) {
                     //print("Page found at index: \(index)")
                     clonedPdfDocument.removePage(at: index)
-                  
+
                     pdfDocument = clonedPdfDocument
-                   
+
                     noteFile.notePages.removeAll(where: {
                         $0.id == pageId
                     })
-                  
+
                     pdfView.layoutDocumentView()
                     noteUndoManager.removeCanvasStack(pageId: pageId)
                 } else {
@@ -173,7 +186,7 @@ struct PDFCanvasView: UIViewRepresentable {
     }
 
     class Coordinator: NSObject, UIScrollViewDelegate {
-        weak var pdfView: CustomPDFView?  // Weak reference to avoid retain cycles
+        weak var pdfView: PDFView?  // Weak reference to avoid retain cycles
 
         var pdfDocument: PDFDocument
         private var imageState: ImageState
@@ -188,7 +201,7 @@ struct PDFCanvasView: UIViewRepresentable {
         @Binding private var searchText: String
 
         init(
-            pdfView: CustomPDFView,
+            pdfView: PDFView,
             pdfDocument: PDFDocument,
             noteFile: NoteFile,
             noteUndoManager: NoteUndoManager,
@@ -208,7 +221,7 @@ struct PDFCanvasView: UIViewRepresentable {
         }
 
         func configure(
-            pdfView: CustomPDFView,
+            pdfView: PDFView,
             displayDirection: PDFDisplayDirection
         ) {
             self.pdfView = pdfView
@@ -316,7 +329,7 @@ struct PDFCanvasView: UIViewRepresentable {
         }
 
         func addCanvasesToPages(
-            pdfView: CustomPDFView,
+            pdfView: PDFView,
             displayDirection: PDFDisplayDirection
         ) {
             guard let document = pdfView.document,
@@ -396,8 +409,6 @@ struct PDFCanvasView: UIViewRepresentable {
                 pdfView.highlightedSelections = matches
             }
         }
-        
-
 
         func addPageIndicator(to pdfView: PDFView) {
             // Remove any existing page indicator first
@@ -490,5 +501,21 @@ struct PDFCanvasView: UIViewRepresentable {
             }
         }
 
+       
+        @objc func handlePinch(_ sender: UIPinchGestureRecognizer) {
+            guard let scrollView = sender.view as? UIScrollView else { return }
+            
+            switch sender.state {
+            case .began, .changed:
+                // Adjust zoom scale dynamically based on pinch gesture
+                let newZoomScale = scrollView.zoomScale * sender.scale
+                let clampedZoomScale = min(max(newZoomScale, scrollView.minimumZoomScale), scrollView.maximumZoomScale)
+                scrollView.setZoomScale(newZoomScale, animated: false)
+                sender.scale = 1.0
+                // Do not reset sender.scale to maintain cumulative scaling
+            default:
+                break
+            }
+        }
     }
 }
